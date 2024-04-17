@@ -8,7 +8,13 @@ CORS(app)
 client = MongoClient('mongodb+srv://sukoon_user:Tcks8x7wblpLL9OA@cluster0.o7vywoz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0')
 db = client['test']
 blogs_collection = db['blogposts']
-calls_collection = db['calls']  # Replace 'calls' with your collection name
+calls_collection = db['calls']
+experts_collection = db['experts']
+
+@app.route('/api/experts')
+def get_experts():
+    experts = list(experts_collection.find({'status': "online"}, {'_id': 0}))
+    return jsonify(experts)
 
 @app.route('/api/calls')
 def get_calls():
