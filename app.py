@@ -22,7 +22,9 @@ def get_calls():
     for call in calls:
         call['expert'] = str(call.get('expert', ''))
         call['user'] = str(call.get('user', ''))
-    return jsonify(calls)
+    calls = jsonify(calls)
+    print(calls)
+    return calls
 
 
 @app.route('/api/calls/<string:id>')
