@@ -25,7 +25,7 @@ def get_calls():
 def get_experts():
     experts = list(experts_collection.find({}, {'_id': 0}))
     for expert in experts:
-        expert['_id'] = str(expert['_id'])
+        expert['_id'] = str(expert.get('_id'), '')
     return jsonify(experts)
 
 
