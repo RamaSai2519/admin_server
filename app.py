@@ -17,10 +17,8 @@ def get_users():
     users = list(users_collection.find())
     for user in users:
         user['_id'] = str(user.get('_id', ''))
-        
-    return jsonify({
-        'users': users
-    })
+
+    return jsonify(users)
 
 
 @app.route('/api/experts')
