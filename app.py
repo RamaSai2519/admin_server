@@ -36,7 +36,7 @@ def get_users():
     return jsonify(users)
 
 @app.route('/api/experts')
-def get_expert():
+def get_experts():
     experts = list(experts_collection.find({}, {'categories': 0}))
     for expert in experts:
         expert['_id'] = str(expert.get('_id', ''))
@@ -51,13 +51,13 @@ def get_calls():
     return jsonify(calls)
 
 @app.route('/api/experts/<string:id>')
-def get_expert():
+def get_expert(id):
     experts = list(experts_collection.find_one({'_id': id}, {'categories': 0}))
     print(experts)
     return jsonify(experts)
 
 @app.route('/api/users/<string:id>')
-def get_expert():
+def get_user(id):
     users = list(users_collection.find_one({'_id': id}, {'categories': 0}))
     print(users)
     return jsonify(users)
