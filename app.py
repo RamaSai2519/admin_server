@@ -13,7 +13,9 @@ experts_collection = db['experts']
 
 @app.route('/api/experts')
 def get_expert():
-    experts = list(experts_collection.find({}, {'_id': 0, 'categories': 0}))
+    experts = list(experts_collection.find({}, {'categories': 0}))
+    for expert in experts:
+        expert['_id'] = str(expert.get('_id', ''))
     return jsonify(experts)
 
 @app.route('/api/calls')
