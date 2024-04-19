@@ -56,6 +56,7 @@ def get_expert(id):
     expert = experts_collection.find_one({'_id': ObjectId(id)}, {'categories': 0})
     if expert:
         expert['_id'] = str(expert.get('_id', ''))
+    print(expert.name)
     return jsonify(expert)
 
 @app.route('/api/users/<string:id>')
@@ -63,6 +64,7 @@ def get_user(id):
     user = users_collection.find_one({'_id': ObjectId(id)})
     if user:
         user['_id'] = str(user.get('_id', ''))
+    print(user.name)
     return jsonify(user)
 
 @app.route('/api/calls/<string:id>')
