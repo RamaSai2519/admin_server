@@ -11,20 +11,20 @@ blogs_collection = db['blogposts']
 calls_collection = db['calls']
 experts_collection = db['experts']
 
+@app.route('/api/experts')
+def get_expert():
+    experts = list(experts_collection.find())
+    for expert in experts:
+        expert['_id'] = str(expert['_id'])
+    return jsonify(expert)
+
 @app.route('/api/calls')
 def get_calls():
     calls = list(calls_collection.find({}, {'_id': 0}))
     for call in calls:
         call['expert'] = str(call.get('expert', ''))
         call['user'] = str(call.get('user', ''))
-
-    calls = jsonify(calls)
-    return calls
-
-@app.route('/api/experts')
-def get_experts():
-    experts = list(experts_collection.find())
-    return jsonify(experts)
+    return jsonify(calls)
 
 
 @app.route('/api/calls/<string:id>')
