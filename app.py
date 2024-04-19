@@ -2,7 +2,6 @@
 from flask import Flask, jsonify
 from pymongo import MongoClient
 from flask_cors import CORS
-from bson.objectid import ObjectId
 
 app = Flask(__name__)
 CORS(app)
@@ -26,9 +25,6 @@ def get_calls():
 def get_experts():
     experts = list(experts_collection.find({}, {'_id': 0}))
     return jsonify(experts)
-
-# Other routes remain the same
-
 
 
 @app.route('/api/calls/<string:id>')
