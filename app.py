@@ -10,6 +10,15 @@ db = client['test']
 blogs_collection = db['blogposts']
 calls_collection = db['calls']
 experts_collection = db['experts']
+users_collection = db['users']
+
+@app.route('/api/users')
+def get_users():
+    users = list(users_collection.find())
+    return jsonify({
+        'users': users
+    })
+
 
 @app.route('/api/experts')
 def get_expert():
