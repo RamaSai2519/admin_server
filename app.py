@@ -13,11 +13,8 @@ experts_collection = db['experts']
 
 @app.route('/api/experts')
 def get_expert():
-    experts = list(experts_collection.find())
-    for expert in experts:
-        expert['_id'] = str(expert['_id'])
-        print(expert)
-    return jsonify(expert)
+    experts = list(experts_collection.find({}, {'_id': 0, 'categories': 0}))
+    return jsonify(experts)
 
 @app.route('/api/calls')
 def get_calls():
