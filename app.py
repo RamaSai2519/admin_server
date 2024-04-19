@@ -17,7 +17,6 @@ def get_online_saarthis():
     online_saarthis = list(experts_collection.find({'status': 'online'}, {'categories': 0}))
     for saarthi in online_saarthis:
         saarthi['_id'] = str(saarthi.get('_id', ''))
-    print(online_saarthis)
     return jsonify(online_saarthis)
 
 @app.route('/api/successful-calls')
@@ -34,9 +33,7 @@ def get_users():
     users = list(users_collection.find())
     for user in users:
         user['_id'] = str(user.get('_id', ''))
-
     return jsonify(users)
-
 
 @app.route('/api/experts')
 def get_expert():
@@ -53,6 +50,17 @@ def get_calls():
         call['user'] = str(call.get('user', ''))
     return jsonify(calls)
 
+@app.route('/api/experts/<string:id>')
+def get_expert():
+    experts = list(experts_collection.find_one({'_id': id}, {'categories': 0}))
+    print(experts)
+    return jsonify(experts)
+
+@app.route('/api/users/<string:id>')
+def get_expert():
+    users = list(users_collection.find_one({'_id': id}, {'categories': 0}))
+    print(users)
+    return jsonify(users)
 
 @app.route('/api/calls/<string:id>')
 def get_call(id):
