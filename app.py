@@ -24,6 +24,8 @@ def get_calls():
 @app.route('/api/experts')
 def get_experts():
     experts = list(experts_collection.find({}, {'_id': 0}))
+    for expert in experts:
+        expert['_id'] = str(expert['_id'])
     return jsonify(experts)
 
 
