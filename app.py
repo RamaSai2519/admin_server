@@ -12,6 +12,14 @@ calls_collection = db['calls']
 experts_collection = db['experts']
 users_collection = db['users']
 
+@app.route('/api/successful-calls')
+def get_successful_calls():
+    successful_calls = list(calls_collection.find({'status': 'successful'}, {'_id': 0}))
+    for call in successful_calls:
+        call['expert'] = str(call.get('expert', ''))
+        call['user'] = str(call.get('user', ''))
+    return jsonify(successful_calls)
+
 @app.route('/api/users')
 def get_users():
     users = list(users_collection.find())
