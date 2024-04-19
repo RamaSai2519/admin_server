@@ -3,6 +3,7 @@ from flask import Flask, jsonify
 from pymongo import MongoClient
 from flask_cors import CORS
 from bson import ObjectId
+import pprint
 
 app = Flask(__name__)
 CORS(app)
@@ -19,14 +20,12 @@ def get_last_five_calls():
         last_five_calls = list(calls_collection.find().sort([('initiatedTime', -1)]).limit(5))
         for call in last_five_calls:
             user = users_collection.find_one({'_id': call['user']})
-            user['_id'] = str(user.get('_id', ''))
             expert = experts_collection.find_one({'_id': call['expert']})
-            expert['_id'] = str(expert.get('_id', ''))
             call['userName'] = user.get('name', 'Unknown')
             call['expertName'] = expert.get('name', 'Unknown')
             call['expert'] = str(call.get('expert', ''))
             call['user'] = str(call.get('user', ''))
-        print(last_five_calls)
+        pprint(last_five_calls)
         return jsonify(last_five_calls)
     except Exception as e:
         print('Error fetching last five calls:', e)
