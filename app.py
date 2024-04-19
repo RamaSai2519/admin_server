@@ -13,6 +13,22 @@ calls_collection = db['calls']
 experts_collection = db['experts']
 users_collection = db['users']
 
+@app.route('/api/last-five-calls')
+def get_last_five_calls():
+    try:
+        last_five_calls = list(calls_collection.find().sort([('initiatedTime', -1)]).limit(5))
+        for call in last_five_calls:
+            user = users_collection.find_one({'_id': call['user']})
+            expert = experts_collection.find_one({'_id': call['expert']})
+            call['userName'] = user.get('name', 'Unknown')
+            call['expertName'] = expert.get('name', 'Unknown')
+        
+        return jsonify(last_five_calls)
+    except Exception as e:
+        print('Error fetching last five calls:', e)
+        return jsonify({'error': 'Failed to fetch last five calls'}), 500
+
+
 @app.route('/api/online-saarthis')
 def get_online_saarthis():
     online_saarthis = list(experts_collection.find({'status': 'online'}, {'categories': 0}))
