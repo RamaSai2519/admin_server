@@ -12,6 +12,14 @@ calls_collection = db['calls']
 experts_collection = db['experts']
 users_collection = db['users']
 
+@app.route('/api/online-saarthis')
+def get_online_saarthis():
+    online_saarthis = list(experts_collection.find({'status': 'online'}, {'categories': 0}))
+    for saarthi in online_saarthis:
+        saarthi['_id'] = str(saarthi.get('_id', ''))
+    print(online_saarthis)
+    return jsonify(online_saarthis)
+
 @app.route('/api/successful-calls')
 def get_successful_calls():
     calls = list(calls_collection.find({}, {'_id': 0}))
