@@ -18,6 +18,7 @@ def get_successful_calls():
     for call in successful_calls:
         call['expert'] = str(call.get('expert', ''))
         call['user'] = str(call.get('user', ''))
+    print(successful_calls)
     return jsonify(successful_calls)
 
 @app.route('/api/users')
@@ -34,7 +35,6 @@ def get_expert():
     experts = list(experts_collection.find({}, {'categories': 0}))
     for expert in experts:
         expert['_id'] = str(expert.get('_id', ''))
-    print(experts)
     return jsonify(experts)
 
 @app.route('/api/calls')
