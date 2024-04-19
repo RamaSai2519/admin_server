@@ -19,11 +19,6 @@ def get_calls():
         call['expert'] = str(call.get('expert', ''))
         call['user'] = str(call.get('user', ''))
 
-        # Fetch expert details and append to each call
-        expert_id = call['expert']
-        expert = experts_collection.find_one({'_id': ObjectId(expert_id)})
-        call['expert_data'] = expert
-
     calls = jsonify(calls)
     return calls
 
