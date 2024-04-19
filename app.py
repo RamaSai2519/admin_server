@@ -15,6 +15,9 @@ users_collection = db['users']
 @app.route('/api/users')
 def get_users():
     users = list(users_collection.find())
+    for user in users:
+        user['_id'] = str(user.get('_id', ''))
+        
     return jsonify({
         'users': users
     })
