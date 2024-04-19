@@ -23,6 +23,9 @@ def get_last_five_calls():
             expert = experts_collection.find_one({'_id': call['expert']})
             call['userName'] = user.get('name', 'Unknown')
             call['expertName'] = expert.get('name', 'Unknown')
+            call['_id'] = str(call.get('_id', ''))
+            call['user'] = str(call.get('user', ''))
+            call['expert'] = str(call.get('expert', ''))                
         print("\n", last_five_calls)
         return jsonify(last_five_calls)
     except Exception as e:
