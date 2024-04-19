@@ -17,11 +17,13 @@ users_collection = db['users']
 def get_last_five_calls():
     try:
         last_five_calls = list(calls_collection.find().sort([('initiatedTime', -1)]).limit(5))
+        print(last_five_calls)
         for call in last_five_calls:
             user = users_collection.find_one({'_id': call['user']})
             expert = experts_collection.find_one({'_id': call['expert']})
             call['userName'] = user.get('name', 'Unknown')
             call['expertName'] = expert.get('name', 'Unknown')
+        print("\n", last_five_calls)
         return jsonify(last_five_calls)
     except Exception as e:
         print('Error fetching last five calls:', e)
