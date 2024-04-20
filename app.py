@@ -37,11 +37,19 @@ def get_all_calls():
         for call in all_calls:
             user = users_collection.find_one({'_id': call['user']})
             expert = experts_collection.find_one({'_id': call['expert']})
-            call['userName'] = user.get('name', 'Unknown')
-            call['expertName'] = expert.get('name', 'Unknown')
+            if user:
+                call['userName'] = user.get('name', 'Unknown')
+                call['user'] = str(call['user'])
+            else:
+                call['userName'] = 'Unknown'
+                call['user'] = 'Unknown'
+            if expert:
+                call['expertName'] = expert.get('name', 'Unknown')
+                call['expert'] = str(call['expert'])
+            else:
+                call['expertName'] = 'Unknown'
+                call['expert'] = 'Unknown'
             call['_id'] = str(call.get('_id', ''))
-            call['user'] = str(call.get('user', ''))
-            call['expert'] = str(call.get('expert', ''))                
         return jsonify(all_calls)
     except Exception as e:
         print('Error fetching all calls:', e)
