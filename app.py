@@ -13,6 +13,25 @@ calls_collection = db['calls']
 experts_collection = db['experts']
 users_collection = db['users']
 
+@app.route('/api/all-calls')
+def get_all_calls():
+    try:
+        last_five_calls = list(calls_collection.find().sort([('initiatedTime', -1)]))
+        print(last_five_calls)
+        for call in last_five_calls:
+            user = users_collection.find_one({'_id': call['user']})
+            expert = experts_collection.find_one({'_id': call['expert']})
+            call['userName'] = user.get('name', 'Unknown')
+            call['expertName'] = expert.get('name', 'Unknown')
+            call['_id'] = str(call.get('_id', ''))
+            call['user'] = str(call.get('user', ''))
+            call['expert'] = str(call.get('expert', ''))                
+        print("\n", last_five_calls)
+        return jsonify(last_five_calls)
+    except Exception as e:
+        print('Error fetching last five calls:', e)
+        return jsonify({'error': 'Failed to fetch last five calls'}), 500
+
 @app.route('/api/last-five-calls')
 def get_last_five_calls():
     try:
