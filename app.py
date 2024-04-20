@@ -35,20 +35,30 @@ def get_all_calls():
     try:
         all_calls = list(calls_collection.find())
         for call in all_calls:
-            user = users_collection.find_one({'_id': call['user']})
-            expert = experts_collection.find_one({'_id': call['expert']})
-            if user:
-                call['userName'] = user.get('name', 'Unknown')
-                call['user'] = str(call['user'])
+            if 'user' in call:
+                user = users_collection.find_one({'_id': call['user']})
+                if user:
+                    call['userName'] = user.get('name', 'Unknown')
+                    call['user'] = str(call['user'])
+                else:
+                    call['userName'] = 'Unknown'
+                    call['user'] = 'Unknown'
             else:
                 call['userName'] = 'Unknown'
                 call['user'] = 'Unknown'
-            if expert:
-                call['expertName'] = expert.get('name', 'Unknown')
-                call['expert'] = str(call['expert'])
+
+            if 'expert' in call:
+                expert = experts_collection.find_one({'_id': call['expert']})
+                if expert:
+                    call['expertName'] = expert.get('name', 'Unknown')
+                    call['expert'] = str(call['expert'])
+                else:
+                    call['expertName'] = 'Unknown'
+                    call['expert'] = 'Unknown'
             else:
                 call['expertName'] = 'Unknown'
                 call['expert'] = 'Unknown'
+
             call['_id'] = str(call.get('_id', ''))
         return jsonify(all_calls)
     except Exception as e:
