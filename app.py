@@ -18,13 +18,29 @@ def get_last_five_calls():
     try:
         last_five_calls = list(calls_collection.find().sort([('initiatedTime', -1)]).limit(5))
         for call in last_five_calls:
-            user = users_collection.find_one({'_id': call['user']})
-            expert = experts_collection.find_one({'_id': call['expert']})
-            call['userName'] = user.get('name', 'Unknown')
-            call['expertName'] = expert.get('name', 'Unknown')
+            if 'user' in call:
+                user = users_collection.find_one({'_id': call['user']})
+                if user:
+                    call['userName'] = user.get('name', 'Unknown')
+                    call['user'] = str(call['user'])
+                else:
+                    call['userName'] = 'Unknown'
+                    call['user'] = 'Unknown'
+            else:
+                call['userName'] = 'Unknown'
+                call['user'] = 'Unknown'
+            if 'expert' in call:
+                expert = experts_collection.find_one({'_id': call['expert']})
+                if expert:
+                    call['expertName'] = expert.get('name', 'Unknown')
+                    call['expert'] = str(call['expert'])
+                else:
+                    call['expertName'] = 'Unknown'
+                    call['expert'] = 'Unknown'
+            else:
+                call['expertName'] = 'Unknown'
+                call['expert'] = 'Unknown'
             call['_id'] = str(call.get('_id', ''))
-            call['user'] = str(call.get('user', ''))
-            call['expert'] = str(call.get('expert', ''))
         return jsonify(last_five_calls)
     except Exception as e:
         print('Error fetching last five calls:', e)
@@ -46,7 +62,6 @@ def get_all_calls():
             else:
                 call['userName'] = 'Unknown'
                 call['user'] = 'Unknown'
-
             if 'expert' in call:
                 expert = experts_collection.find_one({'_id': call['expert']})
                 if expert:
@@ -58,7 +73,6 @@ def get_all_calls():
             else:
                 call['expertName'] = 'Unknown'
                 call['expert'] = 'Unknown'
-
             call['_id'] = str(call.get('_id', ''))
         return jsonify(all_calls)
     except Exception as e:
@@ -122,9 +136,29 @@ def get_user(id):
 @app.route('/api/calls/<string:id>')
 def get_call(id):
     call = calls_collection.find_one({'callId': id})
-    call['_id'] = str(call['_id'])
-    call['expert'] = str(call.get('expert', ''))
-    call['user'] = str(call.get('user', ''))
+    if 'user' in call:
+        user = users_collection.find_one({'_id': call['user']})
+        if user:
+            call['userName'] = user.get('name', 'Unknown')
+            call['user'] = str(call['user'])
+        else:
+            call['userName'] = 'Unknown'
+            call['user'] = 'Unknown'
+    else:
+        call['userName'] = 'Unknown'
+        call['user'] = 'Unknown'
+    if 'expert' in call:
+        expert = experts_collection.find_one({'_id': call['expert']})
+        if expert:
+            call['expertName'] = expert.get('name', 'Unknown')
+            call['expert'] = str(call['expert'])
+        else:
+            call['expertName'] = 'Unknown'
+            call['expert'] = 'Unknown'
+    else:
+        call['expertName'] = 'Unknown'
+        call['expert'] = 'Unknown'
+    call['_id'] = str(call.get('_id', ''))
     return jsonify(call)
 
 @app.route('/api/blogs')
