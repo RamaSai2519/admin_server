@@ -49,7 +49,7 @@ def get_last_five_calls():
 @app.route('/api/all-calls')
 def get_all_calls():
     try:
-        all_calls = list(calls_collection.find({}, {'Score Breakup': 0}, {'Saarthi Feedback': 0}, {'User Callback': 0}, {'Summary': 0}))
+        all_calls = list(calls_collection.find({}, {'Score Breakup': 0, 'Saarthi Feedback': 0, 'User Callback': 0, 'Summary': 0}))
         for call in all_calls:
             if 'user' in call:
                 user = users_collection.find_one({'_id': call['user']})
