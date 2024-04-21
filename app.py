@@ -46,27 +46,27 @@ def get_last_five_calls():
         print('Error fetching last five calls:', e)
         return jsonify({'error': 'Failed to fetch last five calls'}), 500
 
-from bson import ObjectId
-
 @app.route('/api/all-calls')
 def get_all_calls():
     try:
-        # Fetch all calls
         all_calls = list(calls_collection.find({}, {'Score Breakup': 0, 'Saarthi Feedback': 0, 'User Callback': 0, 'Summary': 0}))
 
-        # Prepare dictionary to map user IDs to their names
-        user_map = {str(user['_id']): user.get('name', 'Unknown') for user in users_collection.find()}
+        user_ids = set()
+        expert_ids = set()
 
-        # Prepare dictionary to map expert IDs to their names
-        expert_map = {str(expert['_id']): expert.get('name', 'Unknown') for expert in experts_collection.find()}
-
-        # Update each call with user and expert names
         for call in all_calls:
-            user_id = str(call.get('user', 'Unknown'))
-            call['userName'] = user_map.get(user_id, 'Unknown')
+            user_ids.add(call.get('user'))
+            expert_ids.add(call.get('expert'))
 
-            expert_id = str(call.get('expert', 'Unknown'))
-            call['expertName'] = expert_map.get(expert_id, 'Unknown')
+        users = {str(user['_id']): user.get('name', 'Unknown') for user in users_collection.find({'_id': {'$in': list(user_ids)}})}
+        experts = {str(expert['_id']): expert.get('name', 'Unknown') for expert in experts_collection.find({'_id': {'$in': list(expert_ids)}})}
+
+        for call in all_calls:
+            call['userName'] = users.get(str(call.get('user')), 'Unknown')
+            call['user'] = str(call.get('user', 'Unknown'))
+
+            call['expertName'] = experts.get(str(call.get('expert')), 'Unknown')
+            call['expert'] = str(call.get('expert', 'Unknown'))
 
             call['_id'] = str(call.get('_id', ''))
 
