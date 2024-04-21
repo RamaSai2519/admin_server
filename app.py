@@ -20,7 +20,7 @@ def get_calls():
         {'duration': {'$gt': '00:02:00'}},  # Filter for duration greater than 2 minutes
         {'_id': 0}
     ))
-    
+    print(calls[10])
     for call in calls:
         call['expert'] = str(call.get('expert', ''))
         call['user'] = str(call.get('user', ''))
