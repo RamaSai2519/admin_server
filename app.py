@@ -82,11 +82,11 @@ def get_all_calls():
 
         # Update each call with user and expert names
         for call in all_calls:
-            user_id = str(call.get('user', 'Unknown'))
-            call['userName'] = user_map.get(user_id, 'Unknown')
+            user_id = str(call.get('user'))
+            call['userName'] = user_map.get(user_id)
 
-            expert_id = str(call.get('expert', 'Unknown'))
-            call['expertName'] = expert_map.get(expert_id, 'Unknown')
+            expert_id = str(call.get('expert'))
+            call['expertName'] = expert_map.get(expert_id)
 
             call['_id'] = str(call.get('_id', ''))
 
