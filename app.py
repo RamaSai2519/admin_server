@@ -46,38 +46,59 @@ def get_last_five_calls():
         print('Error fetching last five calls:', e)
         return jsonify({'error': 'Failed to fetch last five calls'}), 500
 
+from bson import ObjectId
+
 @app.route('/api/all-calls')
 def get_all_calls():
     try:
-        all_calls = list(calls_collection.find({}, {'Score Breakup': 0, 'Saarthi Feedback': 0, 'User Callback': 0, 'Summary': 0}))
+        # Fetch all calls with user and expert IDs
+        pipeline = [
+            {
+                "$lookup": {
+                    "from": "users_collection",
+                    "localField": "user",
+                    "foreignField": "_id",
+                    "as": "user"
+                }
+            },
+            {
+                "$lookup": {
+                    "from": "experts_collection",
+                    "localField": "expert",
+                    "foreignField": "_id",
+                    "as": "expert"
+                }
+            },
+            {
+                "$unset": ["Score Breakup", "Saarthi Feedback", "User Callback", "Summary"]
+            }
+        ]
+
+        all_calls = list(calls_collection.aggregate(pipeline))
+
+        # Prepare dictionary to map user and expert IDs to their names
+        user_map = {str(user['_id']): user.get('name', 'Unknown') for user in users_collection.find()}
+        expert_map = {str(expert['_id']): expert.get('name', 'Unknown') for expert in experts_collection.find()}
+
+        # Update each call with user and expert names
         for call in all_calls:
-            if 'user' in call:
-                user = users_collection.find_one({'_id': call['user']})
-                if user:
-                    call['userName'] = user.get('name', 'Unknown')
-                    call['user'] = str(call['user'])
-                else:
-                    call['userName'] = 'Unknown'
-                    call['user'] = 'Unknown'
-            else:
-                call['userName'] = 'Unknown'
-                call['user'] = 'Unknown'
-            if 'expert' in call:
-                expert = experts_collection.find_one({'_id': call['expert']})
-                if expert:
-                    call['expertName'] = expert.get('name', 'Unknown')
-                    call['expert'] = str(call['expert'])
-                else:
-                    call['expertName'] = 'Unknown'
-                    call['expert'] = 'Unknown'
-            else:
-                call['expertName'] = 'Unknown'
-                call['expert'] = 'Unknown'
+            user_id = str(call.get('user', 'Unknown'))
+            call['userName'] = user_map.get(user_id, 'Unknown')
+
+            expert_id = str(call.get('expert', 'Unknown'))
+            call['expertName'] = expert_map.get(expert_id, 'Unknown')
+
             call['_id'] = str(call.get('_id', ''))
+
+            # Clean up unnecessary fields
+            call.pop('user', None)
+            call.pop('expert', None)
+
         return jsonify(all_calls)
     except Exception as e:
         print('Error fetching all calls:', e)
         return jsonify({'error': 'Failed to fetch all calls'}), 500
+
 
 @app.route('/api/online-saarthis')
 def get_online_saarthis():
