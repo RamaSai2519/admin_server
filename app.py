@@ -15,16 +15,18 @@ users_collection = db['users']
 
 @app.route('/api/calls')
 def get_calls():
-    filter_query = {
-        'duration': {'$gt': '00:05:00'}
-    }
-    calls = list(calls_collection.find(filter_query, {'_id': 0}))
-    print(len(calls))
-    print(calls[10])
+    # Fetch calls with duration more than 2 minutes directly in the query
+    calls = list(calls_collection.find(
+        {'duration': {'$gt': '00:02:00'}},  # Filter for duration greater than 2 minutes
+        {'_id': 0}
+    ))
+    
     for call in calls:
         call['expert'] = str(call.get('expert', ''))
         call['user'] = str(call.get('user', ''))
+
     return jsonify(calls)
+
 
 
 @app.route('/api/users')
