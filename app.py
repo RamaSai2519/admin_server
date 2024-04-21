@@ -94,6 +94,7 @@ def get_all_calls():
             call.pop('user', None)
             call.pop('expert', None)
 
+        print('All calls:', all_calls)
         return jsonify(all_calls)
     except Exception as e:
         print('Error fetching all calls:', e)
