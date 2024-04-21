@@ -82,10 +82,12 @@ def get_all_calls():
 
         # Update each call with user and expert names
         for call in all_calls:
-            user_id = str(call.get('user', [{}])[0].get('_id', 'Unknown'))
+            user_list = call.get('user', [])
+            user_id = str(user_list[0]['_id']) if user_list else 'Unknown'
             call['userName'] = user_map.get(user_id, 'Unknown')
 
-            expert_id = str(call.get('expert', [{}])[0].get('_id', 'Unknown'))
+            expert_list = call.get('expert', [])
+            expert_id = str(expert_list[0]['_id']) if expert_list else 'Unknown'
             call['expertName'] = expert_map.get(expert_id, 'Unknown')
 
             call['_id'] = str(call.get('_id', ''))
@@ -94,11 +96,11 @@ def get_all_calls():
             call.pop('user', None)
             call.pop('expert', None)
 
-        print(all_calls)
         return jsonify(all_calls)
     except Exception as e:
         print('Error fetching all calls:', e)
         return jsonify({'error': 'Failed to fetch all calls'}), 500
+
 
 
 @app.route('/api/online-saarthis')
