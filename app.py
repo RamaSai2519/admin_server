@@ -20,12 +20,11 @@ def get_calls():
     }
     calls = list(calls_collection.find(filter_query, {'_id': 0}))
     print(len(calls))
+    print(calls[10])
     for call in calls:
         call['expert'] = str(call.get('expert', ''))
         call['user'] = str(call.get('user', ''))
-    calls = jsonify(calls)
-    print(calls[10])
-    return calls
+    return jsonify(calls)
 
 
 @app.route('/api/users')
