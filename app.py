@@ -51,30 +51,8 @@ from bson import ObjectId
 @app.route('/api/all-calls')
 def get_all_calls():
     try:
-        # Fetch all calls with user and expert IDs
-        pipeline = [
-            {
-                "$lookup": {
-                    "from": "users_collection",
-                    "localField": "user",
-                    "foreignField": "_id",
-                    "as": "user"
-                }
-            },
-            {
-                "$lookup": {
-                    "from": "experts_collection",
-                    "localField": "expert",
-                    "foreignField": "_id",
-                    "as": "expert"
-                }
-            },
-            {
-                "$unset": ["Score Breakup", "Saarthi Feedback", "User Callback", "Summary"]
-            }
-        ]
-
-        all_calls = list(calls_collection.aggregate(pipeline))
+        # Fetch all calls
+        all_calls = list(calls_collection.find({}, {'Score Breakup': 0, 'Saarthi Feedback': 0, 'User Callback': 0, 'Summary': 0}))
 
         # Prepare dictionary to map user IDs to their names
         user_map = {str(user['_id']): user.get('name', 'Unknown') for user in users_collection.find()}
@@ -84,24 +62,18 @@ def get_all_calls():
 
         # Update each call with user and expert names
         for call in all_calls:
-            user_id = str(call.get('user', [{}])[0].get('_id')) if 'user' in call else 'Unknown'
+            user_id = str(call.get('user', 'Unknown'))
             call['userName'] = user_map.get(user_id, 'Unknown')
 
-            expert_id = str(call.get('expert', [{}])[0].get('_id')) if 'expert' in call else 'Unknown'
+            expert_id = str(call.get('expert', 'Unknown'))
             call['expertName'] = expert_map.get(expert_id, 'Unknown')
 
             call['_id'] = str(call.get('_id', ''))
-
-            # Clean up unnecessary fields
-            call.pop('user', None)
-            call.pop('expert', None)
 
         return jsonify(all_calls)
     except Exception as e:
         print('Error fetching all calls:', e)
         return jsonify({'error': 'Failed to fetch all calls'}), 500
-
-
 
 @app.route('/api/online-saarthis')
 def get_online_saarthis():
