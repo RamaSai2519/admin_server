@@ -19,6 +19,7 @@ def get_calls():
         'duration': {'$gt': '00:05:00'}
     }
     calls = list(calls_collection.find(filter_query, {'_id': 0}))
+    print(len(calls))
     for call in calls:
         call['expert'] = str(call.get('expert', ''))
         call['user'] = str(call.get('user', ''))
