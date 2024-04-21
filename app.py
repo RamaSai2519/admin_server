@@ -21,7 +21,7 @@ def get_calls():
     filtered_calls = []
     for call in calls:
         duration_str = call.get('transferDuration', '')
-        if is_valid_duration(duration_str) and get_timedelta(duration_str) > timedelta(minutes=2.01):
+        if is_valid_duration(duration_str) and get_timedelta(duration_str) > timedelta(minutes=2):
             call['expert'] = str(call.get('expert', ''))
             call['user'] = str(call.get('user', ''))
             filtered_calls.append(call)
