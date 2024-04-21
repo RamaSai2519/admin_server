@@ -16,7 +16,7 @@ users_collection = db['users']
 @app.route('/api/calls')
 def get_calls():
     filter_query = {
-        'duration': {'$gt': '00:02:00'}
+        'duration': {'$gt': '00:05:00'}
     }
     calls = list(calls_collection.find(filter_query, {'_id': 0}))
     for call in calls:
