@@ -15,11 +15,15 @@ users_collection = db['users']
 
 @app.route('/api/calls')
 def get_calls():
-    calls = list(calls_collection.find({}, {'_id': 0}))
+    filter_query = {
+        'duration': {'$gt': '00:02:00'}
+    }
+    calls = list(calls_collection.find(filter_query, {'_id': 0}))
     for call in calls:
         call['expert'] = str(call.get('expert', ''))
         call['user'] = str(call.get('user', ''))
     return jsonify(calls)
+
 
 @app.route('/api/users')
 def get_users():
