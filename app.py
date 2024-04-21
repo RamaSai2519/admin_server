@@ -13,6 +13,56 @@ calls_collection = db['calls']
 experts_collection = db['experts']
 users_collection = db['users']
 
+@app.route('/api/calls')
+def get_calls():
+    calls = list(calls_collection.find({}, {'_id': 0}))
+    for call in calls:
+        call['expert'] = str(call.get('expert', ''))
+        call['user'] = str(call.get('user', ''))
+    return jsonify(calls)
+
+@app.route('/api/users')
+def get_users():
+    users = list(users_collection.find())
+    for user in users:
+        user['_id'] = str(user.get('_id', ''))
+    return jsonify(users)
+
+@app.route('/api/experts')
+def get_experts():
+    experts = list(experts_collection.find({}, {'categories': 0}))
+    for expert in experts:
+        expert['_id'] = str(expert.get('_id', ''))
+    return jsonify(experts)
+
+@app.route('/api/calls/<string:id>')
+def get_call(id):
+    call = calls_collection.find_one({'callId': id})
+    if 'user' in call:
+        user = users_collection.find_one({'_id': call['user']})
+        if user:
+            call['userName'] = user.get('name', 'Unknown')
+            call['user'] = str(call['user'])
+        else:
+            call['userName'] = 'Unknown'
+            call['user'] = 'Unknown'
+    else:
+        call['userName'] = 'Unknown'
+        call['user'] = 'Unknown'
+    if 'expert' in call:
+        expert = experts_collection.find_one({'_id': call['expert']})
+        if expert:
+            call['expertName'] = expert.get('name', 'Unknown')
+            call['expert'] = str(call['expert'])
+        else:
+            call['expertName'] = 'Unknown'
+            call['expert'] = 'Unknown'
+    else:
+        call['expertName'] = 'Unknown'
+        call['expert'] = 'Unknown'
+    call['_id'] = str(call.get('_id', ''))
+    return jsonify(call)
+
 @app.route('/api/last-five-calls')
 def get_last_five_calls():
     try:
@@ -91,36 +141,6 @@ def get_successful_calls():
         call['user'] = str(call.get('user', ''))
     return jsonify(calls)
 
-@app.route('/api/users')
-def get_users():
-    users = list(users_collection.find())
-    for user in users:
-        user['_id'] = str(user.get('_id', ''))
-    return jsonify(users)
-
-@app.route('/api/experts')
-def get_experts():
-    experts = list(experts_collection.find({}, {'categories': 0}))
-    for expert in experts:
-        expert['_id'] = str(expert.get('_id', ''))
-    return jsonify(experts)
-
-@app.route('/api/calls')
-def get_calls():
-    calls = list(calls_collection.find({}, {'_id': 0}))
-    for call in calls:
-        call['expert'] = str(call.get('expert', ''))
-        call['user'] = str(call.get('user', ''))
-    return jsonify(calls)
-
-@app.route('/api/experts/<string:id>')
-def get_expert(id):
-    expert = experts_collection.find_one({'_id': ObjectId(id)}, {'categories': 0})
-    if expert:
-        expert['_id'] = str(expert.get('_id', ''))
-    print(expert.name)
-    return jsonify(expert)
-
 @app.route('/api/users/<string:id>')
 def get_user(id):
     user = users_collection.find_one({'_id': ObjectId(id)})
@@ -129,33 +149,13 @@ def get_user(id):
     print(user.name)
     return jsonify(user)
 
-@app.route('/api/calls/<string:id>')
-def get_call(id):
-    call = calls_collection.find_one({'callId': id})
-    if 'user' in call:
-        user = users_collection.find_one({'_id': call['user']})
-        if user:
-            call['userName'] = user.get('name', 'Unknown')
-            call['user'] = str(call['user'])
-        else:
-            call['userName'] = 'Unknown'
-            call['user'] = 'Unknown'
-    else:
-        call['userName'] = 'Unknown'
-        call['user'] = 'Unknown'
-    if 'expert' in call:
-        expert = experts_collection.find_one({'_id': call['expert']})
-        if expert:
-            call['expertName'] = expert.get('name', 'Unknown')
-            call['expert'] = str(call['expert'])
-        else:
-            call['expertName'] = 'Unknown'
-            call['expert'] = 'Unknown'
-    else:
-        call['expertName'] = 'Unknown'
-        call['expert'] = 'Unknown'
-    call['_id'] = str(call.get('_id', ''))
-    return jsonify(call)
+@app.route('/api/experts/<string:id>')
+def get_expert(id):
+    expert = experts_collection.find_one({'_id': ObjectId(id)}, {'categories': 0})
+    if expert:
+        expert['_id'] = str(expert.get('_id', ''))
+    print(expert.name)
+    return jsonify(expert)
 
 @app.route('/api/blogs')
 def get_blogs():
