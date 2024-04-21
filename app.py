@@ -17,22 +17,40 @@ from datetime import timedelta
 
 @app.route('/api/calls')
 def get_calls():
-    # Filter calls with duration more than 2 minutes
+    # Fetch all calls
     calls = list(calls_collection.find({}, {'_id': 0}))
 
     # Filter calls with duration more than 2 minutes
-    filtered_calls = [call for call in calls if get_timedelta(call['duration']) > timedelta(minutes=2)]
-
-    for call in filtered_calls:
-        call['expert'] = str(call.get('expert', ''))
-        call['user'] = str(call.get('user', ''))
+    filtered_calls = []
+    for call in calls:
+        duration_str = call.get('duration', '')
+        if is_valid_duration(duration_str) and get_timedelta(duration_str) > timedelta(minutes=2):
+            call['expert'] = str(call.get('expert', ''))
+            call['user'] = str(call.get('user', ''))
+            filtered_calls.append(call)
 
     return jsonify(filtered_calls)
 
 def get_timedelta(duration_str):
     # Parse duration string in format HH:MM:SS to timedelta
-    hours, minutes, seconds = map(int, duration_str.split(':'))
-    return timedelta(hours=hours, minutes=minutes, seconds=seconds)
+    try:
+        hours, minutes, seconds = map(int, duration_str.split(':'))
+        return timedelta(hours=hours, minutes=minutes, seconds=seconds)
+    except ValueError:
+        return timedelta(seconds=0)  # Return 0 seconds if invalid duration
+
+def is_valid_duration(duration_str):
+    # Check if duration string is in correct format HH:MM:SS
+    parts = duration_str.split(':')
+    if len(parts) == 3:
+        try:
+            hours, minutes, seconds = map(int, parts)
+            if 0 <= hours < 24 and 0 <= minutes < 60 and 0 <= seconds < 60:
+                return True
+        except ValueError:
+            pass
+    return False
+
 
 @app.route('/api/users')
 def get_users():
