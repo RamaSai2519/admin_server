@@ -13,21 +13,26 @@ calls_collection = db['calls']
 experts_collection = db['experts']
 users_collection = db['users']
 
+from datetime import timedelta
+
 @app.route('/api/calls')
 def get_calls():
-    # Fetch calls with duration more than 2 minutes directly in the query
-    calls = list(calls_collection.find(
-        {'duration': {'$gt': '00:02:00'}},  # Filter for duration greater than 2 minutes
-        {'_id': 0}
-    ))
-    print(calls[10])
-    for call in calls:
+    # Filter calls with duration more than 2 minutes
+    calls = list(calls_collection.find({}, {'_id': 0}))
+
+    # Filter calls with duration more than 2 minutes
+    filtered_calls = [call for call in calls if get_timedelta(call['duration']) > timedelta(minutes=2)]
+
+    for call in filtered_calls:
         call['expert'] = str(call.get('expert', ''))
         call['user'] = str(call.get('user', ''))
 
-    return jsonify(calls)
+    return jsonify(filtered_calls)
 
-
+def get_timedelta(duration_str):
+    # Parse duration string in format HH:MM:SS to timedelta
+    hours, minutes, seconds = map(int, duration_str.split(':'))
+    return timedelta(hours=hours, minutes=minutes, seconds=seconds)
 
 @app.route('/api/users')
 def get_users():
