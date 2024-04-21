@@ -76,18 +76,18 @@ def get_all_calls():
 
         all_calls = list(calls_collection.aggregate(pipeline))
 
-        # Prepare dictionary to map user and expert IDs to their names
+        # Prepare dictionary to map user IDs to their names
         user_map = {str(user['_id']): user.get('name', 'Unknown') for user in users_collection.find()}
+
+        # Prepare dictionary to map expert IDs to their names
         expert_map = {str(expert['_id']): expert.get('name', 'Unknown') for expert in experts_collection.find()}
 
         # Update each call with user and expert names
         for call in all_calls:
-            user_list = call.get('user', [])
-            user_id = str(user_list[0]['_id']) if user_list else 'Unknown'
+            user_id = str(call.get('user', [{}])[0].get('_id')) if 'user' in call else 'Unknown'
             call['userName'] = user_map.get(user_id, 'Unknown')
 
-            expert_list = call.get('expert', [])
-            expert_id = str(expert_list[0]['_id']) if expert_list else 'Unknown'
+            expert_id = str(call.get('expert', [{}])[0].get('_id')) if 'expert' in call else 'Unknown'
             call['expertName'] = expert_map.get(expert_id, 'Unknown')
 
             call['_id'] = str(call.get('_id', ''))
