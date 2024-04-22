@@ -18,14 +18,23 @@ from datetime import timedelta
 @app.route('/api/calls')
 def get_calls():
     calls = list(calls_collection.find({}, {'_id': 0}))
+    for call in calls:
+        call['expert'] = str(call.get('expert', ''))
+        call['user'] = str(call.get('user', ''))
+    return jsonify(calls)
+
+@app.route('/api/successful-calls')
+def get_successful_calls():
     filtered_calls = []
+    calls = list(calls_collection.find({}, {'_id': 0}))
+    calls = list(filter(lambda call: call['status'] == 'successfull', calls))
     for call in calls:
         duration_str = call.get('transferDuration', '')
         if is_valid_duration(duration_str) and get_timedelta(duration_str) > timedelta(minutes=2):
             call['expert'] = str(call.get('expert', ''))
             call['user'] = str(call.get('user', ''))
             filtered_calls.append(call)
-    return jsonify(filtered_calls)
+    return jsonify(calls)
 
 @app.route('/api/users')
 def get_users():
@@ -137,15 +146,6 @@ def get_online_saarthis():
     for saarthi in online_saarthis:
         saarthi['_id'] = str(saarthi.get('_id', ''))
     return jsonify(online_saarthis)
-
-@app.route('/api/successful-calls')
-def get_successful_calls():
-    calls = list(calls_collection.find({}, {'_id': 0}))
-    calls = list(filter(lambda call: call['status'] == 'successfull', calls))
-    for call in calls:
-        call['expert'] = str(call.get('expert', ''))
-        call['user'] = str(call.get('user', ''))
-    return jsonify(calls)
 
 @app.route('/api/users/<string:id>')
 def get_user(id):
