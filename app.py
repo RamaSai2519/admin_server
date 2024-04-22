@@ -78,10 +78,28 @@ def get_call(id):
     call['_id'] = str(call.get('_id', ''))
     return jsonify(call)
 
+from datetime import datetime, timedelta
+
 @app.route('/api/last-five-calls')
 def get_last_five_calls():
     try:
-        last_five_calls = list(calls_collection.find().sort([('initiatedTime', -1)]).limit(5))
+        # Get the current date
+        current_date = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+
+        # Query calls for the current day
+        current_day_calls = list(calls_collection.find({
+            'initiatedTime': {
+                '$gte': current_date,
+                '$lt': current_date + timedelta(days=1)
+            }
+        }).sort([('initiatedTime', -1)]))
+
+        # If current day's calls are 0, get the latest 5 calls
+        if len(current_day_calls) == 0:
+            last_five_calls = list(calls_collection.find().sort([('initiatedTime', -1)]).limit(5))
+        else:
+            last_five_calls = current_day_calls
+
         for call in last_five_calls:
             if 'user' in call:
                 user = users_collection.find_one({'_id': call['user']})
@@ -108,8 +126,8 @@ def get_last_five_calls():
             call['_id'] = str(call.get('_id', ''))
         return jsonify(last_five_calls)
     except Exception as e:
-        print('Error fetching last five calls:', e)
-        return jsonify({'error': 'Failed to fetch last five calls'}), 500
+        print('Error fetching calls:', e)
+        return jsonify({'error': 'Failed to fetch calls'}), 500
 
 @app.route('/api/all-calls')
 def get_all_calls():
