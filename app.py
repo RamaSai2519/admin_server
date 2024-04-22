@@ -32,7 +32,7 @@ def get_successful_calls():
         call['expert'] = str(call.get('expert', ''))
         call['user'] = str(call.get('user', ''))
         duration_str = call.get('transferDuration', '')
-        if is_valid_duration(duration_str) and get_timedelta(duration_str) > timedelta(minutes=5):
+        if is_valid_duration(duration_str) and get_timedelta(duration_str) > timedelta(minutes=2):
             filtered_calls.append(call)
     return jsonify(filtered_calls)
 
