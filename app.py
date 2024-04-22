@@ -72,6 +72,7 @@ def get_users():
     users = list(users_collection.find({'_id': {'$nin': excluded_users}}))
     for user in users:
         user['_id'] = str(user.get('_id', ''))
+    print(users[1])
     return jsonify(users)
 
 @app.route('/api/experts')
