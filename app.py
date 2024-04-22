@@ -3,7 +3,7 @@ from flask import Flask, jsonify
 from pymongo import MongoClient
 from flask_cors import CORS
 from bson import ObjectId
-from datetime import timedelta
+from datetime import datetime, timedelta
 from excluded_users import excluded_users
 
 app = Flask(__name__)
@@ -17,7 +17,7 @@ users_collection = db['users']
 
 @app.route('/api/calls')
 def get_calls():
-    calls = list(calls_collection.find({}, {'_id': 0}))
+    calls = list(calls_collection.find({'user': {'$nin': excluded_users}}, {'_id': 0}))
     for call in calls:
         call['expert'] = str(call.get('expert', ''))
         call['user'] = str(call.get('user', ''))
@@ -26,7 +26,7 @@ def get_calls():
 @app.route('/api/successful-calls')
 def get_successful_calls():
     filtered_calls = []
-    calls = list(calls_collection.find({}, {'_id': 0}))
+    calls = list(calls_collection.find({'user': {'$nin': excluded_users}}, {'_id': 0}))
     calls = list(filter(lambda call: call['status'] == 'successfull', calls))
     for call in calls:
         call['expert'] = str(call.get('expert', ''))
@@ -77,8 +77,6 @@ def get_call(id):
         call['expert'] = 'Unknown'
     call['_id'] = str(call.get('_id', ''))
     return jsonify(call)
-
-from datetime import datetime, timedelta
 
 @app.route('/api/last-five-calls')
 def get_last_five_calls():
