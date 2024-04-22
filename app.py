@@ -79,11 +79,11 @@ def get_last_five_calls():
         current_day_calls = get_calls({
             'initiatedTime': {'$gte': current_date, '$lt': current_date + timedelta(days=1)}
         })
-        
+
         if not current_day_calls:
             last_five_calls = get_calls().sort([('initiatedTime', -1)]).limit(5)
         else:
-            last_five_calls = sorted(current_day_calls, key=lambda x: x['initiatedTime'], reverse=True)[:5]
+            last_five_calls = current_day_calls.sort([('initiatedTime', -1)])
 
         formatted_calls = [format_call(call) for call in last_five_calls]
         return jsonify(formatted_calls)
