@@ -27,6 +27,7 @@ def get_calls():
 def get_successful_calls():
     filtered_calls = []
     calls = list(calls_collection.find({}, {'_id': 0}))
+    calls = list(filter(lambda call: call['status'] == 'successfull', calls))
     for call in calls:
         call['expert'] = str(call.get('expert', ''))
         call['user'] = str(call.get('user', ''))
