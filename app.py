@@ -74,18 +74,22 @@ def get_call(id):
 
 @app.route('/api/last-five-calls')
 def get_last_five_calls():
-    current_date = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-    current_day_calls = get_calls({
-        'initiatedTime': {'$gte': current_date, '$lt': current_date + timedelta(days=1)}
-    }).sort([('initiatedTime', -1)])
+    try:
+        current_date = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        current_day_calls = get_calls({
+            'initiatedTime': {'$gte': current_date, '$lt': current_date + timedelta(days=1)}
+        })
+        
+        if not current_day_calls:
+            last_five_calls = get_calls().sort([('initiatedTime', -1)]).limit(5)
+        else:
+            last_five_calls = sorted(current_day_calls, key=lambda x: x['initiatedTime'], reverse=True)[:5]
 
-    if not current_day_calls:
-        last_five_calls = get_calls().sort([('initiatedTime', -1)]).limit(5)
-    else:
-        last_five_calls = current_day_calls
-
-    formatted_calls = [format_call(call) for call in last_five_calls]
-    return jsonify(formatted_calls)
+        formatted_calls = [format_call(call) for call in last_five_calls]
+        return jsonify(formatted_calls)
+    except Exception as e:
+        print('Error fetching last five calls:', e)
+        return jsonify({'error': 'Failed to fetch last five calls'}), 500
 
 @app.route('/api/all-calls')
 def get_all_calls():
