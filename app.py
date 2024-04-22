@@ -75,21 +75,51 @@ def get_call(id):
 @app.route('/api/last-five-calls')
 def get_last_five_calls():
     try:
+        # Get the current date
         current_date = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-        current_day_calls = get_calls({
-            'initiatedTime': {'$gte': current_date, '$lt': current_date + timedelta(days=1)}
-        })
 
-        if not current_day_calls:
-            last_five_calls = get_calls().sort([('initiatedTime', -1)]).limit(5)
+        # Query calls for the current day
+        current_day_calls = list(calls_collection.find({
+            'initiatedTime': {
+                '$gte': current_date,
+                '$lt': current_date + timedelta(days=1)
+            }
+        }).sort([('initiatedTime', -1)]))
+
+        # If current day's calls are 0, get the latest 5 calls
+        if len(current_day_calls) == 0:
+            last_five_calls = list(calls_collection.find().sort([('initiatedTime', -1)]).limit(5))
         else:
-            last_five_calls = current_day_calls.sort([('initiatedTime', -1)])
+            last_five_calls = current_day_calls
 
-        formatted_calls = [format_call(call) for call in last_five_calls]
-        return jsonify(formatted_calls)
+        for call in last_five_calls:
+            if 'user' in call:
+                user = users_collection.find_one({'_id': call['user']})
+                if user:
+                    call['userName'] = user.get('name', 'Unknown')
+                    call['user'] = str(call['user'])
+                else:
+                    call['userName'] = 'Unknown'
+                    call['user'] = 'Unknown'
+            else:
+                call['userName'] = 'Unknown'
+                call['user'] = 'Unknown'
+            if 'expert' in call:
+                expert = experts_collection.find_one({'_id': call['expert']})
+                if expert:
+                    call['expertName'] = expert.get('name', 'Unknown')
+                    call['expert'] = str(call['expert'])
+                else:
+                    call['expertName'] = 'Unknown'
+                    call['expert'] = 'Unknown'
+            else:
+                call['expertName'] = 'Unknown'
+                call['expert'] = 'Unknown'
+            call['_id'] = str(call.get('_id', ''))
+        return jsonify(last_five_calls)
     except Exception as e:
-        print('Error fetching last five calls:', e)
-        return jsonify({'error': 'Failed to fetch last five calls'}), 500
+        print('Error fetching calls:', e)
+        return jsonify({'error': 'Failed to fetch calls'}), 500
 
 @app.route('/api/all-calls')
 def get_all_calls():
