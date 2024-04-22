@@ -7,6 +7,8 @@ from excluded_users import excluded_users
 
 app = Flask(__name__)
 CORS(app)
+
+# Connect to MongoDB
 client = MongoClient('mongodb+srv://sukoon_user:Tcks8x7wblpLL9OA@cluster0.o7vywoz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0')
 db = client['test']
 blogs_collection = db['blogposts']
@@ -14,22 +16,36 @@ calls_collection = db['calls']
 experts_collection = db['experts']
 users_collection = db['users']
 
+# Cache user and expert data for quicker access
+users_cache = {}
+experts_cache = {}
+
 def get_user_name(user_id):
-    user = users_collection.find_one({'_id': user_id})
-    return user.get('name', 'Unknown') if user else 'Unknown'
+    if user_id in users_cache:
+        return users_cache[user_id]
+    user = users_collection.find_one({'_id': user_id}, {'name': 1})
+    if user:
+        users_cache[user_id] = user['name']
+        return user['name']
+    return 'Unknown'
 
 def get_expert_name(expert_id):
-    expert = experts_collection.find_one({'_id': expert_id})
-    return expert.get('name', 'Unknown') if expert else 'Unknown'
+    if expert_id in experts_cache:
+        return experts_cache[expert_id]
+    expert = experts_collection.find_one({'_id': expert_id}, {'name': 1})
+    if expert:
+        experts_cache[expert_id] = expert['name']
+        return expert['name']
+    return 'Unknown'
 
 def format_call(call):
-    call['userName'] = get_user_name(call.get('user', 'Unknown'))
-    call['user'] = str(call.get('user', 'Unknown'))
-
-    call['expertName'] = get_expert_name(call.get('expert', 'Unknown'))
-    call['expert'] = str(call.get('expert', 'Unknown'))
-
+    user_id = call.get('user', 'Unknown')
+    expert_id = call.get('expert', 'Unknown')
     call['_id'] = str(call.get('_id', ''))
+    call['userName'] = get_user_name(user_id)
+    call['user'] = str(user_id)
+    call['expertName'] = get_expert_name(expert_id)
+    call['expert'] = str(expert_id)
     return call
 
 def get_calls(query={}, fields={'_id': 0}):
@@ -53,13 +69,13 @@ def get_successful_calls():
 
 @app.route('/api/users')
 def get_users():
-    users = list(users_collection.find({'_id': {'$nin': excluded_users}}))
+    users = users_collection.find({'_id': {'$nin': excluded_users}}, {'name': 1})
     formatted_users = [{'_id': str(user['_id']), 'name': user.get('name', 'Unknown')} for user in users]
     return jsonify(formatted_users)
 
 @app.route('/api/experts')
 def get_experts():
-    experts = list(experts_collection.find({}, {'categories': 0}))
+    experts = experts_collection.find({}, {'categories': 0})
     formatted_experts = [{'_id': str(expert['_id']), 'name': expert.get('name', 'Unknown')} for expert in experts]
     return jsonify(formatted_experts)
 
@@ -75,10 +91,7 @@ def get_call(id):
 @app.route('/api/last-five-calls')
 def get_last_five_calls():
     try:
-        # Get the current date
         current_date = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-
-        # Query calls for the current day
         current_day_calls = list(calls_collection.find({
             'initiatedTime': {
                 '$gte': current_date,
@@ -86,37 +99,13 @@ def get_last_five_calls():
             }
         }).sort([('initiatedTime', -1)]))
 
-        # If current day's calls are 0, get the latest 5 calls
         if len(current_day_calls) == 0:
             last_five_calls = list(calls_collection.find().sort([('initiatedTime', -1)]).limit(5))
         else:
             last_five_calls = current_day_calls
 
-        for call in last_five_calls:
-            if 'user' in call:
-                user = users_collection.find_one({'_id': call['user']})
-                if user:
-                    call['userName'] = user.get('name', 'Unknown')
-                    call['user'] = str(call['user'])
-                else:
-                    call['userName'] = 'Unknown'
-                    call['user'] = 'Unknown'
-            else:
-                call['userName'] = 'Unknown'
-                call['user'] = 'Unknown'
-            if 'expert' in call:
-                expert = experts_collection.find_one({'_id': call['expert']})
-                if expert:
-                    call['expertName'] = expert.get('name', 'Unknown')
-                    call['expert'] = str(call['expert'])
-                else:
-                    call['expertName'] = 'Unknown'
-                    call['expert'] = 'Unknown'
-            else:
-                call['expertName'] = 'Unknown'
-                call['expert'] = 'Unknown'
-            call['_id'] = str(call.get('_id', ''))
-        return jsonify(last_five_calls)
+        formatted_calls = [format_call(call) for call in last_five_calls]
+        return jsonify(formatted_calls)
     except Exception as e:
         print('Error fetching calls:', e)
         return jsonify({'error': 'Failed to fetch calls'}), 500
@@ -127,8 +116,8 @@ def get_all_calls():
     user_ids = set(call.get('user') for call in all_calls)
     expert_ids = set(call.get('expert') for call in all_calls)
 
-    users = {str(user['_id']): user.get('name', 'Unknown') for user in users_collection.find({'_id': {'$in': list(user_ids)}})}
-    experts = {str(expert['_id']): expert.get('name', 'Unknown') for expert in experts_collection.find({'_id': {'$in': list(expert_ids)}})}
+    users = {str(user['_id']): user.get('name', 'Unknown') for user in users_collection.find({'_id': {'$in': list(user_ids)}}, {'name': 1})}
+    experts = {str(expert['_id']): expert.get('name', 'Unknown') for expert in experts_collection.find({'_id': {'$in': list(expert_ids)}}, {'name': 1})}
 
     formatted_calls = []
     for call in all_calls:
@@ -143,13 +132,13 @@ def get_all_calls():
 
 @app.route('/api/online-saarthis')
 def get_online_saarthis():
-    online_saarthis = list(experts_collection.find({'status': 'online'}, {'categories': 0}))
+    online_saarthis = experts_collection.find({'status': 'online'}, {'categories': 0})
     formatted_saarthis = [{'_id': str(saarthi['_id']), 'name': saarthi.get('name', 'Unknown')} for saarthi in online_saarthis]
     return jsonify(formatted_saarthis)
 
 @app.route('/api/users/<string:id>')
 def get_user(id):
-    user = users_collection.find_one({'_id': ObjectId(id)})
+    user = users_collection.find_one({'_id': ObjectId(id)}, {'name': 1})
     if not user:
         return jsonify({'error': 'User not found'}), 404
     user['_id'] = str(user.get('_id', ''))
