@@ -69,7 +69,7 @@ def get_successful_calls():
 
 @app.route('/api/users')
 def get_users():
-    users = users_collection.find({'_id': {'$nin': excluded_users}}, {'name': 1})
+    users = users_collection.find({'_id': {'$nin': excluded_users}})
     for user in users:
         user['_id'] = str(user['_id'])
     print(users[1])
