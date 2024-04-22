@@ -33,7 +33,7 @@ def get_successful_calls():
         duration_str = call.get('transferDuration', '')
         if is_valid_duration(duration_str) and get_timedelta(duration_str) > timedelta(minutes=5):
             filtered_calls.append(call)
-    return jsonify(calls)
+    return jsonify(filtered_calls)
 
 @app.route('/api/users')
 def get_users():
