@@ -69,10 +69,9 @@ def get_successful_calls():
 
 @app.route('/api/users')
 def get_users():
-    users = users_collection.find({'_id': {'$nin': excluded_users}})
+    users = list(users_collection.find({'_id': {'$nin': excluded_users}}))
     for user in users:
-        user['_id'] = str(user['_id'])
-    print(users[1])
+        user['_id'] = str(user.get('_id', ''))
     return jsonify(users)
 
 @app.route('/api/experts')
