@@ -1,24 +1,32 @@
 from flask import Flask, jsonify
-from pymongo import MongoClient
-from flask_cors import CORS
+from pymongo import MongoClient, DESCENDING
+from flask_caching import Cache
 from bson import ObjectId
 from datetime import datetime, timedelta
 from excluded_users import excluded_users
+from concurrent.futures import ThreadPoolExecutor
+import os
 
 app = Flask(__name__)
-CORS(app)
+cache = Cache(app, config={'CACHE_TYPE': 'simple'})
 
 # Connect to MongoDB
-client = MongoClient('mongodb+srv://sukoon_user:Tcks8x7wblpLL9OA@cluster0.o7vywoz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0')
+client = MongoClient(os.environ['MONGO_URI'])
 db = client['test']
 blogs_collection = db['blogposts']
 calls_collection = db['calls']
 experts_collection = db['experts']
 users_collection = db['users']
 
+# Create indexes for frequent queries
+calls_collection.create_index([('user', 1)])
+calls_collection.create_index([('expert', 1)])
+
 # Cache user and expert data for quicker access
 users_cache = {}
 experts_cache = {}
+
+executor = ThreadPoolExecutor(max_workers=2)
 
 def get_user_name(user_id):
     if user_id in users_cache:
@@ -48,18 +56,17 @@ def format_call(call):
     call['expert'] = str(expert_id)
     return call
 
-def get_calls(query={}, fields={'_id': 0}):
-    return list(calls_collection.find(query, fields))
-
 @app.route('/api/calls')
+@cache.cached(timeout=60)  # Cache for 60 seconds
 def get_calls_route():
-    calls = get_calls({'user': {'$nin': excluded_users}})
+    calls = list(calls_collection.find({'user': {'$nin': excluded_users}}))
     formatted_calls = [format_call(call) for call in calls]
     return jsonify(formatted_calls)
 
 @app.route('/api/successful-calls')
+@cache.cached(timeout=60)  # Cache for 60 seconds
 def get_successful_calls():
-    calls = get_calls({'user': {'$nin': excluded_users}, 'status': 'successfull'})
+    calls = list(calls_collection.find({'user': {'$nin': excluded_users}, 'status': 'successfull'}))
     filtered_calls = []
     for call in calls:
         duration_str = call.get('transferDuration', '')
@@ -68,14 +75,16 @@ def get_successful_calls():
     return jsonify(filtered_calls)
 
 @app.route('/api/users')
+@cache.cached(timeout=60)  # Cache for 60 seconds
 def get_users():
-    users = users_collection.find({'_id': {'$nin': excluded_users}}, {'name': 1})
+    users = list(users_collection.find({'_id': {'$nin': excluded_users}}, {'name': 1}))
     formatted_users = [{'_id': str(user['_id']), 'name': user.get('name', 'Unknown')} for user in users]
     return jsonify(formatted_users)
 
 @app.route('/api/experts')
+@cache.cached(timeout=60)  # Cache for 60 seconds
 def get_experts():
-    experts = experts_collection.find({}, {'categories': 0})
+    experts = list(experts_collection.find({}, {'categories': 0}))
     formatted_experts = [{'_id': str(expert['_id']), 'name': expert.get('name', 'Unknown')} for expert in experts]
     return jsonify(formatted_experts)
 
@@ -89,30 +98,28 @@ def get_call(id):
     return jsonify(formatted_call)
 
 @app.route('/api/last-five-calls')
+@cache.cached(timeout=60)  # Cache for 60 seconds
 def get_last_five_calls():
-    try:
-        current_date = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-        current_day_calls = list(calls_collection.find({
-            'initiatedTime': {
-                '$gte': current_date,
-                '$lt': current_date + timedelta(days=1)
-            }
-        }).sort([('initiatedTime', -1)]))
+    current_date = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    current_day_calls = list(calls_collection.find({
+        'initiatedTime': {
+            '$gte': current_date,
+            '$lt': current_date + timedelta(days=1)
+        }
+    }).sort([('initiatedTime', DESCENDING)]))
 
-        if len(current_day_calls) == 0:
-            last_five_calls = list(calls_collection.find().sort([('initiatedTime', -1)]).limit(5))
-        else:
-            last_five_calls = current_day_calls
+    if len(current_day_calls) == 0:
+        last_five_calls = list(calls_collection.find().sort([('initiatedTime', DESCENDING)]).limit(5))
+    else:
+        last_five_calls = current_day_calls
 
-        formatted_calls = [format_call(call) for call in last_five_calls]
-        return jsonify(formatted_calls)
-    except Exception as e:
-        print('Error fetching calls:', e)
-        return jsonify({'error': 'Failed to fetch calls'}), 500
+    formatted_calls = [format_call(call) for call in last_five_calls]
+    return jsonify(formatted_calls)
 
 @app.route('/api/all-calls')
+@cache.cached(timeout=60)  # Cache for 60 seconds
 def get_all_calls():
-    all_calls = get_calls({'user': {'$nin': excluded_users}})
+    all_calls = list(calls_collection.find({'user': {'$nin': excluded_users}}))
     user_ids = set(call.get('user') for call in all_calls)
     expert_ids = set(call.get('expert') for call in all_calls)
 
@@ -131,8 +138,9 @@ def get_all_calls():
     return jsonify(formatted_calls)
 
 @app.route('/api/online-saarthis')
+@cache.cached(timeout=60)  # Cache for 60 seconds
 def get_online_saarthis():
-    online_saarthis = experts_collection.find({'status': 'online'}, {'categories': 0})
+    online_saarthis = list(experts_collection.find({'status': 'online'}, {'categories': 0}))
     formatted_saarthis = [{'_id': str(saarthi['_id']), 'name': saarthi.get('name', 'Unknown')} for saarthi in online_saarthis]
     return jsonify(formatted_saarthis)
 
@@ -167,7 +175,7 @@ def get_blog(id):
 
 @app.route('/api/featuredblog')
 def get_featured_blog():
-    featured_blog = blogs_collection.find_one(sort=[('id', -1)])
+    featured_blog = blogs_collection.find_one(sort=[('id', DESCENDING)])
     if not featured_blog:
         return jsonify({'error': 'Featured blog not found'}), 404
     featured_blog['_id'] = str(featured_blog['_id'])
@@ -192,4 +200,11 @@ def is_valid_duration(duration_str):
     return False
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port='80', debug=True)
+    # For production, use Gunicorn server
+    if 'ON_HEROKU' in os.environ:
+        print('Running on Heroku...')
+        app.run()
+    else:
+        # For local development
+        print('Running locally...')
+        app.run(debug=True)
