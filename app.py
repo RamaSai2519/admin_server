@@ -3,6 +3,8 @@ from flask import Flask, jsonify
 from pymongo import MongoClient
 from flask_cors import CORS
 from bson import ObjectId
+from datetime import timedelta
+from excluded_users import excluded_users
 
 app = Flask(__name__)
 CORS(app)
@@ -12,8 +14,6 @@ blogs_collection = db['blogposts']
 calls_collection = db['calls']
 experts_collection = db['experts']
 users_collection = db['users']
-
-from datetime import timedelta
 
 @app.route('/api/calls')
 def get_calls():
@@ -38,7 +38,7 @@ def get_successful_calls():
 
 @app.route('/api/users')
 def get_users():
-    users = list(users_collection.find())
+    users = list(users_collection.find({'_id': {'$nin': excluded_users}}))
     for user in users:
         user['_id'] = str(user.get('_id', ''))
     return jsonify(users)
@@ -132,8 +132,7 @@ def get_last_five_calls():
 @app.route('/api/all-calls')
 def get_all_calls():
     try:
-        all_calls = list(calls_collection.find({}, {'Score Breakup': 0, 'Saarthi Feedback': 0, 'User Callback': 0, 'Summary': 0}))
-
+        all_calls = list(calls_collection.find({'user': {'$nin': excluded_users}}, {'Score Breakup': 0, 'Saarthi Feedback': 0, 'User Callback': 0, 'Summary': 0}))
         user_ids = set()
         expert_ids = set()
 
