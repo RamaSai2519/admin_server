@@ -95,7 +95,7 @@ def get_last_five_calls():
         }).sort([('initiatedTime', -1)]))
 
         # If current day's calls are 0, get the latest 5 calls
-        if len(current_day_calls) != 0:
+        if len(current_day_calls) == 0:
             last_five_calls = list(calls_collection.find().sort([('initiatedTime', -1)]).limit(5))
         else:
             last_five_calls = current_day_calls
