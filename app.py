@@ -71,6 +71,7 @@ def get_successful_calls():
 def get_users():
     users = users_collection.find({'_id': {'$nin': excluded_users}}, {'name': 1})
     formatted_users = [{'_id': str(user['_id']), 'name': user.get('name', 'Unknown')} for user in users]
+    print(formatted_users[1])
     return jsonify(formatted_users)
 
 @app.route('/api/experts')
