@@ -11,7 +11,7 @@ app = Flask(__name__)
 cache = Cache(app, config={'CACHE_TYPE': 'simple'})
 
 # Connect to MongoDB
-client = MongoClient(os.environ['MONGO_URI'])
+client = MongoClient('mongodb+srv://sukoon_user:Tcks8x7wblpLL9OA@cluster0.o7vywoz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0')
 db = client['test']
 blogs_collection = db['blogposts']
 calls_collection = db['calls']
