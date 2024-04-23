@@ -99,6 +99,7 @@ def get_call(id):
 def get_last_five_calls():
     try:
         current_date = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        print(current_date)
         current_day_calls = list(calls_collection.find({
             'initiatedTime': {
                 '$gte': current_date,
