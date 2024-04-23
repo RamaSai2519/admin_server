@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, render_template
+from flask import Flask, jsonify
 from flask_socketio import SocketIO, emit
 from pymongo import MongoClient
 from flask_cors import CORS
