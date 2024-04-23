@@ -56,6 +56,7 @@ def get_calls(query={}, fields={'_id': 0}):
 
 @socketio.on('error_notification')
 def handle_error_notification(data):
+    print('Received error notification:', data)
     emit('error_notification', data, broadcast=True)
 
 @app.route('/api/calls')
