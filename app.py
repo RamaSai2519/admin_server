@@ -200,4 +200,4 @@ def is_valid_duration(duration_str):
     return False
 
 if __name__ == '__main__':
-    socketio.run(host='0.0.0.0', port='80', debug=True)
+    socketio.run(app, host='0.0.0.0', port=80, debug=True)
