@@ -5,6 +5,7 @@ from flask_cors import CORS
 from bson import ObjectId
 from datetime import datetime, timedelta
 from excluded_users import excluded_users
+from pytz import timezone
 
 app = Flask(__name__)
 CORS(app)
@@ -98,7 +99,8 @@ def get_call(id):
 @app.route('/api/last-five-calls')
 def get_last_five_calls():
     try:
-        current_date = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        ist = timezone('Asia/Kolkata')
+        current_date = datetime.now(ist).replace(hour=0, minute=0, second=0, microsecond=0)
         print(current_date)
         current_day_calls = list(calls_collection.find({
             'initiatedTime': {
