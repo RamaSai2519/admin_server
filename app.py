@@ -1,4 +1,5 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, render_template
+from flask_socketio import SocketIO, emit
 from pymongo import MongoClient
 from flask_cors import CORS
 from bson import ObjectId
@@ -7,6 +8,7 @@ from excluded_users import excluded_users
 
 app = Flask(__name__)
 CORS(app)
+socketio = SocketIO(app)
 
 # Connect to MongoDB
 client = MongoClient('mongodb+srv://sukoon_user:Tcks8x7wblpLL9OA@cluster0.o7vywoz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0')
@@ -50,6 +52,10 @@ def format_call(call):
 
 def get_calls(query={}, fields={'_id': 0}):
     return list(calls_collection.find(query, fields))
+
+@socketio.on('error_notification')
+def handle_error_notification(data):
+    emit('error_notification', data, broadcast=True)
 
 @app.route('/api/calls')
 def get_calls_route():
@@ -194,4 +200,4 @@ def is_valid_duration(duration_str):
     return False
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port='80', debug=True)
+    socketio.run(host='0.0.0.0', port='80', debug=True)

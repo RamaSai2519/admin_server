@@ -1,57 +1,22 @@
 from pymongo import MongoClient
-from datetime import datetime
 
-# Connect to MongoDB Atlas
-client = MongoClient("mongodb+srv://sukoon_user:Tcks8x7wblpLL9OA@cluster0.o7vywoz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
-db = client["test"]
-collection = db["calls"]
+# Connect to the MongoDB cluster
+client = MongoClient('mongodb+srv://sukoon_user:Tcks8x7wblpLL9OA@cluster0.o7vywoz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0')
 
-# Define the aggregation pipeline
-pipeline = [
-    {
-        "$project": {
-            "hourOfDay": {"$hour": {"$toDate": "$initiatedTime"}},
-            "dayOfYear": {"$dayOfYear": {"$toDate": "$initiatedTime"}}
-        }
-    },
-    {
-        "$group": {
-            "_id": {"dayOfYear": "$dayOfYear", "hourOfDay": "$hourOfDay"},
-            "count": {"$sum": 1}
-        }
-    },
-    {
-        "$group": {
-            "_id": "$_id.hourOfDay",
-            "averageCalls": {"$avg": "$count"}
-        }
-    },
-    {
-        "$sort": {"_id": 1}
-    }
-]
+# Access the 'test' database
+db = client['test']
 
-# Execute the aggregation pipeline
-result = collection.aggregate(pipeline)
+# Define the array of city names to replace
+city_names_to_replace = ["Pune", "Pune "]
 
-# Define a function to convert 24-hour format to 12-hour format
-# Define a function to convert 24-hour format to 12-hour format
-def to_12_hour_format(hour):
-    if hour is None:
-        return "Unknown"
-    if hour == 0:
-        return "12am"
-    elif hour < 12:
-        return f"{hour}am"
-    elif hour == 12:
-        return "12pm"
-    else:
-        return f"{hour - 12}pm"
+# Define the new city name
+new_city_name = "Pune"
 
-# Print the result
-for doc in result:
-    hour = to_12_hour_format(doc['_id'])
-    print(f"{hour}: Average calls {doc['averageCalls']:.2f}")
+# Update documents where the city is in the list of city_names_to_replace
+result = db.users.update_many(
+    {"city": {"$in": city_names_to_replace}},
+    {"$set": {"city": new_city_name}}
+)
 
-# Close the MongoDB connection
-client.close()
+# Optionally, you can print updated documents to verify
+updated_documents = db.users.find({"city": new_city_name})
