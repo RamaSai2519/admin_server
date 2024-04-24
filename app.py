@@ -53,7 +53,6 @@ def format_call(call):
 
 def get_calls(query={}, fields={'_id': 0}):
     calls = list(calls_collection.find(query, fields).sort([('initiatedTime', -1)]))
-    calls = calls.reverse() 
     return calls
 
 @socketio.on('error_notification')
