@@ -143,6 +143,8 @@ def get_all_calls():
     users = {str(user['_id']): user.get('name', 'Unknown') for user in users_collection.find({'_id': {'$in': list(user_ids)}}, {'name': 1})}
     experts = {str(expert['_id']): expert.get('name', 'Unknown') for expert in experts_collection.find({'_id': {'$in': list(expert_ids)}}, {'name': 1})}
 
+    all_calls.sort(key=lambda x: x.get('initiated_time', ''), reverse=True)
+
     formatted_calls = []
     for call in all_calls:
         call['userName'] = users.get(str(call.get('user')), 'Unknown')
