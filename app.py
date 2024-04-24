@@ -66,7 +66,9 @@ def handle_error_notification(data):
 
 @app.route('/api/errorlogs')
 def get_error_logs():
-    error_logs = list(logs_collection.find({}, {'_id': 0}))
+    error_logs = list(logs_collection.find())
+    for log in error_logs:
+        log['_id'] = str(log.get('_id', ''))
     error_logs = error_logs.reverse()
     print(error_logs)
     return jsonify(error_logs)
