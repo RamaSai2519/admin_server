@@ -62,7 +62,6 @@ def handle_error_notification(data):
         "time": time
     }
     logs_collection.insert_one(document)
-    logs_collection.insert_one(data)
     emit('error_notification', data, broadcast=True)
 
 @app.route('/api/calls')
