@@ -52,7 +52,7 @@ def format_call(call):
     return call
 
 def get_calls(query={}, fields={'_id': 0}):
-    return list(calls_collection.find(query, fields).sort([('initiatedTime', -1)]))
+    return list(calls_collection.find(query, fields).sort([('initiatedTime', -1)])).reverse()
 
 @socketio.on('error_notification')
 def handle_error_notification(data):
@@ -142,8 +142,6 @@ def get_all_calls():
 
     users = {str(user['_id']): user.get('name', 'Unknown') for user in users_collection.find({'_id': {'$in': list(user_ids)}}, {'name': 1})}
     experts = {str(expert['_id']): expert.get('name', 'Unknown') for expert in experts_collection.find({'_id': {'$in': list(expert_ids)}}, {'name': 1})}
-
-    all_calls.sort(key=lambda x: x.get('initiated_time', ''), reverse=True)
 
     formatted_calls = []
     for call in all_calls:
