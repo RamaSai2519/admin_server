@@ -69,7 +69,6 @@ def get_error_logs():
     error_logs = logs_collection.find()
     for log in error_logs:
         log['_id'] = str(log.get('_id', ''))
-    error_logs = error_logs.reverse()
     print(error_logs)
     return jsonify(error_logs)
 
