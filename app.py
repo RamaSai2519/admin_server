@@ -52,7 +52,9 @@ def format_call(call):
     return call
 
 def get_calls(query={}, fields={'_id': 0}):
-    return list(calls_collection.find(query, fields).sort([('initiatedTime', -1)]))
+    calls = list(calls_collection.find(query, fields).sort([('initiatedTime', -1)]))
+    calls = calls.reverse() 
+    return calls
 
 @socketio.on('error_notification')
 def handle_error_notification(data):
