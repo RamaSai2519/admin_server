@@ -64,6 +64,12 @@ def handle_error_notification(data):
     logs_collection.insert_one(document)
     emit('error_notification', data, broadcast=True)
 
+@app.route('/api/errorlogs')
+def get_error_logs():
+    error_logs = list(logs_collection.find({}, {'_id': 0}))
+    error_logs = error_logs.reverse()
+    return jsonify(error_logs)
+
 @app.route('/api/calls')
 def get_calls_route():
     calls = get_calls({'user': {'$nin': excluded_users}})
