@@ -18,8 +18,8 @@ blogs_collection = db['blogposts']
 calls_collection = db['calls']
 experts_collection = db['experts']
 users_collection = db['users']
+logs_collection = db['errorlogs']
 
-# Cache user and expert data for quicker access
 users_cache = {}
 experts_cache = {}
 
@@ -56,7 +56,13 @@ def get_calls(query={}, fields={'_id': 0}):
 
 @socketio.on('error_notification')
 def handle_error_notification(data):
-    print('Received error notification:', data)
+    time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    document = {
+        "message": data,
+        "time": time
+    }
+    logs_collection.insert_one(document)
+    logs_collection.insert_one(data)
     emit('error_notification', data, broadcast=True)
 
 @app.route('/api/calls')
