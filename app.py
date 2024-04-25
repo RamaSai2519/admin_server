@@ -96,6 +96,7 @@ def handle_error_notification(data):
     logs_collection.insert_one(document)
     emit("error_notification", document, broadcast=True)
     tokens = list(fcm_tokens_collection.find())
+    print(tokens)
     for token in tokens:
         token["_id"] = str(token.get("_id", ""))
         send_push_notification(token["token"], data)
