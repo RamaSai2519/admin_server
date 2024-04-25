@@ -93,7 +93,7 @@ def get_calls(query={}, fields={"_id": 0}):
 def handle_error_notification(data):
     time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     document = {"message": data, "time": time}
-
+    print(document)
     logs_collection.insert_one(document)
     emit("error_notification", data, broadcast=True)
     tokens = list(fcm_tokens_collection.find())
