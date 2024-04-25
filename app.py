@@ -89,7 +89,7 @@ def get_calls(query={}, fields={"_id": 0}):
     return calls
 
 
-@socketio.on("error_notification", namespace="/api/socket")
+@socketio.on("/error_notification")
 def handle_error_notification(data):
     time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     document = {"message": data, "time": time}
