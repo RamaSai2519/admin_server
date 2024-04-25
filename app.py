@@ -94,12 +94,8 @@ def handle_error_notification(data):
     time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     document = {"message": data, "time": time}
 
-    for key, value in document.items():
-        if isinstance(value, ObjectId):
-            document[key] = str(value)
-
     logs_collection.insert_one(document)
-    print(document)
+    document['_id'] = str(document.get('_id', ''))
     emit("error_notification", document, broadcast=True)
     tokens = list(fcm_tokens_collection.find())
     for token in tokens:
