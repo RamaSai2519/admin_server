@@ -115,6 +115,7 @@ def save_fcm_token():
 @app.route("/api/errorlogs")
 def get_error_logs():
     error_logs = list(logs_collection.find())
+    print(error_logs)
     for log in error_logs:
         log["_id"] = str(log.get("_id", ""))
     print(error_logs)
