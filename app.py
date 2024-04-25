@@ -99,7 +99,7 @@ def handle_error_notification(data):
             document[key] = str(value)
 
     logs_collection.insert_one(document)
-    emit("error_notification", document, broadcast=True)
+    # emit("error_notification", document, broadcast=True)
     tokens = list(fcm_tokens_collection.find())
     for token in tokens:
         token["_id"] = str(token.get("_id", ""))
