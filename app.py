@@ -106,7 +106,10 @@ def handle_error_notification(data):
 def save_fcm_token():
     data = request.json
     token = data.get("token")
-    if token:
+    tokens = list(fcm_tokens_collection.find())
+    if token in [t["token"] for t in tokens]:
+        return jsonify({"message": "FCM token already saved"}), 200
+    elif token:
         fcm_tokens_collection.insert_one({"token": token})
         return jsonify({"message": "FCM token saved successfully"}), 200
     else:
