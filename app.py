@@ -231,6 +231,8 @@ def get_all_calls():
         call["expertName"] = experts.get(str(call.get("expert")), "Unknown")
         call["expert"] = str(call.get("expert", "Unknown"))
         call["_id"] = str(call.get("_id", ""))
+        call["ConversationScore"] = call.pop("Conversation Score", None)
+
         formatted_calls.append(call)
 
     return jsonify(formatted_calls)
