@@ -231,7 +231,7 @@ def get_all_calls():
         call["expertName"] = experts.get(str(call.get("expert")), "Unknown")
         call["expert"] = str(call.get("expert", "Unknown"))
         call["_id"] = str(call.get("_id", ""))
-        call["ConversationScore"] = call.pop("Conversation Score", None)
+        call["ConversationScore"] = call.pop("Conversation Score", 0)
 
         formatted_calls.append(call)
 
