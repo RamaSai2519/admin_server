@@ -137,7 +137,7 @@ def get_successful_calls():
     for call in calls:
         duration_str = call.get("transferDuration", "")
         if is_valid_duration(duration_str) and get_timedelta(duration_str) > timedelta(
-            minutes=2
+            minutes=1
         ):
             filtered_calls.append(format_call(call))
     return jsonify(filtered_calls)

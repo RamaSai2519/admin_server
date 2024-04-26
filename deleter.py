@@ -7,8 +7,9 @@ client = MongoClient(
 db = client["test"]
 
 calls_collection = db["calls"]
-experts_collection = db["experts"]
 users_collection = db["users"]
+experts_collection = db["experts"]
+
 
 repeat_users_per_expert = {}
 total_users_per_expert = {}
