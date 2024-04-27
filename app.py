@@ -30,6 +30,7 @@ users_collection = db["users"]
 fcm_tokens_collection = db["fcm_tokens"]
 logs_collection = db["errorlogs"]
 categories_collection = db["categories"]
+statuslogs_collection = db["statuslogs"]
 
 users_cache = {}
 experts_cache = {}
@@ -174,8 +175,23 @@ def get_call(id):
     if not call:
         return jsonify({"error": "Call not found"}), 404
 
+    call["ConversationScore"] = call.pop("Conversation Score", 0)
     formatted_call = format_call(call)
     return jsonify(formatted_call)
+
+
+@app.route("/api/calls/<string:id>", methods=["PUT"])
+def update_call(id):
+    data = request.get_json()
+    new_conversation_score = data.get("ConversationScore")
+    result = calls_collection.update_one(
+        {"callId": id}, {"$set": {"Conversation Score": new_conversation_score}}
+    )
+
+    if result.modified_count == 0:
+        return jsonify({"error": "Failed to update Conversation Score"}), 400
+    else:
+        return jsonify(new_conversation_score), 200
 
 
 @app.route("/api/last-five-calls")
@@ -375,7 +391,6 @@ def update_expert(id):
     if new_total_score:
         update_query["total_score"] = new_total_score
     if new_categories_names:
-        # Retrieve ObjectIds for new category names
         new_categories_object_ids = []
         for category_name in new_categories_names:
             category = categories_collection.find_one({"name": category_name})
@@ -430,20 +445,65 @@ def get_featured_blog():
     return jsonify(featured_blog)
 
 
+from datetime import datetime
+from bson import ObjectId
+
+
 @app.route("/api/experts")
 def get_experts():
     experts = list(experts_collection.find({}, {"categories": 0}))
-    formatted_experts = [
-        {
-            "_id": str(expert["_id"]),
+    formatted_experts = []
+
+    for expert in experts:
+        expert_id = str(expert["_id"])
+        login_logs = list(
+            statuslogs_collection.find(
+                {"expert": ObjectId(expert_id), "status": "online"}
+            )
+        )
+
+        # Calculate logged-in hours
+        logged_in_hours = calculate_logged_in_hours(login_logs)
+
+        formatted_expert = {
+            "_id": expert_id,
             "name": expert.get("name", "Unknown"),
             "phoneNumber": expert.get("phoneNumber", ""),
             "score": expert.get("score", 0),
             "status": expert.get("status", "offline"),
+            "loggedInHours": logged_in_hours,
         }
-        for expert in experts
-    ]
+        formatted_experts.append(formatted_expert)
+
     return jsonify(formatted_experts)
+
+
+def calculate_logged_in_hours(login_logs):
+    total_logged_in_hours = 0
+    last_logged_out_time = None
+
+    for log in login_logs:
+
+        if log["status"] == "online":
+            logged_in_at = log["date"]
+            logged_out_at = (
+                datetime.now() if last_logged_out_time is None else last_logged_out_time
+            )
+            print(f"log in: {logged_in_at}")
+            print(f"log out: {logged_out_at}")
+        else:
+            logged_out_at = log["date"]
+            logged_in_at = last_logged_out_time
+
+        if logged_in_at is not None and logged_out_at is not None:
+            total_logged_in_hours += (
+                logged_out_at - logged_in_at
+            ).total_seconds() / 3600
+
+        last_logged_out_time = logged_out_at
+        print(f"total logged in hours: {total_logged_in_hours}")
+
+    return total_logged_in_hours
 
 
 if __name__ == "__main__":
