@@ -195,11 +195,15 @@ def get_last_five_calls():
                 }
             ).sort([("initiatedTime", -1)])
         )
+        for call in current_day_calls:
+            call["ConversationScore"] = call.pop("Conversation Score", 0)
 
         if len(current_day_calls) == 0:
             last_five_calls = list(
                 calls_collection.find().sort([("initiatedTime", -1)]).limit(5)
             )
+            for call in current_day_calls:
+                call["ConversationScore"] = call.pop("Conversation Score", 0)
         else:
             last_five_calls = current_day_calls
 
@@ -323,7 +327,6 @@ def get_categories():
 def update_expert(id):
     expert_data = request.json
 
-    # Extract fields from request data
     new_name = expert_data.get("name")
     new_phone_number = expert_data.get("phoneNumber")
     new_topics = expert_data.get("topics")
@@ -333,9 +336,8 @@ def update_expert(id):
     new_score = expert_data.get("score")
     new_repeat_score = expert_data.get("repeat_score")
     new_total_score = expert_data.get("total_score")
-    new_categories_names = expert_data.get("categories")  # New category names provided
+    new_categories_names = expert_data.get("categories")
 
-    # Check if any field is provided for update
     if not any(
         [
             new_name,
@@ -347,7 +349,7 @@ def update_expert(id):
             new_score,
             new_repeat_score,
             new_total_score,
-            new_categories_names,  # Include new_categories_names in the check
+            new_categories_names,
         ]
     ):
         return jsonify({"error": "At least one field is required for update"}), 400
