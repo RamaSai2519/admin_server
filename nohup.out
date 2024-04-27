@@ -5618,3 +5618,6 @@ Werkzeug appears to be used in a production deployment. Consider switching to a 
 54.242.108.134 - - [27/Apr/2024 11:37:53] "GET /api/all-calls HTTP/1.1" 200 -
 13.235.0.39 - - [27/Apr/2024 11:38:05] "GET /api/calls/69653ed6-e3d6-447b-83ef-f3824b9b56c2 HTTP/1.1" 200 -
 13.235.0.39 - - [27/Apr/2024 11:38:38] "GET /api/all-calls HTTP/1.1" 200 -
+192.155.90.220 - - [27/Apr/2024 11:46:49] code 400, message Bad request version ('À\x14À')
+192.155.90.220 - - [27/Apr/2024 11:46:49] "\x16\x03\x01\x00\x85\x01\x00\x00\x81\x03\x03Ù¾Ð¹s\x14øÀ \x0eì^ï&Ù¸çÈ\x8b8PN±-`Ûâå)wÖ¢\x00\x00 À/À0À+À,Ì¨Ì©À\x13À\x09À\x14À" HTTPStatus.BAD_REQUEST -
+18.116.13.7 - - [27/Apr/2024 11:47:29] "GET /api/all-calls HTTP/1.1" 200 -
