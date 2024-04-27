@@ -58,18 +58,14 @@ def is_valid_duration(duration_str):
 def send_push_notification(token, message):
     fcm_url = "https://fcm.googleapis.com/fcm/send"
     server_key = "AAAAM5jkbNg:APA91bG80zQ8CzD1AeQmV45YT4yWuwSgJ5VwvyLrNynAJBk4AcyCb6vbCSGlIQeQFPAndS0TbXrgEL8HFYQq4DMXmSoJ4ek7nFcCwOEDq3Oi5Or_SibSpywYFrnolM4LSxpRkVeiYGDv"
-
     payload = {
         "to": token,
         "notification": {"title": "Error Notification", "body": message},
     }
-
     headers = {"Authorization": "key=" + server_key, "Content-Type": "application/json"}
-
     response = requests.post(fcm_url, json=payload, headers=headers)
-
     if response.status_code == 200:
-        print("Notification sent successfully")
+        pass
     else:
         print("Failed to send notification:", response.text)
 
@@ -114,7 +110,6 @@ def get_calls(query={}, fields={"_id": 0}):
 def handle_error_notification(data):
     time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     document = {"message": data, "time": time}
-    print(document)
     logs_collection.insert_one(document)
     emit("error_notification", data, broadcast=True)
     tokens = list(fcm_tokens_collection.find())
@@ -140,10 +135,8 @@ def save_fcm_token():
 @app.route("/api/errorlogs")
 def get_error_logs():
     error_logs = list(logs_collection.find())
-    print(error_logs)
     for log in error_logs:
         log["_id"] = str(log.get("_id", ""))
-    print(error_logs)
     return jsonify(error_logs)
 
 
@@ -192,7 +185,6 @@ def get_last_five_calls():
         current_date = datetime.now(ist).replace(
             hour=0, minute=0, second=0, microsecond=0
         )
-        print(current_date)
         current_day_calls = list(
             calls_collection.find(
                 {
@@ -214,7 +206,6 @@ def get_last_five_calls():
         formatted_calls = [format_call(call) for call in last_five_calls]
         return jsonify(formatted_calls)
     except Exception as e:
-        print("Error fetching calls:", e)
         return jsonify({"error": "Failed to fetch calls"}), 500
 
 
@@ -261,7 +252,6 @@ def get_online_saarthis():
 
 @app.route("/api/users/<string:id>", methods=["GET"])
 def get_user(id):
-    print(id)
     user = users_collection.find_one({"_id": ObjectId(id)}, {"_id": 0})
     if not user:
         return jsonify({"error": "User not found"}), 404
