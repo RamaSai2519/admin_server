@@ -29,9 +29,30 @@ experts_collection = db["experts"]
 users_collection = db["users"]
 fcm_tokens_collection = db["fcm_tokens"]
 logs_collection = db["errorlogs"]
+categories_collection = db["categories"]
 
 users_cache = {}
 experts_cache = {}
+
+
+def get_timedelta(duration_str):
+    try:
+        hours, minutes, seconds = map(int, duration_str.split(":"))
+        return timedelta(hours=hours, minutes=minutes, seconds=seconds)
+    except ValueError:
+        return timedelta(seconds=0)
+
+
+def is_valid_duration(duration_str):
+    parts = duration_str.split(":")
+    if len(parts) == 3:
+        try:
+            hours, minutes, seconds = map(int, parts)
+            if 0 <= hours < 24 and 0 <= minutes < 60 and 0 <= seconds < 60:
+                return True
+        except ValueError:
+            pass
+    return False
 
 
 def send_push_notification(token, message):
@@ -154,16 +175,6 @@ def get_users():
     return jsonify(users)
 
 
-@app.route("/api/experts")
-def get_experts():
-    experts = experts_collection.find({}, {"categories": 0})
-    formatted_experts = [
-        {"_id": str(expert["_id"]), "name": expert.get("name", "Unknown")}
-        for expert in experts
-    ]
-    return jsonify(formatted_experts)
-
-
 @app.route("/api/calls/<string:id>")
 def get_call(id):
     call = calls_collection.find_one({"callId": id})
@@ -248,22 +259,143 @@ def get_online_saarthis():
     return jsonify(formatted_saarthis)
 
 
-@app.route("/api/users/<string:id>")
+@app.route("/api/users/<string:id>", methods=["GET"])
 def get_user(id):
-    user = users_collection.find_one({"_id": ObjectId(id)}, {"name": 1})
+    print(id)
+    user = users_collection.find_one({"_id": ObjectId(id)}, {"_id": 0})
     if not user:
         return jsonify({"error": "User not found"}), 404
-    user["_id"] = str(user.get("_id", ""))
     return jsonify(user)
 
 
-@app.route("/api/experts/<string:id>")
+@app.route("/api/users/<string:id>", methods=["PUT"])
+def update_user(id):
+    user_data = request.json
+    new_name = user_data.get("name")
+    new_phone_number = user_data.get("phoneNumber")
+    new_city = user_data.get("city")
+    new_birth_date = user_data.get("birthDate")
+    new_number_of_calls = user_data.get("numberOfCalls")
+
+    # Check if any field is provided for update
+    if not any(
+        [new_name, new_phone_number, new_city, new_birth_date, new_number_of_calls]
+    ):
+        return jsonify({"error": "At least one field is required for update"}), 400
+
+    update_query = {}
+
+    if new_name:
+        update_query["name"] = new_name
+    if new_phone_number:
+        update_query["phoneNumber"] = new_phone_number
+    if new_city:
+        update_query["city"] = new_city
+    if new_birth_date:
+        update_query["birthDate"] = new_birth_date
+    if new_number_of_calls:
+        update_query["numberOfCalls"] = new_number_of_calls
+
+    result = users_collection.update_one({"_id": ObjectId(id)}, {"$set": update_query})
+
+    if result.modified_count == 0:
+        return jsonify({"error": "User not found"}), 404
+
+    updated_user = users_collection.find_one({"_id": ObjectId(id)}, {"_id": 0})
+    return jsonify(updated_user)
+
+
+@app.route("/api/experts/<string:id>", methods=["GET"])
 def get_expert(id):
-    expert = experts_collection.find_one({"_id": ObjectId(id)}, {"categories": 0})
+    expert = experts_collection.find_one({"_id": ObjectId(id)})
     if not expert:
         return jsonify({"error": "Expert not found"}), 404
     expert["_id"] = str(expert.get("_id", ""))
+    category_names = []
+    for category_id in expert.get("categories", []):
+        category = categories_collection.find_one({"_id": ObjectId(category_id)})
+        if category:
+            category_names.append(category.get("name", ""))
+
+    # Update expert document to include category names
+    expert["categories"] = category_names
     return jsonify(expert)
+
+
+@app.route("/api/experts/<string:id>", methods=["PUT"])
+def update_expert(id):
+    expert_data = request.json
+
+    # Extract fields from request data
+    new_name = expert_data.get("name")
+    new_phone_number = expert_data.get("phoneNumber")
+    new_topics = expert_data.get("topics")
+    new_description = expert_data.get("description")
+    new_profile = expert_data.get("profile")
+    new_languages = expert_data.get("languages")
+    new_score = expert_data.get("score")
+    new_repeat_score = expert_data.get("repeat_score")
+    new_total_score = expert_data.get("total_score")
+    new_categories_names = expert_data.get("categories")  # New category names provided
+
+    # Check if any field is provided for update
+    if not any(
+        [
+            new_name,
+            new_phone_number,
+            new_topics,
+            new_description,
+            new_profile,
+            new_languages,
+            new_score,
+            new_repeat_score,
+            new_total_score,
+            new_categories_names,  # Include new_categories_names in the check
+        ]
+    ):
+        return jsonify({"error": "At least one field is required for update"}), 400
+
+    update_query = {}
+
+    if new_name:
+        update_query["name"] = new_name
+    if new_phone_number:
+        update_query["phoneNumber"] = new_phone_number
+    if new_topics:
+        update_query["topics"] = new_topics
+    if new_description:
+        update_query["description"] = new_description
+    if new_profile:
+        update_query["profile"] = new_profile
+    if new_languages:
+        update_query["languages"] = new_languages
+    if new_score:
+        update_query["score"] = new_score
+    if new_repeat_score:
+        update_query["repeat_score"] = new_repeat_score
+    if new_total_score:
+        update_query["total_score"] = new_total_score
+    if new_categories_names:
+        # Retrieve ObjectIds for new category names
+        new_categories_object_ids = []
+        for category_name in new_categories_names:
+            category = categories_collection.find_one({"name": category_name})
+            if category:
+                new_categories_object_ids.append(category["_id"])
+
+        update_query["categories"] = (
+            new_categories_object_ids  # Update with new ObjectIds
+        )
+
+    result = experts_collection.update_one(
+        {"_id": ObjectId(id)}, {"$set": update_query}
+    )
+
+    if result.modified_count == 0:
+        return jsonify({"error": "Expert not found"}), 404
+
+    updated_expert = experts_collection.find_one({"_id": ObjectId(id)}, {"_id": 0})
+    return jsonify(updated_expert)
 
 
 @app.route("/api/blogs")
@@ -290,24 +422,20 @@ def get_featured_blog():
     return jsonify(featured_blog)
 
 
-def get_timedelta(duration_str):
-    try:
-        hours, minutes, seconds = map(int, duration_str.split(":"))
-        return timedelta(hours=hours, minutes=minutes, seconds=seconds)
-    except ValueError:
-        return timedelta(seconds=0)
-
-
-def is_valid_duration(duration_str):
-    parts = duration_str.split(":")
-    if len(parts) == 3:
-        try:
-            hours, minutes, seconds = map(int, parts)
-            if 0 <= hours < 24 and 0 <= minutes < 60 and 0 <= seconds < 60:
-                return True
-        except ValueError:
-            pass
-    return False
+@app.route("/api/experts")
+def get_experts():
+    experts = list(experts_collection.find({}, {"categories": 0}))
+    formatted_experts = [
+        {
+            "_id": str(expert["_id"]),
+            "name": expert.get("name", "Unknown"),
+            "phoneNumber": expert.get("phoneNumber", ""),
+            "score": expert.get("score", 0),
+            "status": expert.get("status", "offline"),
+        }
+        for expert in experts
+    ]
+    return jsonify(formatted_experts)
 
 
 if __name__ == "__main__":
