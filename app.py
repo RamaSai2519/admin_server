@@ -489,8 +489,6 @@ def calculate_logged_in_hours(login_logs):
             logged_out_at = (
                 datetime.now() if last_logged_out_time is None else last_logged_out_time
             )
-            print(f"log in: {logged_in_at}")
-            print(f"log out: {logged_out_at}")
         else:
             logged_out_at = log["date"]
             logged_in_at = last_logged_out_time
@@ -501,8 +499,7 @@ def calculate_logged_in_hours(login_logs):
             ).total_seconds() / 3600
 
         last_logged_out_time = logged_out_at
-        print(f"total logged in hours: {total_logged_in_hours}")
-
+        
     return total_logged_in_hours
 
 
