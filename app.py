@@ -322,6 +322,13 @@ def get_expert(id):
     return jsonify(expert)
 
 
+@app.route("/api/categories")
+def get_categories():
+    categories = list(categories_collection.find({}, {"_id": 0, "name": 1}))
+    category_names = [category["name"] for category in categories]
+    return jsonify(category_names)
+
+
 @app.route("/api/experts/<string:id>", methods=["PUT"])
 def update_expert(id):
     expert_data = request.json
@@ -395,6 +402,15 @@ def update_expert(id):
         return jsonify({"error": "Expert not found"}), 404
 
     updated_expert = experts_collection.find_one({"_id": ObjectId(id)}, {"_id": 0})
+
+    category_names = []
+    for category_id in updated_expert.get("categories", []):
+        category = categories_collection.find_one({"_id": ObjectId(category_id)})
+        if category:
+            category_names.append(category.get("name", ""))
+
+    # Update expert document to include category names
+    updated_expert["categories"] = category_names
     return jsonify(updated_expert)
 
 
