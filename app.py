@@ -348,6 +348,7 @@ def update_expert(id):
     new_topics = expert_data.get("topics")
     new_description = expert_data.get("description")
     new_profile = expert_data.get("profile")
+    new_status = expert_data.get("status")
     new_languages = expert_data.get("languages")
     new_score = expert_data.get("score")
     new_repeat_score = expert_data.get("repeat_score")
@@ -361,6 +362,7 @@ def update_expert(id):
             new_topics,
             new_description,
             new_profile,
+            new_status,
             new_languages,
             new_score,
             new_repeat_score,
@@ -382,6 +384,8 @@ def update_expert(id):
         update_query["description"] = new_description
     if new_profile:
         update_query["profile"] = new_profile
+    if new_status:
+        update_query["status"] = new_status
     if new_languages:
         update_query["languages"] = new_languages
     if new_score:
