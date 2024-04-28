@@ -5,7 +5,6 @@ from flask_cors import CORS
 from email.utils import parsedate_to_datetime
 from bson import ObjectId
 from datetime import datetime, timedelta
-from pprint import pprint
 import requests
 import firebase_admin
 from firebase_admin import credentials
@@ -296,7 +295,6 @@ def handle_expert(id):
         return jsonify(expert)
     elif request.method == "PUT":
         expert_data = request.json
-        pprint(request.json)
         new_name = expert_data.get("name")
         new_phone_number = expert_data.get("phoneNumber")
         new_topics = expert_data.get("topics")
@@ -356,11 +354,9 @@ def handle_expert(id):
                 if category:
                     new_categories_object_ids.append(category["_id"])
             update_query["categories"] = new_categories_object_ids
-            pprint(update_query)
         result = experts_collection.update_one(
             {"_id": ObjectId(id)}, {"$set": update_query}
         )
-        pprint(result)
         if result.modified_count == 0:
             return jsonify({"error": "Expert not found"}), 404
         updated_expert = experts_collection.find_one({"_id": ObjectId(id)}, {"_id": 0})
