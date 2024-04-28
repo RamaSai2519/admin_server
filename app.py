@@ -5,7 +5,6 @@ from flask_cors import CORS
 from bson import ObjectId
 from datetime import datetime, timedelta
 from excluded_users import excluded_users
-from pytz import timezone
 import requests
 import firebase_admin
 from firebase_admin import credentials
@@ -14,11 +13,9 @@ app = Flask(__name__)
 CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
 
-# Initialize Firebase Admin SDK with service account credentials
 cred = credentials.Certificate("serviceAccountKey.json")
 firebase_admin.initialize_app(cred)
 
-# Connect to MongoDB
 client = MongoClient(
     "mongodb+srv://sukoon_user:Tcks8x7wblpLL9OA@cluster0.o7vywoz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 )
@@ -61,7 +58,7 @@ def send_push_notification(token, message):
     server_key = "AAAAM5jkbNg:APA91bG80zQ8CzD1AeQmV45YT4yWuwSgJ5VwvyLrNynAJBk4AcyCb6vbCSGlIQeQFPAndS0TbXrgEL8HFYQq4DMXmSoJ4ek7nFcCwOEDq3Oi5Or_SibSpywYFrnolM4LSxpRkVeiYGDv"
     payload = {
         "to": token,
-        "notification": {"title": "Error Notification", "body": message},
+        "notification": {"title": "Notification", "body": message},
     }
     headers = {"Authorization": "key=" + server_key, "Content-Type": "application/json"}
     response = requests.post(fcm_url, json=payload, headers=headers)
@@ -99,6 +96,7 @@ def format_call(call):
     call["user"] = str(user_id)
     call["expertName"] = get_expert_name(expert_id)
     call["expert"] = str(expert_id)
+    call["ConversationScore"] = call.pop("Conversation Score", 0)
     return call
 
 
@@ -148,25 +146,13 @@ def get_calls_route():
     return jsonify(formatted_calls)
 
 
-@app.route("/api/successful-calls")
-def get_successful_calls():
-    calls = get_calls({"user": {"$nin": excluded_users}, "status": "successfull"})
-    filtered_calls = []
-    for call in calls:
-        duration_str = call.get("transferDuration", "")
-        if is_valid_duration(duration_str) and get_timedelta(duration_str) > timedelta(
-            minutes=1
-        ):
-            filtered_calls.append(format_call(call))
-    return jsonify(filtered_calls)
-
-
-@app.route("/api/users")
-def get_users():
-    users = list(users_collection.find({"_id": {"$nin": excluded_users}}))
-    for user in users:
-        user["_id"] = str(user.get("_id", ""))
-    return jsonify(users)
+@app.route("/api/new-calls")
+def get_new_calls():
+    timestamp = request.args.get("timestamp", type=int)
+    new_calls = get_calls({"initiatedTime": {"$gt": timestamp}})
+    for call in new_calls:
+        format_call(call)
+    return jsonify(new_calls)
 
 
 @app.route("/api/calls/<string:id>")
@@ -175,7 +161,6 @@ def get_call(id):
     if not call:
         return jsonify({"error": "Call not found"}), 404
 
-    call["ConversationScore"] = call.pop("Conversation Score", 0)
     formatted_call = format_call(call)
     return jsonify(formatted_call)
 
@@ -194,80 +179,21 @@ def update_call(id):
         return jsonify(new_conversation_score), 200
 
 
-@app.route("/api/last-five-calls")
-def get_last_five_calls():
-    try:
-        ist = timezone("Asia/Kolkata")
-        current_date = datetime.now(ist).replace(
-            hour=0, minute=0, second=0, microsecond=0
-        )
-        current_day_calls = list(
-            calls_collection.find(
-                {
-                    "initiatedTime": {
-                        "$gte": current_date,
-                        "$lt": current_date + timedelta(days=1),
-                    }
-                }
-            ).sort([("initiatedTime", -1)])
-        )
-        for call in current_day_calls:
-            call["ConversationScore"] = call.pop("Conversation Score", 0)
-
-        if len(current_day_calls) == 0:
-            last_five_calls = list(
-                calls_collection.find().sort([("initiatedTime", -1)]).limit(5)
-            )
-            for call in current_day_calls:
-                call["ConversationScore"] = call.pop("Conversation Score", 0)
-        else:
-            last_five_calls = current_day_calls
-
-        formatted_calls = [format_call(call) for call in last_five_calls]
-        return jsonify(formatted_calls)
-    except Exception as e:
-        return jsonify({"error": "Failed to fetch calls"}), 500
+@app.route("/api/users")
+def get_users():
+    users = list(users_collection.find({"_id": {"$nin": excluded_users}}))
+    for user in users:
+        user["_id"] = str(user.get("_id", ""))
+    return jsonify(users)
 
 
-@app.route("/api/all-calls")
-def get_all_calls():
-    all_calls = get_calls({"user": {"$nin": excluded_users}})
-    user_ids = set(call.get("user") for call in all_calls)
-    expert_ids = set(call.get("expert") for call in all_calls)
-
-    users = {
-        str(user["_id"]): user.get("name", "Unknown")
-        for user in users_collection.find({"_id": {"$in": list(user_ids)}}, {"name": 1})
-    }
-    experts = {
-        str(expert["_id"]): expert.get("name", "Unknown")
-        for expert in experts_collection.find(
-            {"_id": {"$in": list(expert_ids)}}, {"name": 1}
-        )
-    }
-
-    formatted_calls = []
-    for call in all_calls:
-        call["userName"] = users.get(str(call.get("user")), "Unknown")
-        call["user"] = str(call.get("user", "Unknown"))
-        call["expertName"] = experts.get(str(call.get("expert")), "Unknown")
-        call["expert"] = str(call.get("expert", "Unknown"))
-        call["_id"] = str(call.get("_id", ""))
-        call["ConversationScore"] = call.pop("Conversation Score", 0)
-
-        formatted_calls.append(call)
-
-    return jsonify(formatted_calls)
-
-
-@app.route("/api/online-saarthis")
-def get_online_saarthis():
-    online_saarthis = experts_collection.find({"status": "online"}, {"categories": 0})
-    formatted_saarthis = [
-        {"_id": str(saarthi["_id"]), "name": saarthi.get("name", "Unknown")}
-        for saarthi in online_saarthis
-    ]
-    return jsonify(formatted_saarthis)
+@app.route("/api/new-users")
+def get_new_users():
+    timestamp = request.args.get("timestamp", type=int)
+    new_users = list(users_collection.find({"createdDate": {"$gt": timestamp}}))
+    for user in new_users:
+        user["_id"] = str(user.get("_id", ""))
+    return jsonify(new_users)
 
 
 @app.route("/api/users/<string:id>", methods=["GET"])
@@ -287,7 +213,6 @@ def update_user(id):
     new_birth_date = user_data.get("birthDate")
     new_number_of_calls = user_data.get("numberOfCalls")
 
-    # Check if any field is provided for update
     if not any(
         [new_name, new_phone_number, new_city, new_birth_date, new_number_of_calls]
     ):
@@ -315,6 +240,63 @@ def update_user(id):
     return jsonify(updated_user)
 
 
+@app.route("/api/experts")
+def get_experts():
+    experts = list(experts_collection.find({}, {"categories": 0}))
+    formatted_experts = []
+
+    for expert in experts:
+        expert_id = str(expert["_id"])
+        login_logs = list(
+            statuslogs_collection.find(
+                {"expert": ObjectId(expert_id), "status": "online"}
+            )
+        )
+
+        logged_in_hours = calculate_logged_in_hours(login_logs)
+
+        formatted_expert = {
+            "_id": expert_id,
+            "name": expert.get("name", "Unknown"),
+            "phoneNumber": expert.get("phoneNumber", ""),
+            "score": expert.get("score", 0),
+            "status": expert.get("status", "offline"),
+            "loggedInHours": logged_in_hours,
+        }
+        formatted_experts.append(formatted_expert)
+
+    return jsonify(formatted_experts)
+
+
+@app.route("/api/new-experts")
+def get_new_experts():
+    timestamp = request.args.get("timestamp", type=int)
+    new_experts = list(experts_collection.find({"createdDate": {"$gt": timestamp}}))
+    formatted_new_experts = []
+
+    for expert in new_experts:
+        expert_id = str(expert["_id"])
+        login_logs = list(
+            statuslogs_collection.find(
+                {"expert": ObjectId(expert_id), "status": "online"}
+            )
+        )
+
+        logged_in_hours = calculate_logged_in_hours(login_logs)
+
+        formatted_expert = {
+            "_id": expert_id,
+            "name": expert.get("name", "Unknown"),
+            "phoneNumber": expert.get("phoneNumber", ""),
+            "score": expert.get("score", 0),
+            "status": expert.get("status", "offline"),
+            "loggedInHours": logged_in_hours,
+        }
+        formatted_new_experts.append(formatted_expert)
+
+    return jsonify(formatted_new_experts)
+
+
 @app.route("/api/experts/<string:id>", methods=["GET"])
 def get_expert(id):
     expert = experts_collection.find_one({"_id": ObjectId(id)})
@@ -330,13 +312,6 @@ def get_expert(id):
     # Update expert document to include category names
     expert["categories"] = category_names
     return jsonify(expert)
-
-
-@app.route("/api/categories")
-def get_categories():
-    categories = list(categories_collection.find({}, {"_id": 0, "name": 1}))
-    category_names = [category["name"] for category in categories]
-    return jsonify(category_names)
 
 
 @app.route("/api/experts/<string:id>", methods=["PUT"])
@@ -425,61 +400,11 @@ def update_expert(id):
     return jsonify(updated_expert)
 
 
-@app.route("/api/blogs")
-def get_blogs():
-    blogs = list(blogs_collection.find({}, {"_id": 0}))
-    return jsonify(blogs)
-
-
-@app.route("/api/blogs/<string:id>")
-def get_blog(id):
-    blog = blogs_collection.find_one({"id": id})
-    if not blog:
-        return jsonify({"error": "Blog not found"}), 404
-    blog["_id"] = str(blog["_id"])
-    return jsonify(blog)
-
-
-@app.route("/api/featuredblog")
-def get_featured_blog():
-    featured_blog = blogs_collection.find_one(sort=[("id", -1)])
-    if not featured_blog:
-        return jsonify({"error": "Featured blog not found"}), 404
-    featured_blog["_id"] = str(featured_blog["_id"])
-    return jsonify(featured_blog)
-
-
-from datetime import datetime
-from bson import ObjectId
-
-
-@app.route("/api/experts")
-def get_experts():
-    experts = list(experts_collection.find({}, {"categories": 0}))
-    formatted_experts = []
-
-    for expert in experts:
-        expert_id = str(expert["_id"])
-        login_logs = list(
-            statuslogs_collection.find(
-                {"expert": ObjectId(expert_id), "status": "online"}
-            )
-        )
-
-        # Calculate logged-in hours
-        logged_in_hours = calculate_logged_in_hours(login_logs)
-
-        formatted_expert = {
-            "_id": expert_id,
-            "name": expert.get("name", "Unknown"),
-            "phoneNumber": expert.get("phoneNumber", ""),
-            "score": expert.get("score", 0),
-            "status": expert.get("status", "offline"),
-            "loggedInHours": logged_in_hours,
-        }
-        formatted_experts.append(formatted_expert)
-
-    return jsonify(formatted_experts)
+@app.route("/api/categories")
+def get_categories():
+    categories = list(categories_collection.find({}, {"_id": 0, "name": 1}))
+    category_names = [category["name"] for category in categories]
+    return jsonify(category_names)
 
 
 def calculate_logged_in_hours(login_logs):
@@ -503,7 +428,7 @@ def calculate_logged_in_hours(login_logs):
             ).total_seconds() / 3600
 
         last_logged_out_time = logged_out_at
-        
+
     return total_logged_in_hours
 
 
