@@ -183,12 +183,9 @@ def get_new_calls():
     print(timestamp)
     timestamp = parsedate_to_datetime(timestamp)
     timestamp = timestamp + timedelta(seconds=1)
-    print(timestamp)
     new_calls = get_calls({"initiatedTime": {"$gte": timestamp}})
-    print('new_calls :', new_calls[0])
-    formatted_calls = [format_call(call) for call in new_calls]
-    print('formatted_calls :', formatted_calls[0])
-    return jsonify(formatted_calls)
+    print(new_calls[0])
+    return jsonify(new_calls)
 
 
 @app.route("/api/calls/<string:id>", methods=["GET", "PUT"])
