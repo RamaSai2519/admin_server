@@ -127,6 +127,9 @@ def get_formatted_expert(expert):
         "status": expert.get("status", "offline"),
         "createdDate": expert.get("createdDate", ""),
         "loggedInHours": logged_in_hours,
+        "repeatRate": expert.get("repeat_score", 0),
+        "callsShare": expert.get("calls_share", 0),
+        "totalScore": expert.get("total_score", 0)
     }
 
     return formatted_expert
