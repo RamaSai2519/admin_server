@@ -178,12 +178,16 @@ async def get_calls_route():
 
 
 @app.route("/api/new-calls")
-async def get_new_calls():
+def get_new_calls():
     timestamp = request.args.get("timestamp")
+    print(timestamp)
     timestamp = parsedate_to_datetime(timestamp)
     timestamp = timestamp + timedelta(seconds=1)
-    new_calls = await get_calls({"initiatedTime": {"$gte": timestamp}})
+    print(timestamp)
+    new_calls = get_calls({"initiatedTime": {"$gte": timestamp}})
+    print('new_calls :', new_calls)
     formatted_calls = [format_call(call) for call in new_calls]
+    print('formatted_calls :', formatted_calls)
     return jsonify(formatted_calls)
 
 
