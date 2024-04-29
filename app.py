@@ -96,7 +96,7 @@ def get_expert_name(expert_id):
     return "Unknown"
 
 
-async def send_push_notification(token, message):
+def send_push_notification(token, message):
     fcm_url = "https://fcm.googleapis.com/fcm/send"
     server_key = "AAAAM5jkbNg:APA91bG80zQ8CzD1AeQmV45YT4yWuwSgJ5VwvyLrNynAJBk4AcyCb6vbCSGlIQeQFPAndS0TbXrgEL8HFYQq4DMXmSoJ4ek7nFcCwOEDq3Oi5Or_SibSpywYFrnolM4LSxpRkVeiYGDv"
     payload = {
@@ -104,7 +104,7 @@ async def send_push_notification(token, message):
         "notification": {"title": "Notification", "body": message},
     }
     headers = {"Authorization": "key=" + server_key, "Content-Type": "application/json"}
-    response = await requests.post(fcm_url, json=payload, headers=headers)
+    response = requests.post(fcm_url, json=payload, headers=headers)
     if response.status_code == 200:
         pass
     else:
@@ -138,33 +138,33 @@ def get_calls(query={}):
     return calls
 
 
-async def handle_error_notification(data):
+def handle_error_notification(data):
     time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     document = {"message": data, "time": time}
-    await logs_collection.insert_one(document)
-    await emit("error_notification", data, broadcast=True)
+    logs_collection.insert_one(document)
+    emit("error_notification", data, broadcast=True)
     tokens = list(fcm_tokens_collection.find())
     for token in tokens:
         token["_id"] = str(token.get("_id", ""))
-        await send_push_notification(token["token"], data)
+        send_push_notification(token["token"], data)
 
 
 @app.route("/api/save-fcm-token", methods=["POST"])
-async def save_fcm_token():
+def save_fcm_token():
     data = request.json
     token = data.get("token")
     tokens = list(fcm_tokens_collection.find())
     if token in [t["token"] for t in tokens]:
         return jsonify({"message": "FCM token already saved"}), 200
     elif token:
-        await fcm_tokens_collection.insert_one({"token": token})
+        fcm_tokens_collection.insert_one({"token": token})
         return jsonify({"message": "FCM token saved successfully"}), 200
     else:
         return jsonify({"error": "FCM token missing"}), 400
 
 
 @app.route("/api/errorlogs")
-async def get_error_logs():
+def get_error_logs():
     error_logs = list(logs_collection.find())
     for log in error_logs:
         log["_id"] = str(log.get("_id", ""))
@@ -172,8 +172,8 @@ async def get_error_logs():
 
 
 @app.route("/api/calls")
-async def get_calls_route():
-    calls = await get_calls({"user": {"$nin": excluded_users}})
+def get_calls_route():
+    calls = get_calls({"user": {"$nin": excluded_users}})
     return jsonify(calls)
 
 
@@ -185,9 +185,9 @@ def get_new_calls():
     timestamp = timestamp + timedelta(seconds=1)
     print(timestamp)
     new_calls = get_calls({"initiatedTime": {"$gte": timestamp}})
-    print('new_calls :', new_calls)
+    print('new_calls :', new_calls[0])
     formatted_calls = [format_call(call) for call in new_calls]
-    print('formatted_calls :', formatted_calls)
+    print('formatted_calls :', formatted_calls[0])
     return jsonify(formatted_calls)
 
 
