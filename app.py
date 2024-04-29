@@ -137,7 +137,7 @@ def get_calls(query={}):
     calls = [format_call(call) for call in calls]
     return calls
 
-
+@socketio.on("error_notification")
 def handle_error_notification(data):
     time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     document = {"message": data, "time": time}
@@ -180,11 +180,9 @@ def get_calls_route():
 @app.route("/api/new-calls")
 def get_new_calls():
     timestamp = request.args.get("timestamp")
-    print(timestamp)
     timestamp = parsedate_to_datetime(timestamp)
     timestamp = timestamp + timedelta(seconds=1)
     new_calls = get_calls({"initiatedTime": {"$gte": timestamp}})
-    print(new_calls[0])
     return jsonify(new_calls)
 
 
