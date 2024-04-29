@@ -4,6 +4,7 @@ from pymongo import MongoClient, DESCENDING
 from flask_cors import CORS
 from email.utils import parsedate_to_datetime
 from bson import ObjectId
+import pytz
 from datetime import datetime, timedelta
 import requests
 import firebase_admin
@@ -68,6 +69,10 @@ def format_call(call):
     call["expertName"] = get_expert_name(expert_id)
     call["expert"] = str(expert_id)
     call["ConversationScore"] = call.pop("Conversation Score", 0)
+    if call.get("failedReason") == "call missed":
+        call["status"] = "missed"
+    if call.get("status") == "successfull":
+        call["status"] = "successful"
     return call
 
 
@@ -177,7 +182,7 @@ async def get_new_calls():
     timestamp = request.args.get("timestamp")
     timestamp = parsedate_to_datetime(timestamp)
     timestamp = timestamp + timedelta(seconds=1)
-    new_calls = await get_calls({"initiatedTime": {"$gt": timestamp}})
+    new_calls = await get_calls({"initiatedTime": {"$gte": timestamp}})
     formatted_calls = [format_call(call) for call in new_calls]
     return jsonify(formatted_calls)
 
@@ -259,6 +264,7 @@ def handle_user(id):
         if result.modified_count == 0:
             return jsonify({"error": "User not found"}), 404
         updated_user = users_collection.find_one({"_id": ObjectId(id)}, {"_id": 0})
+        users_cache.pop(id, None)
         return jsonify(updated_user)
 
 
