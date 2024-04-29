@@ -132,7 +132,7 @@ def get_formatted_expert(expert):
     return formatted_expert
 
 
-async def get_calls(query={}):
+def get_calls(query={}):
     calls = list(calls_collection.find(query, {"_id": 0}).sort([("initiatedTime", 1)]))
     calls = [format_call(call) for call in calls]
     return calls
