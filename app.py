@@ -142,7 +142,10 @@ def get_calls(query={}):
 
 @socketio.on("error_notification")
 def handle_error_notification(data):
-    time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    utc_now = datetime.now(pytz.utc)
+    ist_timezone = pytz.timezone('Asia/Kolkata')
+    ist_now = utc_now.astimezone(ist_timezone)
+    time = ist_now.strftime("%Y-%m-%d %H:%M:%S")
     document = {"message": data, "time": time}
     logs_collection.insert_one(document)
     emit("error_notification", data, broadcast=True)
@@ -150,6 +153,7 @@ def handle_error_notification(data):
     for token in tokens:
         token["_id"] = str(token.get("_id", ""))
         send_push_notification(token["token"], data)
+
 
 
 @app.route("/api/save-fcm-token", methods=["POST"])
