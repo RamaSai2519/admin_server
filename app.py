@@ -337,19 +337,19 @@ def handle_expert(id):
                 new_profile,
                 new_status,
                 new_languages,
-                float(new_score),
-                float(new_calls_share),
-                float(new_repeat_score),
-                float(new_total_score),
+                new_score,
+                new_calls_share,
+                new_repeat_score,
+                new_total_score,
                 new_categories_names,
-                float(new_opening),
-                float(new_flow),
-                float(new_tonality),
-                float(new_timeSplit),
-                float(new_sentiment),
-                float(new_probability),
-                float(new_closing),
-                float(new_timeSpent)
+                new_opening,
+                new_flow,
+                new_tonality,
+                new_timeSplit,
+                new_sentiment,
+                new_probability,
+                new_closing,
+                new_timeSpent
             ]
         ):
             return jsonify({"error": "At least one field is required for update"}), 400
@@ -365,17 +365,17 @@ def handle_expert(id):
         if new_profile:
             update_query["profile"] = new_profile
         if new_calls_share:
-            update_query["calls_share"] = new_calls_share
+            update_query["calls_share"] = float(new_calls_share)
         if new_status:
             update_query["status"] = new_status
         if new_languages:
             update_query["languages"] = new_languages
         if new_score:
-            update_query["score"] = new_score
+            update_query["score"] = float(new_score)
         if new_repeat_score:
-            update_query["repeat_score"] = new_repeat_score
+            update_query["repeat_score"] = int(new_repeat_score)
         if new_total_score:
-            update_query["total_score"] = new_total_score
+            update_query["total_score"] = int(new_total_score)
         if new_categories_names:
             new_categories_object_ids = []
             for category_name in new_categories_names:
@@ -384,21 +384,21 @@ def handle_expert(id):
                     new_categories_object_ids.append(category["_id"])
             update_query["categories"] = new_categories_object_ids
         if new_opening:
-            update_query["openingGreeting"] = new_opening
+            update_query["openingGreeting"] = float(new_opening)
         if new_closing:
-            update_query["closingGreeting"] = new_closing
+            update_query["closingGreeting"] = float(new_closing)
         if new_flow:
-            update_query["flow"] = new_flow
+            update_query["flow"] = float(new_flow)
         if new_tonality:
-            update_query["tonality"] = new_tonality
+            update_query["tonality"] = float(new_tonality)
         if new_timeSplit:
-            update_query["timeSplit"] = new_timeSplit
+            update_query["timeSplit"] = float(new_timeSplit)
         if new_timeSpent:
-            update_query["timeSpent"] = new_timeSpent
+            update_query["timeSpent"] = float(new_timeSpent)
         if new_sentiment:
-            update_query["userSentiment"] = new_sentiment
+            update_query["userSentiment"] = float(new_sentiment)
         if new_probability:
-            update_query["probability"] = new_probability
+            update_query["probability"] = float(new_probability)
         result = experts_collection.update_one(
             {"_id": ObjectId(id)}, {"$set": update_query}
         )
