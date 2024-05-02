@@ -22,7 +22,6 @@ client = MongoClient(
     "mongodb+srv://sukoon_user:Tcks8x7wblpLL9OA@cluster0.o7vywoz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 )
 db = client["test"]
-blogs_collection = db["blogposts"]
 calls_collection = db["calls"]
 experts_collection = db["experts"]
 users_collection = db["users"]
@@ -30,6 +29,7 @@ fcm_tokens_collection = db["fcm_tokens"]
 logs_collection = db["errorlogs"]
 categories_collection = db["categories"]
 statuslogs_collection = db["statuslogs"]
+blogs_collection = db["blogposts"]
 
 calls_collection.create_index([("initiatedTime", DESCENDING)])
 users_collection.create_index([("createdDate", DESCENDING)])
@@ -319,6 +319,14 @@ def handle_expert(id):
         new_repeat_score = expert_data.get("repeat_score")
         new_total_score = expert_data.get("total_score")
         new_categories_names = expert_data.get("categories")
+        new_opening = expert_data.get("openingGreeting")
+        new_flow = expert_data.get("flow")
+        new_tonality = expert_data.get("tonality")
+        new_timeSplit = expert_data.get("timeSplit")
+        new_timeSpent = expert_data.get("timeSpent")
+        new_sentiment = expert_data.get("userSentiment")
+        new_probability = expert_data.get("probability")
+        new_closing = expert_data.get("closingGreeting")
         if not any(
             [
                 new_name,
@@ -333,6 +341,14 @@ def handle_expert(id):
                 new_repeat_score,
                 new_total_score,
                 new_categories_names,
+                new_opening,
+                new_flow,
+                new_tonality,
+                new_timeSplit,
+                new_sentiment,
+                new_probability,
+                new_closing,
+                new_timeSpent
             ]
         ):
             return jsonify({"error": "At least one field is required for update"}), 400
@@ -366,6 +382,22 @@ def handle_expert(id):
                 if category:
                     new_categories_object_ids.append(category["_id"])
             update_query["categories"] = new_categories_object_ids
+        if new_opening:
+            update_query["openingGreeting"] = new_opening
+        if new_closing:
+            update_query["closingGreeting"] = new_closing
+        if new_flow:
+            update_query["flow"] = new_flow
+        if new_tonality:
+            update_query["tonality"] = new_tonality
+        if new_timeSplit:
+            update_query["timeSplit"] = new_timeSplit
+        if new_timeSpent:
+            update_query["timeSpent"] = new_timeSpent
+        if new_sentiment:
+            update_query["userSentiment"] = new_sentiment
+        if new_probability:
+            update_query["probability"] = new_probability
         result = experts_collection.update_one(
             {"_id": ObjectId(id)}, {"$set": update_query}
         )
