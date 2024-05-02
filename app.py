@@ -337,19 +337,19 @@ def handle_expert(id):
                 new_profile,
                 new_status,
                 new_languages,
-                new_score,
-                new_calls_share,
-                new_repeat_score,
-                new_total_score,
+                float(new_score),
+                float(new_calls_share),
+                float(new_repeat_score),
+                float(new_total_score),
                 new_categories_names,
-                new_opening,
-                new_flow,
-                new_tonality,
-                new_timeSplit,
-                new_sentiment,
-                new_probability,
-                new_closing,
-                new_timeSpent
+                float(new_opening),
+                float(new_flow),
+                float(new_tonality),
+                float(new_timeSplit),
+                float(new_sentiment),
+                float(new_probability),
+                float(new_closing),
+                float(new_timeSpent)
             ]
         ):
             return jsonify({"error": "At least one field is required for update"}), 400
