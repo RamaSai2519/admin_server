@@ -81,8 +81,9 @@ def get_user_name(user_id):
         return users_cache[user_id]
     user = users_collection.find_one({"_id": user_id}, {"name": 1})
     if user:
-        users_cache[user_id] = user["name"]
-        return user["name"]
+        if user.get("name"):
+            users_cache[user_id] = user["name"]
+            return user["name"]
     return "Unknown"
 
 
