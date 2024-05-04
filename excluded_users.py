@@ -1,7 +1,7 @@
 from bson import ObjectId
 
 excluded_users = [
-    ObjectId("6604618e42f04a057fa20cbb"),
+    # ObjectId("6604618e42f04a057fa20cbb"),
     ObjectId("6604a57ad0a5b997c4121881"),
     ObjectId("660acafe9f28ee9c2c00762c"),
     ObjectId("660e5f213a2d66e7354e714c"),

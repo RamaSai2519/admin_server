@@ -1,15 +1,16 @@
+from email.utils import parsedate_to_datetime
+from pymongo import MongoClient, DESCENDING
+from excluded_users import excluded_users
 from flask import Flask, jsonify, request
 from flask_socketio import SocketIO, emit
-from pymongo import MongoClient, DESCENDING
-from flask_cors import CORS
-from email.utils import parsedate_to_datetime
-from bson import ObjectId
-import pytz
 from datetime import datetime, timedelta
-import requests
-import firebase_admin
+from call_intitatior import schedule
 from firebase_admin import credentials
-from excluded_users import excluded_users
+from flask_cors import CORS
+from bson import ObjectId
+import firebase_admin
+import requests
+import pytz
 
 app = Flask(__name__)
 CORS(app)
@@ -430,27 +431,9 @@ def get_categories():
     category_names = [category["name"] for category in categories]
     return jsonify(category_names)
 
-
 @app.route("/api/schedule", methods=["POST", "GET"])
-def schedule():
-    if request.method == "GET":
-        schedules = list(schedules_collection.find())
-        for schedule in schedules:
-            schedule["_id"] = str(schedule.get("_id", ""))
-            schedule["expert"] = str(schedule.get("expert", ""))
-            schedule["user"] = str(schedule.get("user", ""))
-        return jsonify(schedules)
-    elif request.method == "POST":
-        data = request.json
-        expert = data.get("expert")
-        user = data.get("user")
-        time = data.get("datetime")
-        document = {"expert": ObjectId(expert), "user": ObjectId(user), "datetime": time}
-        schedules_collection.insert_one(document)
-        return jsonify({"message": "Data received successfully"})
-    else:
-        return jsonify({"error": "Invalid request method"}), 404
-
+def schedule_route():
+    return schedule()
 
 def calculate_logged_in_hours(login_logs):
     total_logged_in_hours = 0
