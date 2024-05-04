@@ -31,6 +31,7 @@ categories_collection = db["categories"]
 statuslogs_collection = db["statuslogs"]
 blogs_collection = db["blogposts"]
 applications_collection = db["becomesaarthis"]
+schedules_collection = db["schedules"]
 
 calls_collection.create_index([("initiatedTime", DESCENDING)])
 users_collection.create_index([("createdDate", DESCENDING)])
@@ -131,7 +132,7 @@ def get_formatted_expert(expert):
         "loggedInHours": logged_in_hours,
         "repeatRate": expert.get("repeat_score", 0),
         "callsShare": expert.get("calls_share", 0),
-        "totalScore": expert.get("total_score", 0)
+        "totalScore": expert.get("total_score", 0),
     }
 
     return formatted_expert
@@ -142,10 +143,11 @@ def get_calls(query={}):
     calls = [format_call(call) for call in calls]
     return calls
 
+
 @socketio.on("error_notification")
 def handle_error_notification(data):
     utc_now = datetime.now(pytz.utc)
-    ist_timezone = pytz.timezone('Asia/Kolkata')
+    ist_timezone = pytz.timezone("Asia/Kolkata")
     ist_now = utc_now.astimezone(ist_timezone)
     time = ist_now.strftime("%Y-%m-%d %H:%M:%S")
     document = {"message": data, "time": time}
@@ -155,7 +157,6 @@ def handle_error_notification(data):
     for token in tokens:
         token["_id"] = str(token.get("_id", ""))
         send_push_notification(token["token"], data)
-
 
 
 @app.route("/api/save-fcm-token", methods=["POST"])
@@ -179,12 +180,14 @@ def get_error_logs():
         log["_id"] = str(log.get("_id", ""))
     return jsonify(error_logs)
 
+
 @app.route("/api/applications")
 def get_applications():
     applications = list(applications_collection.find())
     for application in applications:
         application["_id"] = str(application.get("_id", ""))
     return jsonify(applications)
+
 
 @app.route("/api/calls")
 def get_calls_route():
@@ -356,7 +359,7 @@ def handle_expert(id):
                 new_sentiment,
                 new_probability,
                 new_closing,
-                new_timeSpent
+                new_timeSpent,
             ]
         ):
             return jsonify({"error": "At least one field is required for update"}), 400
@@ -426,6 +429,27 @@ def get_categories():
     categories = list(categories_collection.find({}, {"_id": 0, "name": 1}))
     category_names = [category["name"] for category in categories]
     return jsonify(category_names)
+
+
+@app.route("/api/schedule", methods=["POST", "GET"])
+def schedule():
+    if request.method == "GET":
+        schedules = list(schedules_collection.find())
+        for schedule in schedules:
+            schedule["_id"] = str(schedule.get("_id", ""))
+            schedule["expert"] = str(schedule.get("expert", ""))
+            schedule["user"] = str(schedule.get("user", ""))
+        return jsonify(schedules)
+    elif request.method == "POST":
+        data = request.json
+        expert = data.get("expert")
+        user = data.get("user")
+        time = data.get("datetime")
+        document = {"expert": ObjectId(expert), "user": ObjectId(user), "datetime": time}
+        schedules_collection.insert_one(document)
+        return jsonify({"message": "Data received successfully"})
+    else:
+        return jsonify({"error": "Invalid request method"}), 404
 
 
 def calculate_logged_in_hours(login_logs):
