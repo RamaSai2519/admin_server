@@ -55,7 +55,7 @@ def schedule():
 
 
 def call_at_specified_time(time, expert, user):
-    scheduled_time = datetime.fromisoformat(time).timestamp()
+    scheduled_time = datetime.strptime(time, "%Y-%m-%dT%H:%M:%S.%fZ").timestamp()
     print("Scheduled time: ", scheduled_time)
     scheduled_time = int(scheduled_time)
     print("Int Scheduled time: ", scheduled_time)
