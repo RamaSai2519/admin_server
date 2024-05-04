@@ -30,6 +30,7 @@ logs_collection = db["errorlogs"]
 categories_collection = db["categories"]
 statuslogs_collection = db["statuslogs"]
 blogs_collection = db["blogposts"]
+applications_collection = db["becomesaarthis"]
 
 calls_collection.create_index([("initiatedTime", DESCENDING)])
 users_collection.create_index([("createdDate", DESCENDING)])
@@ -178,6 +179,12 @@ def get_error_logs():
         log["_id"] = str(log.get("_id", ""))
     return jsonify(error_logs)
 
+@app.route("/api/applications")
+def get_applications():
+    applications = list(applications_collection.find())
+    for application in applications:
+        application["_id"] = str(application.get("_id", ""))
+    return jsonify(applications)
 
 @app.route("/api/calls")
 def get_calls_route():
