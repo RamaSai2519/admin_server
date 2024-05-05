@@ -501,9 +501,7 @@ def schedule_route():
             user_id = schedule.get("user", "")
             user = users_collection.find_one({"_id": user_id}, {"name": 1})
             schedule["user"] = user.get("name", "") if user else ""
-            timestamp_utc = datetime.fromisoformat(
-                schedule.get("datetime", "")
-            ).replace(tzinfo=pytz.utc)
+            timestamp_utc = datetime.strptime(schedule.get("datetime", ""), "%Y-%m-%dT%H:%M:%S.%fZ")
             ist_timezone = pytz.timezone("Asia/Kolkata")
             timestamp_ist = timestamp_utc.astimezone(ist_timezone)
             schedule["datetime"] = timestamp_ist.strftime(r"%Y-%m-%d %H:%M:%S")
