@@ -3,6 +3,7 @@ from flask import jsonify, request
 from pymongo import MongoClient
 from bson import ObjectId
 import threading
+import pytz
 from time import sleep
 from datetime import datetime
 
@@ -32,6 +33,7 @@ def schedule():
         expert = data.get("expert")
         user = data.get("user")
         time = data.get("datetime")
+
         document = {
             "expert": ObjectId(expert),
             "user": ObjectId(user),
@@ -46,7 +48,9 @@ def schedule():
         user = users_collection.find_one({"_id": ObjectId(user)}, {"phoneNumber": 1})
         user = user.get("phoneNumber", "")
         threading.Thread(
-            target=call_at_specified_time, args=(time, expert, user), name=f"CallThread {expert}"
+            target=call_at_specified_time,
+            args=(time, expert, user),
+            name=f"CallThread {expert}",
         ).start()
 
         return jsonify({"message": "Data received successfully"})
@@ -55,24 +59,17 @@ def schedule():
 
 
 def call_at_specified_time(time, expert, user):
-    scheduled_time = datetime.strptime(time, "%Y-%m-%dT%H:%M:%S.%fZ").timestamp()
-    print("Scheduled time: ", scheduled_time)
-    scheduled_time = int(scheduled_time)
-    print("Int Scheduled time: ", scheduled_time)
-    current_time = int(datetime.now().timestamp())
-    print("Current time: ", current_time)
-
+    scheduled_time = datetime.strptime(time, r"%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=pytz.utc)
+    current_time = datetime.now(pytz.utc)
     delay = scheduled_time - current_time
-
-    if delay <= 0:
-        return
-    sleep(delay)
-    response = call_intiator(expert, user)
-    print("Response: ", response)
+    if delay.total_seconds() < 0:
+        response = {"message": "Scheduled time has already passed."}
+    else:
+        sleep(delay.total_seconds())
+        response = call_intiator(expert, user)
 
 
 def call_intiator(expert_number, user_number):
-    print("Calling expert: ", expert_number)
     url = "https://kpi.knowlarity.com/Basic/v1/account/call/makecall"
     payload = {
         "k_number": "+918035384523",
