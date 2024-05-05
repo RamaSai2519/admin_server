@@ -59,14 +59,14 @@ def schedule():
 
 
 def call_at_specified_time(time, expert, user):
-    scheduled_time = datetime.strptime(time, r"%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=pytz.utc)
+    scheduled_time = datetime.strptime(time, r"%Y-%m-%dT%H:%M:%S.%fZ").replace(
+        tzinfo=pytz.utc
+    )
     current_time = datetime.now(pytz.utc)
     delay = scheduled_time - current_time
-    if delay.total_seconds() < 0:
-        response = {"message": "Scheduled time has already passed."}
-    else:
+    if delay.total_seconds() > 0:
         sleep(delay.total_seconds())
-        response = call_intiator(expert, user)
+        call_intiator(expert, user)
 
 
 def call_intiator(expert_number, user_number):
