@@ -10,6 +10,8 @@ from bson import ObjectId
 import firebase_admin
 import requests
 import pytz
+from datetime import datetime
+import pytz
 
 app = Flask(__name__)
 CORS(app)
@@ -460,33 +462,6 @@ def get_categories():
     return jsonify(category_names)
 
 
-# def restart_threads():
-#     global call_threads
-#     keys_to_delete = list(call_threads.keys())  # Create a copy of keys
-
-#     for thread_name in keys_to_delete:
-#         call_threads[thread_name] = False
-#         for thread in threading.enumerate():
-#             if thread.name == thread_name and call_threads[thread_name] is False:
-#                 print(f"Stopping thread {thread_name}")
-
-#     for schedule in schedules_collection.find():
-#         expert_id = schedule.get("expert", "")
-#         user_id = schedule.get("user", "")
-#         time = schedule.get("datetime", "")
-#         expert = experts_collection.find_one({"_id": expert_id}, {"phoneNumber": 1})
-#         expert = expert.get("phoneNumber", "")
-#         user = users_collection.find_one({"_id": user_id}, {"phoneNumber": 1})
-#         user = user.get("phoneNumber", "")
-#         thread_name = f"CallThread {schedule['_id']}"
-#         call_threads[thread_name] = True
-#         threading.Thread(
-#             target=call_at_specified_time,
-#             args=(time, expert, user, thread_name),
-#             name=thread_name,
-#         ).start()
-
-
 @app.route("/api/schedule", methods=["POST", "GET"])
 def schedule_route():
     if request.method == "GET":
@@ -499,57 +474,83 @@ def schedule_route():
             user_id = schedule.get("user", "")
             user_id = users_collection.find_one({"_id": user_id}, {"name": 1})
             schedule["user"] = user_id.get("name", "") if user_id else ""
-            timestamp_utc = datetime.strptime(
-                schedule.get("datetime", ""), "%Y-%m-%dT%H:%M:%S.%fZ"
-            )
-            ist_timezone = pytz.timezone("Asia/Kolkata")
-            timestamp_ist = timestamp_utc.astimezone(ist_timezone)
-            schedule["datetime"] = timestamp_ist.strftime(r"%Y-%m-%d %H:%M:%S")
         return jsonify(schedules)
     elif request.method == "POST":
         data = request.json
         expert_id = data.get("expert")
         user_id = data.get("user")
         time = data.get("datetime")
+        ist_offset = timedelta(hours=5, minutes=30)
+        date_object = datetime.strptime(time, "%Y-%m-%dT%H:%M:%S.%fZ")
+        ist_time = date_object + ist_offset
+        print(
+            "DateTime object:",
+            ist_time.hour,
+            ist_time.minute,
+            ist_time.year,
+            ist_time.month,
+            ist_time.day,
+        )
+        print(time)
 
         document = {
             "expert": ObjectId(expert_id),
             "user": ObjectId(user_id),
-            "datetime": time,
+            "datetime": ist_time.strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
             "status": "pending",
         }
         schedules_collection.insert_one(document)
+        time = datetime.strptime(time, "%Y-%m-%dT%H:%M:%S.%fZ")
+        hour = ist_time.hour - 1
+        minute = ist_time.minute
+        year = ist_time.year
+        month = ist_time.month - 1
+        day = ist_time.day
 
-        hour = int(time.split("T")[1].split(":")[0])
-        minute = int(time.split("T")[1].split(":")[1])
+        # print(hour, minute, year, month, day)
 
         expert_docment = experts_collection.find_one({"_id": ObjectId(expert_id)})
         expert_number = expert_docment.get("phoneNumber", "")
         expert_name = expert_docment.get("name", "")
         user_name = users_collection.find_one({"_id": ObjectId(user_id)}, {"name": 1})
         user_name = user_name.get("name", "")
-        print(expert_name, user_name, hour, minute, expert_number)
 
-        schedule_id = schedules_collection.find_one(document, {"_id": 1})
-        schedule_id = str(schedule_id.get("_id", ""))
-        scheduleJob(expert_name, user_name, hour, minute, schedule_id, expert_number)
+        record = schedules_collection.find_one(document, {"_id": 1})
+        record = str(record.get("_id", ""))
+        scheduleJob(
+            expert_name,
+            user_name,
+            year,
+            month,
+            day,
+            hour,
+            minute,
+            expert_number,
+            record,
+        )
         return jsonify({"message": "Data received successfully"})
     else:
         return jsonify({"error": "Invalid request method"}), 404
 
 
-def scheduleJob(expert_name, user_name, hour, minute, record, expert_number):
-    url = "http://localhost:8080/api/v1/scheduleJob"
+def scheduleJob(
+    expert_name, user_name, year, month, day, hour, minute, expert_number, record
+):
+    url = "http://15.206.127.248:8080/api/v1/scheduleJob"
     payload = {
         "saarthiName": expert_name,
         "userName": user_name,
         "istHour": hour,
         "istMinute": minute,
+        "year": year,
+        "month": month,
+        "day": day,
+        "year": year,
         "link": f"https://admin-sukoon.vercel.app/calls/approve/{record}",
         "recordId": record,
         "saarthiNumber": expert_number,
-        "adminNumber": "9936142128",
-        "superAdminNumber": "8707484110",
+        "adminNumber": "9398036558",
+        "superAdminNumber": "9398036558",
     }
     print(payload)
     requests.post(url, json=payload)
@@ -613,20 +614,65 @@ def update_schedule(id):
         return jsonify(schedule)
 
 
-@app.route("/api/approve/<id>", methods=["PUT"])
-def approve_application(id):
+def cancelJob(record, level):
+    url = "http://15.206.127.248:8080/api/v1/cancelJob"
+    if level == "0":
+        payload = {"recordIds": [f"{record}-1", f"{record}-2"]}
+    elif level == "1":
+        payload = {"recordIds": [f"{record}-0", f"{record}-2"]}
+    else:
+        payload = {"recordIds": [f"{record}-0", f"{record}-1"]}
+
+    requests.post(url, json=payload)
+
+
+def FinalCallJob(record, expert_number, user_number, year, month, day, hour, minute):
+    url = "http://15.206.127.248:8080/api/v1/scheduleFinalCall"
+    payload = {
+        "requestId": record,
+        "expertNumber": expert_number,
+        "userNumber": user_number,
+        "year": year,
+        "month": month - 1,
+        "day": day,
+        "hour": hour,
+        "minute": minute,
+    }
+    requests.post(url, json=payload)
+
+
+@app.route("/api/approve/<id>/<level>", methods=["PUT"])
+def approve_application(id, level):
     data = request.json
     status = data.get("status")
+    cancelJob(id, level)
     result = schedules_collection.update_one(
         {"_id": ObjectId(id)}, {"$set": {"status": status}}
     )
-
-
-
+    schedule_record = schedules_collection.find_one({"_id": ObjectId(id)})
+    expert_id = schedule_record.get("expert", "")
+    expert = experts_collection.find_one({"_id": expert_id})
+    expert_number = expert.get("phoneNumber", "")
+    user_id = schedule_record.get("user", "")
+    user = users_collection.find_one({"_id": user_id})
+    user_number = user.get("phoneNumber", "")
+    scheduled_Call_time = schedule_record.get("datetime", "")
+    scheduled_Call_time = datetime.strptime(
+        scheduled_Call_time, "%Y-%m-%dT%H:%M:%S.%fZ"
+    )
+    FinalCallJob(
+        id,
+        expert_number,
+        user_number,
+        scheduled_Call_time.year,
+        scheduled_Call_time.month,
+        scheduled_Call_time.day,
+        scheduled_Call_time.hour,
+        scheduled_Call_time.minute,
+    )
     if result.modified_count == 0:
         return jsonify({"error": "Application not found"}), 404
     return jsonify({"message": "Application updated successfully"}), 200
-
 
 
 def calculate_logged_in_hours(login_logs):
