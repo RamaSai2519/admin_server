@@ -611,7 +611,7 @@ def update_schedule(id):
 def cancelFinalCall(record):
     url = "http://15.206.127.248:8080/api/v1/cancelJob"
     payload = {"recordIds": {record}}
-    requests.post(url, json=payload)
+    requests.delete(url, json=payload)
 
 
 def cancelJob(record, level):
