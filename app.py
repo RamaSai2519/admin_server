@@ -637,7 +637,7 @@ def FinalCallJob(record, expert_number, user_number, year, month, day, hour, min
         "month": month,
         "date": day,
         "hours": hour + 1,
-        "minutes": minute - 1,
+        "minutes": minute,
     }
     print(payload)
     response = requests.post(url, json=payload)
