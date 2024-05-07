@@ -581,6 +581,7 @@ def update_schedule(id):
             return jsonify({"error": str(e)}), 500
     elif request.method == "DELETE":
         try:
+            cancelFinalCall(id)
             result = schedules_collection.delete_one({"_id": ObjectId(id)})
             if result.deleted_count == 0:
                 return jsonify({"error": "Schedule not found"}), 404
@@ -607,6 +608,12 @@ def update_schedule(id):
         return jsonify(schedule)
 
 
+def cancelFinalCall(record):
+    url = "http://15.206.127.248:8080/api/v1/cancelJob"
+    payload = {"recordIds": {record}}
+    requests.post(url, json=payload)
+
+
 def cancelJob(record, level):
     url = "http://15.206.127.248:8080/api/v1/cancelJob"
     if level == "0":
@@ -624,7 +631,7 @@ def FinalCallJob(record, expert_number, user_number, year, month, day, hour, min
     payload = {
         "requestId": record,
         "saarthiNumber": int(expert_number),
-        "userNumber":int(user_number),
+        "userNumber": int(user_number),
         "year": year,
         "month": month,
         "date": day,
