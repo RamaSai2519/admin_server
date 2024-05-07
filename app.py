@@ -510,16 +510,6 @@ def schedule_route():
 
         record = schedules_collection.find_one(document, {"_id": 1})
         record = str(record.get("_id", ""))
-        print(
-            record,
-            expert_number,
-            user_number,
-            year,
-            month,
-            day,
-            hour,
-            minute,
-        )
         FinalCallJob(record, expert_number, user_number, year, month, day, hour, minute)
         return jsonify({"message": "Data received successfully"})
     else:
@@ -581,7 +571,6 @@ def update_schedule(id):
             return jsonify({"error": str(e)}), 500
     elif request.method == "DELETE":
         try:
-            print(id)
             cancelFinalCall(id)
             result = schedules_collection.delete_one({"_id": ObjectId(id)})
             if result.deleted_count == 0:
@@ -612,7 +601,10 @@ def update_schedule(id):
 def cancelFinalCall(record):
     url = "http://15.206.127.248:8080/api/v1/cancelJob"
     payload = {"recordIds": {record}}
-    requests.delete(url, json=payload)
+    print(payload)
+    response = requests.delete(url, json=payload)  
+    print(response)
+    print(response.json())
 
 
 def cancelJob(record, level):
