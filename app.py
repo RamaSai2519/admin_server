@@ -600,7 +600,9 @@ def update_schedule(id):
 
 def cancelFinalCall(record):
     url = "http://15.206.127.248:8080/api/v1/cancelJob"
-    payload = {"recordIds": {record}}
+    payload = {
+        "recordIds": [record]
+    }
     print(payload)
     response = requests.delete(url, json=payload)  
     print(response)
