@@ -504,7 +504,7 @@ def schedule_route():
         expert_number = expert_docment.get("phoneNumber", "")
         # expert_name = expert_docment.get("name", "")
 
-        user = users_collection.find_one({"_id": ObjectId(user_id)}, {"name": 1})
+        user = users_collection.find_one({"_id": ObjectId(user_id)})
         # user_name = user.get("name", "")
         user_number = user.get("PhoneNumber", "")
 
