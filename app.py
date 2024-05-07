@@ -506,7 +506,7 @@ def schedule_route():
 
         user = users_collection.find_one({"_id": ObjectId(user_id)})
         # user_name = user.get("name", "")
-        user_number = user.get("PhoneNumber", "")
+        user_number = user.get("phoneNumber", "")
 
         record = schedules_collection.find_one(document, {"_id": 1})
         record = str(record.get("_id", ""))
