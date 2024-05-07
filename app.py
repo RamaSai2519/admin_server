@@ -623,13 +623,13 @@ def FinalCallJob(record, expert_number, user_number, year, month, day, hour, min
     url = "http://15.206.127.248:8080/api/v1/scheduleFinalCall"
     payload = {
         "requestId": record,
-        "expertNumber": expert_number,
+        "saarthiNumber": expert_number,
         "userNumber": user_number,
         "year": year,
         "month": month - 1,
-        "day": day,
-        "hour": hour,
-        "minute": minute - 1,
+        "date": day,
+        "hours": hour,
+        "minutes": minute - 1,
     }
     print(payload)
     response = requests.post(url, json=payload)
