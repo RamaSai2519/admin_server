@@ -581,6 +581,7 @@ def update_schedule(id):
             return jsonify({"error": str(e)}), 500
     elif request.method == "DELETE":
         try:
+            print(id)
             cancelFinalCall(id)
             result = schedules_collection.delete_one({"_id": ObjectId(id)})
             if result.deleted_count == 0:
