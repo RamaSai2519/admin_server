@@ -510,17 +510,16 @@ def schedule_route():
 
         record = schedules_collection.find_one(document, {"_id": 1})
         record = str(record.get("_id", ""))
-        # scheduleJob(
-        #     expert_name,
-        #     user_name,
-        #     year,
-        #     month,
-        #     day,
-        #     hour,
-        #     minute,
-        #     expert_number,
-        #     record,
-        # )
+        print(
+            record,
+            expert_number,
+            user_number,
+            year,
+            month,
+            day,
+            hour,
+            minute,
+        )
         FinalCallJob(record, expert_number, user_number, year, month, day, hour, minute)
         return jsonify({"message": "Data received successfully"})
     else:
@@ -632,7 +631,9 @@ def FinalCallJob(record, expert_number, user_number, year, month, day, hour, min
         "hour": hour,
         "minute": minute - 1,
     }
-    requests.post(url, json=payload)
+    print(payload)
+    response = requests.post(url, json=payload)
+    print(response)
 
 
 @app.route("/api/approve/<id>/<level>", methods=["PUT"])
