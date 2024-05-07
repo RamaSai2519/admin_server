@@ -546,7 +546,7 @@ def scheduleJob(
         "month": month,
         "day": day,
         "year": year,
-        "link": f"https://admin-sukoon.vercel.app/calls/approve/{record}",
+        "link": f"https://admin-sukoon.vercel.app/approve/{record}",
         "recordId": record,
         "saarthiNumber": expert_number,
         "adminNumber": "9398036558",
