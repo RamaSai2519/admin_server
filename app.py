@@ -545,12 +545,19 @@ def update_schedule(id):
         try:
             data = request.json
             expert = data.get("expert")
-            expert = experts_collection.find_one({"name": expert}, {"_id": 1})
+            expert = experts_collection.find_one({"name": expert})
             expert = str(expert.get("_id"))
+            expert_number = expert.get("phoneNumber", "")
             user = data.get("user")
-            user = users_collection.find_one({"name": user}, {"_id": 1})
+            user = users_collection.find_one({"name": user})
+            user_number = user.get("phoneNumber", "")
             user = str(user.get("_id"))
             time = data.get("datetime")
+            ist_offset = timedelta(hours=5, minutes=30)
+            date_object = datetime.strptime(time, "%Y-%m-%dT%H:%M:%S.%fZ")
+            ist_time = date_object + ist_offset
+
+            cancelFinalCall(id)
 
             result = schedules_collection.update_one(
                 {"_id": ObjectId(id)},
@@ -562,6 +569,14 @@ def update_schedule(id):
                     }
                 },
             )
+            time = datetime.strptime(time, "%Y-%m-%dT%H:%M:%S.%fZ")
+            hour = ist_time.hour - 1
+            minute = ist_time.minute
+            year = ist_time.year
+            month = ist_time.month - 1
+            day = ist_time.day
+
+            FinalCallJob(id, expert_number, user_number, year, month, day, hour, minute)
 
             if result.modified_count == 0:
                 return jsonify({"error": "Failed to update schedule"}), 400
