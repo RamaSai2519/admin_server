@@ -483,15 +483,6 @@ def schedule_route():
         ist_offset = timedelta(hours=5, minutes=30)
         date_object = datetime.strptime(time, "%Y-%m-%dT%H:%M:%S.%fZ")
         ist_time = date_object + ist_offset
-        print(
-            "DateTime object:",
-            ist_time.hour,
-            ist_time.minute,
-            ist_time.year,
-            ist_time.month,
-            ist_time.day,
-        )
-        print(time)
 
         document = {
             "expert": ObjectId(expert_id),
@@ -511,23 +502,26 @@ def schedule_route():
 
         expert_docment = experts_collection.find_one({"_id": ObjectId(expert_id)})
         expert_number = expert_docment.get("phoneNumber", "")
-        expert_name = expert_docment.get("name", "")
+        # expert_name = expert_docment.get("name", "")
+
         user_name = users_collection.find_one({"_id": ObjectId(user_id)}, {"name": 1})
         user_name = user_name.get("name", "")
+        user_number = user_name.get("PhoneNumber", "")
 
         record = schedules_collection.find_one(document, {"_id": 1})
         record = str(record.get("_id", ""))
-        scheduleJob(
-            expert_name,
-            user_name,
-            year,
-            month,
-            day,
-            hour,
-            minute,
-            expert_number,
-            record,
-        )
+        # scheduleJob(
+        #     expert_name,
+        #     user_name,
+        #     year,
+        #     month,
+        #     day,
+        #     hour,
+        #     minute,
+        #     expert_number,
+        #     record,
+        # )
+        FinalCallJob(record, expert_number, user_number, year, month, day, hour, minute)
         return jsonify({"message": "Data received successfully"})
     else:
         return jsonify({"error": "Invalid request method"}), 404
@@ -636,7 +630,7 @@ def FinalCallJob(record, expert_number, user_number, year, month, day, hour, min
         "month": month - 1,
         "day": day,
         "hour": hour,
-        "minute": minute,
+        "minute": minute - 1,
     }
     requests.post(url, json=payload)
 
