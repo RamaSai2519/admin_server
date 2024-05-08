@@ -396,16 +396,6 @@ def get_dashboard_stats():
         "onlineSaarthis": online_saarthis,
     }
 
-    print(
-        {
-            "totalCalls": total_calls,
-            "successfulCalls": total_successful_calls,
-            "todayCalls": today_calls,
-            "todaySuccessfulCalls": today_successful_calls,
-            "averageCallDuration": average_call_duration,
-        }
-    )
-
     return jsonify(stats_data)
 
 
@@ -591,14 +581,10 @@ def schedule_route():
         month = ist_time.month - 1
         day = ist_time.day
 
-        # print(hour, minute, year, month, day)
-
         expert_docment = experts_collection.find_one({"_id": ObjectId(expert_id)})
         expert_number = expert_docment.get("phoneNumber", "")
-        # expert_name = expert_docment.get("name", "")
 
         user = users_collection.find_one({"_id": ObjectId(user_id)})
-        # user_name = user.get("name", "")
         user_number = user.get("phoneNumber", "")
 
         record = schedules_collection.find_one(document, {"_id": 1})
@@ -628,7 +614,6 @@ def scheduleJob(
         "adminNumber": "9398036558",
         "superAdminNumber": "9398036558",
     }
-    print(payload)
     requests.post(url, json=payload)
 
 
@@ -709,9 +694,7 @@ def update_schedule(id):
 def cancelFinalCall(record):
     url = "http://15.206.127.248:8080/api/v1/cancelJob"
     payload = {"recordIds": [record]}
-    print(payload)
-    response = requests.delete(url, json=payload)
-    print(response)
+    requests.delete(url, json=payload)
 
 
 def cancelJob(record, level):
@@ -738,9 +721,7 @@ def FinalCallJob(record, expert_number, user_number, year, month, day, hour, min
         "hours": hour + 1,
         "minutes": minute,
     }
-    print(payload)
-    response = requests.post(url, json=payload)
-    print(response)
+    requests.post(url, json=payload)
 
 
 @app.route("/api/approve/<id>/<level>", methods=["PUT"])
