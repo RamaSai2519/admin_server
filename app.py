@@ -6,11 +6,10 @@ from flask_socketio import SocketIO, emit
 from datetime import datetime, timedelta
 from firebase_admin import credentials
 from flask_cors import CORS
-from bson import ObjectId
+from bson import ObjectId       
 import firebase_admin
 import requests
 import pytz
-from datetime import datetime
 import pytz
 
 app = Flask(__name__)
@@ -43,34 +42,6 @@ experts_collection.create_index([("status", 1)])
 users_cache = {}
 experts_cache = {}
 call_threads = {}
-
-
-# def call_at_specified_time(time, expert, user, thread_name):
-#     scheduled_time = datetime.strptime(time, r"%Y-%m-%dT%H:%M:%S.%fZ").replace(
-#         tzinfo=pytz.utc
-#     )
-#     current_time = datetime.now(pytz.utc)
-#     delay = scheduled_time - current_time
-#     if delay.total_seconds() > 0 and call_threads[thread_name]:
-#         sleep(delay.total_seconds())
-#         call_intiator(expert, user)
-
-
-# def call_intiator(expert_number, user_number):
-#     url = "https://kpi.knowlarity.com/Basic/v1/account/call/makecall"
-#     payload = {
-#         "k_number": "+918035384523",
-#         "agent_number": "+91" + expert_number,
-#         "customer_number": "+91" + user_number,
-#         "caller_id": "+918035384523",
-#     }
-#     headers = {
-#         "x-api-key": "bb2S4y2cTvaBVswheid7W557PUzUVMnLaPnvyCxI",
-#         "authorization": "0738be9e-1fe5-4a8b-8923-0fe503e87deb",
-#     }
-#     response = requests.post(url, json=payload, headers=headers)
-
-#     return response.json()
 
 
 def get_timedelta(duration_str):
@@ -130,6 +101,24 @@ def get_expert_name(expert_id):
     return "Unknown"
 
 
+def format_duration(duration_in_seconds):
+    hours = duration_in_seconds // 3600
+    minutes = (duration_in_seconds % 3600) // 60
+    seconds = duration_in_seconds % 60
+
+    formatted_duration = []
+    if hours > 0:
+        formatted_duration.append(f"{hours} h")
+
+    if seconds >= 30:
+        formatted_duration.append(f"{minutes + 1} m")
+    elif seconds > 0:
+        if minutes > 0:
+            formatted_duration.append(f"{minutes} m")
+
+    return " ".join(formatted_duration)
+
+
 def send_push_notification(token, message):
     fcm_url = "https://fcm.googleapis.com/fcm/send"
     server_key = "AAAAM5jkbNg:APA91bG80zQ8CzD1AeQmV45YT4yWuwSgJ5VwvyLrNynAJBk4AcyCb6vbCSGlIQeQFPAndS0TbXrgEL8HFYQq4DMXmSoJ4ek7nFcCwOEDq3Oi5Or_SibSpywYFrnolM4LSxpRkVeiYGDv"
@@ -170,7 +159,31 @@ def get_formatted_expert(expert):
 
 
 def get_calls(query={}):
-    calls = list(calls_collection.find(query, {"_id": 0}).sort([("initiatedTime", 1)]))
+    calls = list(
+        calls_collection.find(
+            query,
+            {
+                "_id": 0,
+                "recording_url": 0,
+                "Score Breakup": 0,
+                "Saarthi Feedback": 0,
+                "User Callback": 0,
+                "Summary": 0,
+                "tonality": 0,
+                "timeSplit": 0,
+                "Sentiment": 0,
+                "Topics": 0,
+                "timeSpent": 0,
+                "userSentiment": 0,
+                "probability": 0,
+                "openingGreeting": 0,
+                "transcript_url": 0,
+                "flow": 0,
+                "closingGreeting": 0,
+            },
+        ).sort([("initiatedTime", 1)])
+    )
+
     calls = [format_call(call) for call in calls]
     return calls
 
@@ -204,6 +217,19 @@ def save_fcm_token():
         return jsonify({"error": "FCM token missing"}), 400
 
 
+@app.route("/api/leads", methods=["GET"])
+def get_leads():
+    final_leads = []
+    leads = list(users_collection.find())
+    for lead in leads:
+        if "name" not in lead:
+            lead["_id"] = str(lead.get("_id", ""))
+            lead["name"] = lead.get("phoneNumber", "")
+            lead["createdDate"] = lead.get("createdDate", "").strftime("%Y-%m-%d")
+            final_leads.append(lead)
+    return jsonify(final_leads)
+
+
 @app.route("/api/errorlogs")
 def get_error_logs():
     error_logs = list(logs_collection.find())
@@ -224,15 +250,6 @@ def get_applications():
 def get_calls_route():
     calls = get_calls({"user": {"$nin": excluded_users}})
     return jsonify(calls)
-
-
-@app.route("/api/new-calls")
-def get_new_calls():
-    timestamp = request.args.get("timestamp")
-    timestamp = parsedate_to_datetime(timestamp)
-    timestamp = timestamp + timedelta(seconds=1)
-    new_calls = get_calls({"initiatedTime": {"$gte": timestamp}})
-    return jsonify(new_calls)
 
 
 @app.route("/api/calls/<string:id>", methods=["GET", "PUT"])
@@ -262,6 +279,7 @@ def get_users():
     users = list(users_collection.find({"_id": {"$nin": excluded_users}}))
     for user in users:
         user["_id"] = str(user.get("_id", ""))
+        user["createdDate"] = user.get("createdDate", "").strftime("%Y-%m-%d")
     return jsonify(users)
 
 
@@ -314,6 +332,81 @@ def handle_user(id):
         updated_user = users_collection.find_one({"_id": ObjectId(id)}, {"_id": 0})
         users_cache.pop(id, None)
         return jsonify(updated_user)
+
+
+@app.route("/api/dashboard/stats")
+def get_dashboard_stats():
+    current_date = datetime.now()
+    total_calls = calls_collection.count_documents({"user": {"$nin": excluded_users}})
+    total_successful_calls = calls_collection.count_documents(
+        {"status": "successfull", "user": {"$nin": excluded_users}}
+    )
+    successful_calls_data = list(
+        calls_collection.find(
+            {"status": "successfull", "user": {"$nin": excluded_users}},
+            {"duration": 1, "initiatedTime": 1},
+        )
+    )
+    total_successful_calls = len(successful_calls_data)
+
+    total_duration_seconds = sum(
+        [
+            get_timedelta(call.get("duration", "00:00:00")).total_seconds()
+            for call in successful_calls_data
+            if get_timedelta(call.get("duration", "00:00:00")).total_seconds() > 60
+        ]
+    )
+    average_call_duration = (
+        total_duration_seconds / len(successful_calls_data)
+        if successful_calls_data
+        else 0
+    )
+    average_call_duration = format_duration(average_call_duration)
+    # Count today's successful and total calls in a single query
+    today_start = datetime.combine(current_date, datetime.min.time())
+    today_end = datetime.combine(current_date, datetime.max.time())
+    today_successful_calls = calls_collection.count_documents(
+        {
+            "status": "successfull",
+            "user": {"$nin": excluded_users},
+            "failedReason": "",
+            "initiatedTime": {"$gte": today_start, "$lte": today_end},
+        },
+    )
+
+    today_calls = calls_collection.count_documents(
+        {
+            "user": {"$nin": excluded_users},
+            "initiatedTime": {"$gte": today_start, "$lt": today_end},
+        }
+    )
+
+    # Fetch online saarthis
+    online_saarthis = list(
+        experts_collection.find({"status": {"$regex": "online"}}, {"categories": 0})
+    )
+    online_saarthis = [get_formatted_expert(expert) for expert in online_saarthis]
+
+    stats_data = {
+        "totalCalls": total_calls,
+        "successfulCalls": total_successful_calls,
+        "todayCalls": today_calls,
+        "todaySuccessfulCalls": today_successful_calls,
+        "averageCallDuration": average_call_duration,
+        "onlineSaarthis": online_saarthis,
+    }
+
+    print(
+        {
+            "totalCalls": total_calls,
+            "successfulCalls": total_successful_calls,
+            "todayCalls": today_calls,
+            "todaySuccessfulCalls": today_successful_calls,
+            "averageCallDuration": average_call_duration,
+        }
+    )
+
+    return jsonify(stats_data)
 
 
 @app.route("/api/experts")
