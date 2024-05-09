@@ -373,7 +373,7 @@ def handle_user(id):
 
 @app.route("/api/dashboard/stats")
 def get_dashboard_stats():
-    current_date = datetime.now()
+    current_date = datetime.now(pytz.timezone("Asia/Kolkata"))
     today_start = datetime.combine(current_date, datetime.min.time())
     today_end = datetime.combine(current_date, datetime.max.time())
     total_calls = len(get_calls())
