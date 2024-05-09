@@ -1,6 +1,5 @@
 from email.utils import parsedate_to_datetime
 from pymongo import MongoClient, DESCENDING
-from excluded_users import excluded_users
 from flask import Flask, jsonify, request
 from flask_socketio import SocketIO, emit
 from datetime import datetime, timedelta
@@ -185,10 +184,16 @@ def get_formatted_expert(expert):
     return formatted_expert
 
 
-def get_calls(query={}):
+def get_calls(query={}, projection={}):
+    admin_ids = [
+        user["_id"] for user in users_collection.find({"role": "admin"}, {"_id": 1})
+    ]
     calls = list(
         calls_collection.find(
-            query,
+            {
+                "user": {"$nin": admin_ids},
+                **query,
+            },
             {
                 "_id": 0,
                 "recording_url": 0,
@@ -207,6 +212,7 @@ def get_calls(query={}):
                 "transcript_url": 0,
                 "flow": 0,
                 "closingGreeting": 0,
+                **projection,
             },
         ).sort([("initiatedTime", 1)])
     )
@@ -275,7 +281,7 @@ def get_applications():
 
 @app.route("/api/calls")
 def get_calls_route():
-    calls = get_calls({"user": {"$nin": excluded_users}})
+    calls = get_calls({}, {})
     return jsonify(calls)
 
 
@@ -303,7 +309,7 @@ def handle_call(id):
 
 @app.route("/api/users")
 def get_users():
-    users = list(users_collection.find({"_id": {"$nin": excluded_users}}))
+    users = list(users_collection.find({"role": {"$ne": "admin"}}))
     for user in users:
         user["_id"] = str(user.get("_id", ""))
         user["createdDate"] = user.get("createdDate", "").strftime("%Y-%m-%d")
@@ -364,18 +370,41 @@ def handle_user(id):
 @app.route("/api/dashboard/stats")
 def get_dashboard_stats():
     current_date = datetime.now()
-    total_calls = calls_collection.count_documents({"user": {"$nin": excluded_users}})
-    total_successful_calls = calls_collection.count_documents(
-        {"status": "successfull", "user": {"$nin": excluded_users}}
+    today_start = datetime.combine(current_date, datetime.min.time())
+    today_end = datetime.combine(current_date, datetime.max.time())
+    total_calls = len(get_calls())
+    today_calls_query = {"initiatedTime": {"$gte": today_start, "$lt": today_end}}
+    today_calls = get_calls(today_calls_query, {})
+    today_successful_calls = sum(
+        1 for call in today_calls if call["status"] == "successfull"
     )
-    successful_calls_data = list(
-        calls_collection.find(
-            {"status": "successfull", "user": {"$nin": excluded_users}},
-            {"duration": 1, "initiatedTime": 1},
-        )
+    today_total_calls = len(today_calls)
+    online_saarthis = get_online_saarthis()
+    total_successful_calls, total_duration_seconds = (
+        get_total_successful_calls_and_duration()
+    )
+    average_call_duration = (
+        format_duration(total_duration_seconds / total_successful_calls)
+        if total_successful_calls
+        else "00:00:00"
+    )
+    stats_data = {
+        "totalCalls": total_calls,
+        "successfulCalls": total_successful_calls,
+        "todayCalls": today_total_calls,
+        "todaySuccessfulCalls": today_successful_calls,
+        "averageCallDuration": average_call_duration,
+        "onlineSaarthis": online_saarthis,
+    }
+
+    return jsonify(stats_data)
+
+
+def get_total_successful_calls_and_duration():
+    successful_calls_data = get_calls(
+        {"status": "successfull", "duration": {"$exists": True}}
     )
     total_successful_calls = len(successful_calls_data)
-
     total_duration_seconds = sum(
         [
             get_timedelta(call.get("duration", "00:00:00")).total_seconds()
@@ -383,47 +412,14 @@ def get_dashboard_stats():
             if get_timedelta(call.get("duration", "00:00:00")).total_seconds() > 60
         ]
     )
-    average_call_duration = (
-        total_duration_seconds / len(successful_calls_data)
-        if successful_calls_data
-        else 0
-    )
-    average_call_duration = format_duration(average_call_duration)
-    # Count today's successful and total calls in a single query
-    today_start = datetime.combine(current_date, datetime.min.time())
-    today_end = datetime.combine(current_date, datetime.max.time())
-    today_successful_calls = calls_collection.count_documents(
-        {
-            "status": "successfull",
-            "user": {"$nin": excluded_users},
-            "failedReason": "",
-            "initiatedTime": {"$gte": today_start, "$lte": today_end},
-        },
-    )
+    return total_successful_calls, total_duration_seconds
 
-    today_calls = calls_collection.count_documents(
-        {
-            "user": {"$nin": excluded_users},
-            "initiatedTime": {"$gte": today_start, "$lt": today_end},
-        }
+
+def get_online_saarthis():
+    online_saarthis = experts_collection.find(
+        {"status": {"$regex": "online"}}, {"categories": 0}
     )
-
-    # Fetch online saarthis
-    online_saarthis = list(
-        experts_collection.find({"status": {"$regex": "online"}}, {"categories": 0})
-    )
-    online_saarthis = [get_formatted_expert(expert) for expert in online_saarthis]
-
-    stats_data = {
-        "totalCalls": total_calls,
-        "successfulCalls": total_successful_calls,
-        "todayCalls": today_calls,
-        "todaySuccessfulCalls": today_successful_calls,
-        "averageCallDuration": average_call_duration,
-        "onlineSaarthis": online_saarthis,
-    }
-
-    return jsonify(stats_data)
+    return [get_formatted_expert(expert) for expert in online_saarthis]
 
 
 @app.route("/api/experts")
