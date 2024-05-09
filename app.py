@@ -259,7 +259,6 @@ def get_leads():
             lead["_id"] = str(lead.get("_id", ""))
             lead["createdDate"] = lead.get("createdDate", "")
             final_leads.append(lead)
-    final_leads = len(final_leads)
     return jsonify(final_leads)
 
 
