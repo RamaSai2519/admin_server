@@ -309,7 +309,8 @@ def handle_call(id):
 
 @app.route("/api/users")
 def get_users():
-    users = list(users_collection.find({"role": {"$ne": "admin"}}))
+    
+    users = list(users_collection.find({"role": {"$ne": "admin"}, "name": {"$exists": True}}))
     for user in users:
         user["_id"] = str(user.get("_id", ""))
         user["createdDate"] = user.get("createdDate", "").strftime("%Y-%m-%d")
@@ -376,7 +377,7 @@ def get_dashboard_stats():
     today_calls_query = {"initiatedTime": {"$gte": today_start, "$lt": today_end}}
     today_calls = get_calls(today_calls_query, {})
     today_successful_calls = sum(
-        1 for call in today_calls if call["status"] == "successfull"
+        1 for call in today_calls if call["status"] == "successful"
     )
     today_total_calls = len(today_calls)
     online_saarthis = get_online_saarthis()
@@ -388,6 +389,7 @@ def get_dashboard_stats():
         if total_successful_calls
         else "00:00:00"
     )
+
     stats_data = {
         "totalCalls": total_calls,
         "successfulCalls": total_successful_calls,
