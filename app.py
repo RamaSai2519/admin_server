@@ -253,7 +253,7 @@ def save_fcm_token():
 @app.route("/api/leads", methods=["GET"])
 def get_leads():
     final_leads = []
-    leads = list(users_collection.find({"Customer Persona": 0}))
+    leads = list(users_collection.find({}, {"Customer Persona": 0}))
     for lead in leads:
         if lead.get("profileCompleted") is False:
             lead["_id"] = str(lead.get("_id", ""))
