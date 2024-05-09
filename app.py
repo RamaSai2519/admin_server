@@ -255,10 +255,9 @@ def get_leads():
     final_leads = []
     leads = list(users_collection.find())
     for lead in leads:
-        if "name" not in lead:
+        if lead.get("profileCompleted") is False:
             lead["_id"] = str(lead.get("_id", ""))
-            lead["name"] = lead.get("phoneNumber", "")
-            lead["createdDate"] = lead.get("createdDate", "").strftime("%Y-%m-%d")
+            lead["createdDate"] = lead.get("createdDate", "")
             final_leads.append(lead)
     return jsonify(final_leads)
 
@@ -309,8 +308,12 @@ def handle_call(id):
 
 @app.route("/api/users")
 def get_users():
-    
-    users = list(users_collection.find({"role": {"$ne": "admin"}, "name": {"$exists": True}}))
+    users = list(
+        users_collection.find(
+            {"role": {"$ne": "admin"}, "name": {"$exists": True}},
+            {"Customer Persona": 0},
+        )
+    )
     for user in users:
         user["_id"] = str(user.get("_id", ""))
         user["createdDate"] = user.get("createdDate", "").strftime("%Y-%m-%d")
@@ -402,18 +405,24 @@ def get_dashboard_stats():
     return jsonify(stats_data)
 
 
+def get_total_duration_in_seconds(time_str):
+    hours, minutes, seconds = map(int, time_str.split(":"))
+    total_seconds = hours * 3600 + minutes * 60 + seconds
+    return total_seconds
+
+
 def get_total_successful_calls_and_duration():
     successful_calls_data = get_calls(
         {"status": "successfull", "duration": {"$exists": True}}
     )
     total_successful_calls = len(successful_calls_data)
+    print(total_successful_calls)
+
     total_duration_seconds = sum(
-        [
-            get_timedelta(call.get("duration", "00:00:00")).total_seconds()
-            for call in successful_calls_data
-            if get_timedelta(call.get("duration", "00:00:00")).total_seconds() > 60
-        ]
+        get_total_duration_in_seconds(call["duration"])
+        for call in successful_calls_data
     )
+    print(total_duration_seconds)
     return total_successful_calls, total_duration_seconds
 
 
