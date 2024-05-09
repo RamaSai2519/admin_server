@@ -304,7 +304,7 @@ def get_new_users():
     return jsonify(new_users)
 
 
-@app.route("/api/users/<string:id>", methods=["GET", "PUT"])
+@app.route("/api/users/<string:id>", methods=["GET", "PUT", "DELETE"])
 def handle_user(id):
     if request.method == "GET":
         user = users_collection.find_one({"_id": ObjectId(id)}, {"_id": 0})
@@ -342,6 +342,11 @@ def handle_user(id):
         updated_user = users_collection.find_one({"_id": ObjectId(id)}, {"_id": 0})
         users_cache.pop(id, None)
         return jsonify(updated_user)
+    elif request.method == "DELETE":
+        result = users_collection.delete_one({"_id": ObjectId(id)})
+        if result.deleted_count == 0:
+            return jsonify({"error": "User not found"}), 404
+        return jsonify({"message": "User deleted successfully"})
 
 
 @app.route("/api/dashboard/stats")
