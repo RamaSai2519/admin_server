@@ -43,33 +43,6 @@ experts_cache = {}
 call_threads = {}
 
 
-def job():
-    query = {"status": "online"}
-    update = {"$set": {"status": "offline"}}
-    result = experts_collection.update_many(query, update)
-    if result.modified_count > 0:
-        tokens = list(fcm_tokens_collection.find())
-    for token in tokens:
-        token["_id"] = str(token.get("_id", ""))
-        send_push_notification(token["token"], "All Saarthis are offline now")
-
-
-def run_script():
-    ist = pytz.timezone("Asia/Kolkata")
-
-    while True:
-        current_time = datetime.now(ist)
-        if current_time.hour == 21 and current_time.minute == 0:
-            job()
-            time.sleep(3600)
-        else:
-            next_hour = (current_time + timedelta(hours=1)).replace(
-                minute=0, second=0, microsecond=0
-            )
-            sleep_duration = (next_hour - current_time).total_seconds()
-            time.sleep(sleep_duration)
-
-
 def get_timedelta(duration_str):
     try:
         hours, minutes, seconds = map(int, duration_str.split(":"))
