@@ -379,7 +379,7 @@ def get_total_duration_in_seconds(time_str):
 
 def get_total_successful_calls_and_duration():
     successful_calls_data = get_calls(
-        {"status": "successfull", "duration": {"$exists": True}}
+        {"status": "successfull", "duration": {"$exists": True, "$gt": "00:01:00"}}
     )
     total_successful_calls = len(successful_calls_data)
 
