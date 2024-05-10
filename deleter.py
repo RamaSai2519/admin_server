@@ -8,20 +8,24 @@ client = MongoClient(
     "mongodb+srv://sukoon_user:Tcks8x7wblpLL9OA@cluster0.o7vywoz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 )
 db = client["test"]
-
 experts_collection = db["experts"]
 fcm_tokens_collection = db["fcm_tokens"]
 
 
-def send_push_notification(token, message):
+def send_push_notification(message):
     fcm_url = "https://fcm.googleapis.com/fcm/send"
     server_key = "AAAAM5jkbNg:APA91bG80zQ8CzD1AeQmV45YT4yWuwSgJ5VwvyLrNynAJBk4AcyCb6vbCSGlIQeQFPAndS0TbXrgEL8HFYQq4DMXmSoJ4ek7nFcCwOEDq3Oi5Or_SibSpywYFrnolM4LSxpRkVeiYGDv"
-    payload = {
-        "to": token,
-        "notification": {"title": "Notification", "body": message},
-    }
-    headers = {"Authorization": "key=" + server_key, "Content-Type": "application/json"}
-    response = requests.post(fcm_url, json=payload, headers=headers)
+    tokens = list(fcm_tokens_collection.find())
+    for token in tokens:
+        payload = {
+            "to": token["token"],
+            "notification": {"title": "Notification", "body": message},
+        }
+        headers = {
+            "Authorization": "key=" + server_key,
+            "Content-Type": "application/json",
+        }
+        response = requests.post(fcm_url, json=payload, headers=headers)
     if response.status_code == 200:
         pass
     else:
@@ -33,10 +37,7 @@ def job():
     update = {"$set": {"status": "offline"}}
     result = experts_collection.update_many(query, update)
     if result.modified_count > 0:
-        tokens = list(fcm_tokens_collection.find())
-        for token in tokens:
-            token["_id"] = str(token.get("_id", ""))
-            send_push_notification(token["token"], "All Saarthis are offline now.")
+        send_push_notification("All Saarthis are offline now.")
 
 
 def run_script():
@@ -44,7 +45,6 @@ def run_script():
         current_time = datetime.now(pytz.timezone("Asia/Kolkata"))
         if current_time.hour == 21 and current_time.minute == 0:
             job()
-            print("Job ran")
             time.sleep(3600)
         else:
             next_hour = (current_time + timedelta(hours=1)).replace(

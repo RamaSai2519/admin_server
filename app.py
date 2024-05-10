@@ -1,7 +1,6 @@
 from email.utils import parsedate_to_datetime
 from pymongo import MongoClient, DESCENDING
 from flask import Flask, jsonify, request
-from flask_socketio import SocketIO, emit
 from datetime import datetime, timedelta
 from firebase_admin import credentials
 from flask_cors import CORS
@@ -9,11 +8,9 @@ from bson import ObjectId
 import firebase_admin
 import requests
 import pytz
-import time
 
 app = Flask(__name__)
 CORS(app)
-socketio = SocketIO(app, cors_allowed_origins="*")
 
 cred = credentials.Certificate("serviceAccountKey.json")
 firebase_admin.initialize_app(cred)
@@ -194,21 +191,6 @@ def get_calls(query={}, projection={}):
     return calls
 
 
-@socketio.on("error_notification")
-def handle_error_notification(data):
-    utc_now = datetime.now(pytz.utc)
-    ist_timezone = pytz.timezone("Asia/Kolkata")
-    ist_now = utc_now.astimezone(ist_timezone)
-    time = ist_now.strftime("%Y-%m-%d %H:%M:%S")
-    document = {"message": data, "time": time}
-    logs_collection.insert_one(document)
-    emit("error_notification", data, broadcast=True)
-    tokens = list(fcm_tokens_collection.find())
-    for token in tokens:
-        token["_id"] = str(token.get("_id", ""))
-        send_push_notification(token["token"], data)
-
-
 @app.route("/api/save-fcm-token", methods=["POST"])
 def save_fcm_token():
     data = request.json
@@ -319,7 +301,13 @@ def handle_user(id):
         new_birth_date = user_data.get("birthDate")
         new_number_of_calls = user_data.get("numberOfCalls")
         if not any(
-            [new_name, new_phone_number, new_city, new_birth_date, new_number_of_calls]
+            [
+                new_name,
+                new_phone_number,
+                new_city,
+                new_birth_date,
+                new_number_of_calls,
+            ]
         ):
             return jsonify({"error": "At least one field is required for update"}), 400
         update_query = {}
@@ -394,13 +382,11 @@ def get_total_successful_calls_and_duration():
         {"status": "successfull", "duration": {"$exists": True}}
     )
     total_successful_calls = len(successful_calls_data)
-    print(total_successful_calls)
 
     total_duration_seconds = sum(
         get_total_duration_in_seconds(call["duration"])
         for call in successful_calls_data
     )
-    print(total_duration_seconds)
     return total_successful_calls, total_duration_seconds
 
 
@@ -798,4 +784,4 @@ def calculate_logged_in_hours(login_logs):
 
 
 if __name__ == "__main__":
-    socketio.run(app, port=8080)
+    Flask.run(app, port=8080)
