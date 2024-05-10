@@ -2,18 +2,13 @@ from email.utils import parsedate_to_datetime
 from pymongo import MongoClient, DESCENDING
 from flask import Flask, jsonify, request
 from datetime import datetime, timedelta
-from firebase_admin import credentials
 from flask_cors import CORS
 from bson import ObjectId
-import firebase_admin
-import requests
+from functions import *
 import pytz
 
 app = Flask(__name__)
 CORS(app)
-
-cred = credentials.Certificate("serviceAccountKey.json")
-firebase_admin.initialize_app(cred)
 
 client = MongoClient(
     "mongodb+srv://sukoon_user:Tcks8x7wblpLL9OA@cluster0.o7vywoz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
@@ -25,8 +20,6 @@ users_collection = db["users"]
 fcm_tokens_collection = db["fcm_tokens"]
 logs_collection = db["errorlogs"]
 categories_collection = db["categories"]
-statuslogs_collection = db["statuslogs"]
-blogs_collection = db["blogposts"]
 applications_collection = db["becomesaarthis"]
 schedules_collection = db["schedules"]
 
@@ -34,161 +27,6 @@ calls_collection.create_index([("initiatedTime", DESCENDING)])
 users_collection.create_index([("createdDate", DESCENDING)])
 experts_collection.create_index([("createdDate", DESCENDING)])
 experts_collection.create_index([("status", 1)])
-
-users_cache = {}
-experts_cache = {}
-call_threads = {}
-
-
-def get_timedelta(duration_str):
-    try:
-        hours, minutes, seconds = map(int, duration_str.split(":"))
-        return timedelta(hours=hours, minutes=minutes, seconds=seconds)
-    except ValueError:
-        return timedelta(seconds=0)
-
-
-def is_valid_duration(duration_str):
-    parts = duration_str.split(":")
-    if len(parts) == 3:
-        try:
-            hours, minutes, seconds = map(int, parts)
-            if 0 <= hours < 24 and 0 <= minutes < 60 and 0 <= seconds < 60:
-                return True
-        except ValueError:
-            pass
-    return False
-
-
-def format_call(call):
-    user_id = call.get("user", "Unknown")
-    expert_id = call.get("expert", "Unknown")
-    call["_id"] = str(call.get("_id", ""))
-    call["userName"] = get_user_name(user_id)
-    call["user"] = str(user_id)
-    call["expertName"] = get_expert_name(expert_id)
-    call["expert"] = str(expert_id)
-    call["ConversationScore"] = call.pop("Conversation Score", 0)
-    if call.get("failedReason") == "call missed":
-        call["status"] = "missed"
-    if call.get("status") == "successfull":
-        call["status"] = "successful"
-    return call
-
-
-def get_user_name(user_id):
-    if user_id in users_cache:
-        return users_cache[user_id]
-    user = users_collection.find_one({"_id": user_id}, {"name": 1})
-    if user:
-        if user.get("name"):
-            users_cache[user_id] = user["name"]
-            return user["name"]
-    return "Unknown"
-
-
-def get_expert_name(expert_id):
-    if expert_id in experts_cache:
-        return experts_cache[expert_id]
-    expert = experts_collection.find_one({"_id": expert_id}, {"name": 1})
-    if expert:
-        experts_cache[expert_id] = expert["name"]
-        return expert["name"]
-    return "Unknown"
-
-
-def format_duration(duration_in_seconds):
-    hours = duration_in_seconds // 3600
-    minutes = (duration_in_seconds % 3600) // 60
-    seconds = duration_in_seconds % 60
-
-    formatted_duration = []
-    if hours > 0:
-        formatted_duration.append(f"{hours} h")
-
-    if seconds >= 30:
-        formatted_duration.append(f"{minutes + 1} m")
-    elif seconds > 0:
-        if minutes > 0:
-            formatted_duration.append(f"{minutes} m")
-
-    return " ".join(formatted_duration)
-
-
-def send_push_notification(token, message):
-    fcm_url = "https://fcm.googleapis.com/fcm/send"
-    server_key = "AAAAM5jkbNg:APA91bG80zQ8CzD1AeQmV45YT4yWuwSgJ5VwvyLrNynAJBk4AcyCb6vbCSGlIQeQFPAndS0TbXrgEL8HFYQq4DMXmSoJ4ek7nFcCwOEDq3Oi5Or_SibSpywYFrnolM4LSxpRkVeiYGDv"
-    payload = {
-        "to": token,
-        "notification": {"title": "Notification", "body": message},
-    }
-    headers = {"Authorization": "key=" + server_key, "Content-Type": "application/json"}
-    response = requests.post(fcm_url, json=payload, headers=headers)
-    if response.status_code == 200:
-        pass
-    else:
-        print("Failed to send notification:", response.text)
-
-
-def get_formatted_expert(expert):
-    expert_id = str(expert["_id"])
-    login_logs = list(
-        statuslogs_collection.find({"expert": expert_id, "status": "online"})
-    )
-
-    logged_in_hours = calculate_logged_in_hours(login_logs)
-
-    formatted_expert = {
-        "_id": expert_id,
-        "name": expert.get("name", "Unknown"),
-        "phoneNumber": expert.get("phoneNumber", ""),
-        "score": expert.get("score", 0),
-        "status": expert.get("status", "offline"),
-        "createdDate": expert.get("createdDate", ""),
-        "loggedInHours": logged_in_hours,
-        "repeatRate": expert.get("repeat_score", 0),
-        "callsShare": expert.get("calls_share", 0),
-        "totalScore": expert.get("total_score", 0),
-    }
-
-    return formatted_expert
-
-
-def get_calls(query={}, projection={}):
-    admin_ids = [
-        user["_id"] for user in users_collection.find({"role": "admin"}, {"_id": 1})
-    ]
-    calls = list(
-        calls_collection.find(
-            {
-                "user": {"$nin": admin_ids},
-                **query,
-            },
-            {
-                "_id": 0,
-                "recording_url": 0,
-                "Score Breakup": 0,
-                "Saarthi Feedback": 0,
-                "User Callback": 0,
-                "Summary": 0,
-                "tonality": 0,
-                "timeSplit": 0,
-                "Sentiment": 0,
-                "Topics": 0,
-                "timeSpent": 0,
-                "userSentiment": 0,
-                "probability": 0,
-                "openingGreeting": 0,
-                "transcript_url": 0,
-                "flow": 0,
-                "closingGreeting": 0,
-                **projection,
-            },
-        ).sort([("initiatedTime", 1)])
-    )
-
-    calls = [format_call(call) for call in calls]
-    return calls
 
 
 @app.route("/api/save-fcm-token", methods=["POST"])
@@ -290,51 +128,43 @@ def get_new_users():
 def handle_user(id):
     if request.method == "GET":
         user = users_collection.find_one({"_id": ObjectId(id)}, {"_id": 0})
-        if not user:
-            return jsonify({"error": "User not found"}), 404
-        return jsonify(user)
+        return (
+            (jsonify(user), 200)
+            if user
+            else (jsonify({"error": "User not found"}), 404)
+        )
     elif request.method == "PUT":
         user_data = request.json
-        new_name = user_data.get("name")
-        new_phone_number = user_data.get("phoneNumber")
-        new_city = user_data.get("city")
-        new_birth_date = user_data.get("birthDate")
-        new_number_of_calls = user_data.get("numberOfCalls")
-        if not any(
-            [
-                new_name,
-                new_phone_number,
-                new_city,
-                new_birth_date,
-                new_number_of_calls,
-            ]
-        ):
+        fields = ["name", "phoneNumber", "city", "birthDate", "numberOfCalls"]
+        if not any(user_data.get(field) for field in fields):
             return jsonify({"error": "At least one field is required for update"}), 400
         update_query = {}
-        if new_name:
-            update_query["name"] = new_name
-        if new_phone_number:
-            update_query["phoneNumber"] = new_phone_number
-        if new_city:
-            update_query["city"] = new_city
-        if new_birth_date:
-            new_birth_date = datetime.strptime(new_birth_date, "%Y-%m-%d")
-            update_query["birthDate"] = new_birth_date
-        if new_number_of_calls:
-            update_query["numberOfCalls"] = int(new_number_of_calls)
+        for field in fields:
+            value = user_data.get(field)
+            if value:
+                if field == "birthDate":
+                    value = datetime.strptime(value, "%Y-%m-%d")
+                elif field == "numberOfCalls":
+                    value = int(value)
+                update_query[field] = value
+
         result = users_collection.update_one(
             {"_id": ObjectId(id)}, {"$set": update_query}
         )
         if result.modified_count == 0:
             return jsonify({"error": "User not found"}), 404
-        updated_user = users_collection.find_one({"_id": ObjectId(id)}, {"_id": 0})
         users_cache.pop(id, None)
+        updated_user = users_collection.find_one({"_id": ObjectId(id)}, {"_id": 0})
         return jsonify(updated_user)
     elif request.method == "DELETE":
         result = users_collection.delete_one({"_id": ObjectId(id)})
-        if result.deleted_count == 0:
-            return jsonify({"error": "User not found"}), 404
-        return jsonify({"message": "User deleted successfully"})
+        return (
+            (jsonify({"message": "User deleted successfully"}), 200)
+            if result.deleted_count
+            else (jsonify({"error": "User not found"}), 404)
+        )
+    else:
+        return jsonify({"error": "Invalid request method"}), 404
 
 
 @app.route("/api/dashboard/stats")
@@ -371,32 +201,6 @@ def get_dashboard_stats():
     return jsonify(stats_data)
 
 
-def get_total_duration_in_seconds(time_str):
-    hours, minutes, seconds = map(int, time_str.split(":"))
-    total_seconds = hours * 3600 + minutes * 60 + seconds
-    return total_seconds
-
-
-def get_total_successful_calls_and_duration():
-    successful_calls_data = get_calls(
-        {"status": "successfull", "duration": {"$exists": True, "$gt": "00:01:00"}}
-    )
-    total_successful_calls = len(successful_calls_data)
-
-    total_duration_seconds = sum(
-        get_total_duration_in_seconds(call["duration"])
-        for call in successful_calls_data
-    )
-    return total_successful_calls, total_duration_seconds
-
-
-def get_online_saarthis():
-    online_saarthis = experts_collection.find(
-        {"status": {"$regex": "online"}}, {"categories": 0}
-    )
-    return [get_formatted_expert(expert) for expert in online_saarthis]
-
-
 @app.route("/api/experts")
 def get_experts():
     experts = list(experts_collection.find({}, {"categories": 0}))
@@ -421,124 +225,78 @@ def handle_expert(id):
         if not expert:
             return jsonify({"error": "Expert not found"}), 404
         expert["_id"] = str(expert.get("_id", ""))
-        category_names = []
-        for category_id in expert.get("categories", []):
-            category = categories_collection.find_one({"_id": ObjectId(category_id)})
-            if category:
-                category_names.append(category.get("name", ""))
+        category_names = [
+            categories_collection.find_one({"_id": ObjectId(category_id)}).get(
+                "name", ""
+            )
+            for category_id in expert.get("categories", [])
+        ]
         expert["categories"] = category_names
         return jsonify(expert)
     elif request.method == "PUT":
         expert_data = request.json
-        new_name = expert_data.get("name")
-        new_phone_number = expert_data.get("phoneNumber")
-        new_topics = expert_data.get("topics")
-        new_description = expert_data.get("description")
-        new_profile = expert_data.get("profile")
-        new_status = expert_data.get("status")
-        new_languages = expert_data.get("languages")
-        new_calls_share = expert_data.get("calls_share")
-        new_score = expert_data.get("score")
-        new_repeat_score = expert_data.get("repeat_score")
-        new_total_score = expert_data.get("total_score")
-        new_categories_names = expert_data.get("categories")
-        new_opening = expert_data.get("openingGreeting")
-        new_flow = expert_data.get("flow")
-        new_tonality = expert_data.get("tonality")
-        new_timeSplit = expert_data.get("timeSplit")
-        new_timeSpent = expert_data.get("timeSpent")
-        new_sentiment = expert_data.get("userSentiment")
-        new_probability = expert_data.get("probability")
-        new_closing = expert_data.get("closingGreeting")
-        if not any(
-            [
-                new_name,
-                new_phone_number,
-                new_topics,
-                new_description,
-                new_profile,
-                new_status,
-                new_languages,
-                new_score,
-                new_calls_share,
-                new_repeat_score,
-                new_total_score,
-                new_categories_names,
-                new_opening,
-                new_flow,
-                new_tonality,
-                new_timeSplit,
-                new_sentiment,
-                new_probability,
-                new_closing,
-                new_timeSpent,
-            ]
-        ):
+        required_fields = [
+            "name",
+            "phoneNumber",
+            "topics",
+            "description",
+            "profile",
+            "status",
+            "languages",
+            "score",
+            "calls_share",
+            "repeat_score",
+            "total_score",
+            "categories",
+            "openingGreeting",
+            "flow",
+            "tonality",
+            "timeSplit",
+            "timeSpent",
+            "userSentiment",
+            "probability",
+            "closingGreeting",
+        ]
+        if not any(expert_data.get(field) for field in required_fields):
             return jsonify({"error": "At least one field is required for update"}), 400
         update_query = {}
-        if new_name:
-            update_query["name"] = new_name
-        if new_phone_number:
-            update_query["phoneNumber"] = new_phone_number
-        if new_topics:
-            update_query["topics"] = new_topics
-        if new_description:
-            update_query["description"] = new_description
-        if new_profile:
-            update_query["profile"] = new_profile
-        if new_calls_share:
-            update_query["calls_share"] = float(new_calls_share)
-        if new_status:
-            update_query["status"] = new_status
-        if new_languages:
-            update_query["languages"] = new_languages
-        if new_score:
-            update_query["score"] = float(new_score)
-        if new_repeat_score:
-            update_query["repeat_score"] = int(new_repeat_score)
-        if new_total_score:
-            update_query["total_score"] = int(new_total_score)
-        if new_categories_names:
-            new_categories_object_ids = []
-            for category_name in new_categories_names:
-                category = categories_collection.find_one({"name": category_name})
-                if category:
-                    new_categories_object_ids.append(category["_id"])
-            update_query["categories"] = new_categories_object_ids
-        if new_opening:
-            update_query["openingGreeting"] = float(new_opening)
-        if new_closing:
-            update_query["closingGreeting"] = float(new_closing)
-        if new_flow:
-            update_query["flow"] = float(new_flow)
-        if new_tonality:
-            update_query["tonality"] = float(new_tonality)
-        if new_timeSplit:
-            update_query["timeSplit"] = float(new_timeSplit)
-        if new_timeSpent:
-            update_query["timeSpent"] = float(new_timeSpent)
-        if new_sentiment:
-            update_query["userSentiment"] = float(new_sentiment)
-        if new_probability:
-            update_query["probability"] = float(new_probability)
+        for field in required_fields:
+            if field == "categories":
+                new_categories_object_ids = [
+                    categories_collection.find_one({"name": category_name}).get("_id")
+                    for category_name in expert_data.get(field, [])
+                ]
+                update_query[field] = new_categories_object_ids
+            elif field in expert_data:
+                update_query[field] = (
+                    float(expert_data[field])
+                    if field in ["calls_share", "score"]
+                    else (
+                        int(expert_data[field])
+                        if field in ["repeat_score", "total_score"]
+                        else expert_data[field]
+                    )
+                )
         result = experts_collection.update_one(
             {"_id": ObjectId(id)}, {"$set": update_query}
         )
         if result.modified_count == 0:
             return jsonify({"error": "Expert not found"}), 404
         updated_expert = experts_collection.find_one({"_id": ObjectId(id)}, {"_id": 0})
-        category_names = []
-        for category_id in updated_expert.get("categories", []):
-            category = categories_collection.find_one({"_id": ObjectId(category_id)})
-            if category:
-                category_names.append(category.get("name", ""))
-        updated_expert["categories"] = category_names
+        updated_expert["categories"] = [
+            categories_collection.find_one({"_id": ObjectId(category_id)}).get(
+                "name", ""
+            )
+            for category_id in updated_expert.get("categories", [])
+        ]
         return jsonify(updated_expert)
     elif request.method == "DELETE":
         result = experts_collection.delete_one({"_id": ObjectId(id)})
         if result.deleted_count == 0:
             return jsonify({"error": "Expert not found"}), 404
         return jsonify({"message": "Expert deleted successfully"})
+    else:
+        return jsonify({"error": "Invalid request method"}), 404
 
 
 @app.route("/api/categories")
@@ -596,28 +354,6 @@ def schedule_route():
         return jsonify({"message": "Data received successfully"})
     else:
         return jsonify({"error": "Invalid request method"}), 404
-
-
-def scheduleJob(
-    expert_name, user_name, year, month, day, hour, minute, expert_number, record
-):
-    url = "http://15.206.127.248:8080/api/v1/scheduleJob"
-    payload = {
-        "saarthiName": expert_name,
-        "userName": user_name,
-        "istHour": hour,
-        "istMinute": minute,
-        "year": year,
-        "month": month,
-        "day": day,
-        "year": year,
-        "link": f"https://admin-sukoon.vercel.app/approve/{record}",
-        "recordId": record,
-        "saarthiNumber": expert_number,
-        "adminNumber": "9398036558",
-        "superAdminNumber": "9398036558",
-    }
-    requests.post(url, json=payload)
 
 
 @app.route("/api/schedule/<id>", methods=["PUT", "DELETE", "GET"])
@@ -694,39 +430,6 @@ def update_schedule(id):
         return jsonify(schedule)
 
 
-def cancelFinalCall(record):
-    url = "http://15.206.127.248:8080/api/v1/cancelJob"
-    payload = {"recordIds": [record]}
-    requests.delete(url, json=payload)
-
-
-def cancelJob(record, level):
-    url = "http://15.206.127.248:8080/api/v1/cancelJob"
-    if level == "0":
-        payload = {"recordIds": [f"{record}-1", f"{record}-2"]}
-    elif level == "1":
-        payload = {"recordIds": [f"{record}-0", f"{record}-2"]}
-    else:
-        payload = {"recordIds": [f"{record}-0", f"{record}-1"]}
-
-    requests.post(url, json=payload)
-
-
-def FinalCallJob(record, expert_number, user_number, year, month, day, hour, minute):
-    url = "http://15.206.127.248:8080/api/v1/scheduleFinalCall"
-    payload = {
-        "requestId": record,
-        "saarthiNumber": int(expert_number),
-        "userNumber": int(user_number),
-        "year": year,
-        "month": month,
-        "date": day,
-        "hours": hour + 1,
-        "minutes": minute,
-    }
-    requests.post(url, json=payload)
-
-
 @app.route("/api/approve/<id>/<level>", methods=["PUT"])
 def approve_application(id, level):
     data = request.json
@@ -759,28 +462,6 @@ def approve_application(id, level):
     if result.modified_count == 0:
         return jsonify({"error": "Application not found"}), 404
     return jsonify({"message": "Application updated successfully"}), 200
-
-
-def calculate_logged_in_hours(login_logs):
-    total_logged_in_hours = 0
-    last_logged_out_time = None
-
-    for log in login_logs:
-        if log["status"] == "online":
-            logged_in_at = log["date"]
-            logged_out_at = (
-                datetime.now() if last_logged_out_time is None else last_logged_out_time
-            )
-        else:
-            logged_out_at = log["date"]
-            logged_in_at = last_logged_out_time
-        if logged_in_at is not None and logged_out_at is not None:
-            total_logged_in_hours += (
-                logged_out_at - logged_in_at
-            ).total_seconds() / 3600
-        last_logged_out_time = logged_out_at
-
-    return total_logged_in_hours
 
 
 if __name__ == "__main__":
