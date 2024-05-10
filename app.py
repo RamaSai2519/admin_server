@@ -428,7 +428,7 @@ def get_new_experts():
     return jsonify(formatted_new_experts)
 
 
-@app.route("/api/experts/<string:id>", methods=["GET", "PUT"])
+@app.route("/api/experts/<string:id>", methods=["GET", "PUT", "DELETE"])
 def handle_expert(id):
     if request.method == "GET":
         expert = experts_collection.find_one({"_id": ObjectId(id)})
@@ -548,6 +548,11 @@ def handle_expert(id):
                 category_names.append(category.get("name", ""))
         updated_expert["categories"] = category_names
         return jsonify(updated_expert)
+    elif request.method == "DELETE":
+        result = experts_collection.delete_one({"_id": ObjectId(id)})
+        if result.deleted_count == 0:
+            return jsonify({"error": "Expert not found"}), 404
+        return jsonify({"message": "Expert deleted successfully"})
 
 
 @app.route("/api/categories")
