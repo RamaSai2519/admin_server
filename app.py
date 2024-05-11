@@ -336,7 +336,7 @@ def schedule_route():
         }
         schedules_collection.insert_one(document)
         time = datetime.strptime(time, "%Y-%m-%dT%H:%M:%S.%fZ")
-        hour = ist_time.hour - 1
+        hour = ist_time.hour
         minute = ist_time.minute
         year = ist_time.year
         month = ist_time.month - 1
@@ -350,7 +350,7 @@ def schedule_route():
 
         record = schedules_collection.find_one(document, {"_id": 1})
         record = str(record.get("_id", ""))
-        FinalCallJob(record, expert_number, user_number, year, month, day, hour, minute)
+        FinalCallJob(record, expert_id, user_id, expert_number, user_number, year, month, day, hour, minute)
         return jsonify({"message": "Data received successfully"})
     else:
         return jsonify({"error": "Invalid request method"}), 404
