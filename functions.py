@@ -64,7 +64,18 @@ def cancelJob(record, level):
     requests.post(url, json=payload)
 
 
-def FinalCallJob(record, expert_id, user_id, expert_number, user_number, year, month, day, hour, minute):
+def FinalCallJob(
+    record,
+    expert_id,
+    user_id,
+    expert_number,
+    user_number,
+    year,
+    month,
+    day,
+    hour,
+    minute,
+):
     url = "http://localhost:8080/api/v1/scheduleFinalCall"
     payload = {
         "requestId": record,
@@ -78,6 +89,7 @@ def FinalCallJob(record, expert_id, user_id, expert_number, user_number, year, m
         "hours": hour,
         "minutes": minute,
     }
+    print(payload)
     requests.post(url, json=payload)
 
 
