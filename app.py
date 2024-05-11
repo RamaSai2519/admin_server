@@ -318,6 +318,10 @@ def schedule_route():
             user_id = schedule.get("user", "")
             user_id = users_collection.find_one({"_id": user_id}, {"name": 1})
             schedule["user"] = user_id.get("name", "") if user_id else ""
+            if isinstance(schedule.get("datetime"), datetime):
+                schedule["datetime"] = schedule.get("datetime", "").strftime(
+                    "%Y-%m-%d %H:%M:%S"
+                )
         return jsonify(schedules)
     elif request.method == "POST":
         data = request.json
@@ -331,7 +335,7 @@ def schedule_route():
         document = {
             "expert": ObjectId(expert_id),
             "user": ObjectId(user_id),
-            "datetime": ist_time.strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
+            "datetime": ist_time,
             "status": "pending",
         }
         schedules_collection.insert_one(document)
@@ -350,7 +354,18 @@ def schedule_route():
 
         record = schedules_collection.find_one(document, {"_id": 1})
         record = str(record.get("_id", ""))
-        FinalCallJob(record, expert_id, user_id, expert_number, user_number, year, month, day, hour, minute)
+        FinalCallJob(
+            record,
+            expert_id,
+            user_id,
+            expert_number,
+            user_number,
+            year,
+            month,
+            day,
+            hour,
+            minute,
+        )
         return jsonify({"message": "Data received successfully"})
     else:
         return jsonify({"error": "Invalid request method"}), 404
