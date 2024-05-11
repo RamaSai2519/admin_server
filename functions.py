@@ -23,6 +23,7 @@ blogs_collection = db["blogposts"]
 applications_collection = db["becomesaarthis"]
 schedules_collection = db["schedules"]
 
+
 def calculate_logged_in_hours(login_logs):
     total_logged_in_hours = 0
     last_logged_out_time = None
@@ -108,14 +109,19 @@ def get_total_duration_in_seconds(time_str):
 
 def get_total_successful_calls_and_duration():
     successful_calls_data = get_calls(
-        {"status": "successfull", "duration": {"$exists": True, "$gt": "00:01:00"}}
+        {"status": "successfull", "duration": {"$exists": True}}
     )
-    total_successful_calls = len(successful_calls_data)
+    total_seconds = []
+    for call in successful_calls_data:
+        duration = call.get("duration", "00:00:00")
+        seconds = sum(
+            int(x) * 60**i for i, x in enumerate(reversed(duration.split(":")))
+        )
+        if seconds > 60:
+            total_seconds.append(seconds)
 
-    total_duration_seconds = sum(
-        get_total_duration_in_seconds(call["duration"])
-        for call in successful_calls_data
-    )
+    total_duration_seconds = sum(total_seconds)
+    total_successful_calls = len(total_seconds)
     return total_successful_calls, total_duration_seconds
 
 

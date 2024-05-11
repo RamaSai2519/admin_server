@@ -186,7 +186,7 @@ def get_dashboard_stats():
     average_call_duration = (
         format_duration(total_duration_seconds / total_successful_calls)
         if total_successful_calls
-        else "00:00:00"
+        else "0 minutes"
     )
 
     stats_data = {
