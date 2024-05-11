@@ -47,13 +47,13 @@ def calculate_logged_in_hours(login_logs):
 
 
 def cancelFinalCall(record):
-    url = "http://15.206.127.248:8080/api/v1/cancelJob"
+    url = "http://localhost:8080/api/v1/cancelJob"
     payload = {"recordIds": [record]}
     requests.delete(url, json=payload)
 
 
 def cancelJob(record, level):
-    url = "http://15.206.127.248:8080/api/v1/cancelJob"
+    url = "http://localhost:8080/api/v1/cancelJob"
     if level == "0":
         payload = {"recordIds": [f"{record}-1", f"{record}-2"]}
     elif level == "1":
@@ -65,7 +65,7 @@ def cancelJob(record, level):
 
 
 def FinalCallJob(record, expert_id, user_id, expert_number, user_number, year, month, day, hour, minute):
-    url = "http://15.206.127.248:8080/api/v1/scheduleFinalCall"
+    url = "http://localhost:8080/api/v1/scheduleFinalCall"
     payload = {
         "requestId": record,
         "saarthiId": expert_id,
@@ -84,7 +84,7 @@ def FinalCallJob(record, expert_id, user_id, expert_number, user_number, year, m
 def scheduleJob(
     expert_name, user_name, year, month, day, hour, minute, expert_number, record
 ):
-    url = "http://15.206.127.248:8080/api/v1/scheduleJob"
+    url = "http://localhost:8080/api/v1/scheduleJob"
     payload = {
         "saarthiName": expert_name,
         "userName": user_name,
