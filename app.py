@@ -1,5 +1,3 @@
-from email.utils import parsedate_to_datetime
-from pymongo import MongoClient, DESCENDING
 from flask import Flask, jsonify, request
 from datetime import datetime, timedelta
 from flask_cors import CORS
