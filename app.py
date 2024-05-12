@@ -10,24 +10,6 @@ import pytz
 app = Flask(__name__)
 CORS(app)
 
-client = MongoClient(
-    "mongodb+srv://sukoon_user:Tcks8x7wblpLL9OA@cluster0.o7vywoz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
-)
-db = client["test"]
-calls_collection = db["calls"]
-experts_collection = db["experts"]
-users_collection = db["users"]
-fcm_tokens_collection = db["fcm_tokens"]
-logs_collection = db["errorlogs"]
-categories_collection = db["categories"]
-applications_collection = db["becomesaarthis"]
-schedules_collection = db["schedules"]
-
-calls_collection.create_index([("initiatedTime", DESCENDING)])
-users_collection.create_index([("createdDate", DESCENDING)])
-experts_collection.create_index([("createdDate", DESCENDING)])
-experts_collection.create_index([("status", 1)])
-
 
 @app.route("/api/save-fcm-token", methods=["POST"])
 def save_fcm_token():

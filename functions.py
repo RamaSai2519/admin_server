@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from firebase_admin import credentials
-from pymongo import MongoClient
+from pymongo import MongoClient, DESCENDING
 import firebase_admin
 import requests
 
@@ -19,9 +19,13 @@ fcm_tokens_collection = db["fcm_tokens"]
 logs_collection = db["errorlogs"]
 categories_collection = db["categories"]
 statuslogs_collection = db["statuslogs"]
-blogs_collection = db["blogposts"]
 applications_collection = db["becomesaarthis"]
 schedules_collection = db["schedules"]
+
+calls_collection.create_index([("initiatedTime", DESCENDING)])
+users_collection.create_index([("createdDate", DESCENDING)])
+experts_collection.create_index([("createdDate", DESCENDING)])
+experts_collection.create_index([("status", 1)])
 
 
 def calculate_logged_in_hours(login_logs):
