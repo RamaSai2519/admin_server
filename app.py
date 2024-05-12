@@ -113,17 +113,6 @@ def get_users():
     return jsonify(users)
 
 
-@app.route("/api/new-users")
-def get_new_users():
-    timestamp = request.args.get("timestamp")
-    timestamp = parsedate_to_datetime(timestamp)
-    timestamp = timestamp + timedelta(seconds=1)
-    new_users = list(users_collection.find({"createdDate": {"$gt": timestamp}}))
-    for user in new_users:
-        user["_id"] = str(user.get("_id", ""))
-    return jsonify(new_users)
-
-
 @app.route("/api/users/<string:id>", methods=["GET", "PUT", "DELETE"])
 def handle_user(id):
     if request.method == "GET":
@@ -206,16 +195,6 @@ def get_experts():
     experts = list(experts_collection.find({}, {"categories": 0}))
     formatted_experts = [get_formatted_expert(expert) for expert in experts]
     return jsonify(formatted_experts)
-
-
-@app.route("/api/new-experts")
-def get_new_experts():
-    timestamp = request.args.get("timestamp")
-    timestamp = parsedate_to_datetime(timestamp)
-    timestamp = timestamp + timedelta(seconds=1)
-    new_experts = list(experts_collection.find({"createdDate": {"$gt": timestamp}}))
-    formatted_new_experts = [get_formatted_expert(expert) for expert in new_experts]
-    return jsonify(formatted_new_experts)
 
 
 @app.route("/api/experts/<string:id>", methods=["GET", "PUT", "DELETE"])
