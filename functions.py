@@ -264,6 +264,7 @@ def get_formatted_expert(expert):
         "repeatRate": expert.get("repeat_score", 0),
         "callsShare": expert.get("calls_share", 0),
         "totalScore": expert.get("total_score", 0),
+        "isBusy": expert.get("isBusy", False),
     }
 
     return formatted_expert
