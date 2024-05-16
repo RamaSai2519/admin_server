@@ -8,6 +8,25 @@ import pytz
 app = Flask(__name__)
 CORS(app)
 
+@app.route("/api/blogs")
+def get_blogs():
+    blogs = list(blogs_collection.find({}, {"_id": 0}))
+    return jsonify(blogs)
+
+
+@app.route("/api/blogs/<string:id>", methods=["GET"])
+def get_blog(id):
+    blog = blogs_collection.find_one({"id": id})
+    blog["_id"] = str(blog["_id"])
+    return jsonify(blog)
+
+
+@app.route("/api/featuredblog")
+def get_featured_blog():
+    featured_blog = blogs_collection.find_one(sort=[("id", -1)])
+    featured_blog["_id"] = str(featured_blog["_id"])
+    return jsonify(featured_blog)
+
 
 @app.route("/api/save-fcm-token", methods=["POST"])
 def save_fcm_token():
