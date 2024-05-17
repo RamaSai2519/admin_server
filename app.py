@@ -8,6 +8,7 @@ import pytz
 app = Flask(__name__)
 CORS(app)
 
+
 @app.route("/api/blogs")
 def get_blogs():
     blogs = list(blogs_collection.find({}, {"_id": 0}))
@@ -143,6 +144,7 @@ def handle_user(id):
             return jsonify({"error": "User not found"}), 404
         users_cache.pop(id, None)
         updated_user = users_collection.find_one({"_id": ObjectId(id)}, {"_id": 0})
+        updateProfile_status(updated_user)
         return jsonify(updated_user)
     elif request.method == "DELETE":
         result = users_collection.delete_one({"_id": ObjectId(id)})

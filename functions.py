@@ -1,9 +1,9 @@
-from datetime import datetime, timedelta
-from firebase_admin import credentials
-from pymongo import MongoClient, DESCENDING
-import firebase_admin
 import requests
-
+import firebase_admin
+from bson.objectid import ObjectId
+from firebase_admin import credentials
+from datetime import datetime, timedelta
+from pymongo import MongoClient, DESCENDING
 
 cred = credentials.Certificate("serviceAccountKey.json")
 firebase_admin.initialize_app(cred)
@@ -27,6 +27,15 @@ calls_collection.create_index([("initiatedTime", DESCENDING)])
 users_collection.create_index([("createdDate", DESCENDING)])
 experts_collection.create_index([("createdDate", DESCENDING)])
 experts_collection.create_index([("status", 1)])
+
+
+def updateProfile_status(user):
+    if "name" and "phoneNumber" and "city" and "birthDate" in user:
+        if "name" != "" and "phoneNumber" != "" and "city" != "" and "birthDate" != "":
+            user["_id"] = ObjectId(user["_id"])
+            users_collection.update_one(
+                {"_id": user["_id"]}, {"$set": {"profileCompleted": True}}
+            )
 
 
 def calculate_logged_in_hours(login_logs):
