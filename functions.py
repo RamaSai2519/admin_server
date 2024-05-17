@@ -30,11 +30,12 @@ experts_collection.create_index([("status", 1)])
 
 
 def updateProfile_status(user):
+    print(user)
     if "name" and "phoneNumber" and "city" and "birthDate" in user:
         if "name" != "" and "phoneNumber" != "" and "city" != "" and "birthDate" != "":
-            user["_id"] = ObjectId(user["_id"])
             users_collection.update_one(
-                {"_id": user["_id"]}, {"$set": {"profileCompleted": True}}
+                {"phoneNumber": user["phoneNumber"]},
+                {"$set": {"profileCompleted": True}},
             )
 
 
