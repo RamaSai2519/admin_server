@@ -103,7 +103,8 @@ def handle_call(id):
 def get_users():
     users = list(
         users_collection.find(
-            {"role": {"$ne": "admin"}, "name": {"$exists": True}},
+            # {"role": {"$ne": "admin"}, "name": {"$exists": True}},
+            {"name": {"$exists": True}},
             {"Customer Persona": 0},
         )
     )
@@ -339,7 +340,7 @@ def schedule_route():
 
         record = schedules_collection.find_one(document, {"_id": 1})
         record = str(record.get("_id", ""))
-        FinalCallJob(
+        final_call_job(
             record,
             expert_id,
             user_id,
@@ -374,7 +375,7 @@ def update_schedule(id):
             date_object = datetime.strptime(time, "%Y-%m-%dT%H:%M:%S.%fZ")
             ist_time = date_object + ist_offset
 
-            cancelFinalCall(id)
+            cancel_final_call(id)
 
             result = schedules_collection.update_one(
                 {"_id": ObjectId(id)},
@@ -393,7 +394,9 @@ def update_schedule(id):
             month = ist_time.month - 1
             day = ist_time.day
 
-            FinalCallJob(id, expert_number, user_number, year, month, day, hour, minute)
+            final_call_job(
+                id, expert_number, user_number, year, month, day, hour, minute
+            )
 
             if result.modified_count == 0:
                 return jsonify({"error": "Failed to update schedule"}), 400
@@ -403,7 +406,7 @@ def update_schedule(id):
             return jsonify({"error": str(e)}), 500
     elif request.method == "DELETE":
         try:
-            cancelFinalCall(id)
+            cancel_final_call(id)
             result = schedules_collection.delete_one({"_id": ObjectId(id)})
             if result.deleted_count == 0:
                 return jsonify({"error": "Schedule not found"}), 404
@@ -434,7 +437,7 @@ def update_schedule(id):
 def approve_application(id, level):
     data = request.json
     status = data.get("status")
-    cancelJob(id, level)
+    cancel_final_call(id, level)
     result = schedules_collection.update_one(
         {"_id": ObjectId(id)}, {"$set": {"status": status}}
     )
@@ -449,7 +452,7 @@ def approve_application(id, level):
     scheduled_Call_time = datetime.strptime(
         scheduled_Call_time, "%Y-%m-%dT%H:%M:%S.%fZ"
     )
-    FinalCallJob(
+    final_call_job(
         id,
         expert_number,
         user_number,

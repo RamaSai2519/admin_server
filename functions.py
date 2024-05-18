@@ -5,9 +5,11 @@ from firebase_admin import credentials
 from datetime import datetime, timedelta
 from pymongo import MongoClient, DESCENDING
 
+# Firebase initialization
 cred = credentials.Certificate("serviceAccountKey.json")
 firebase_admin.initialize_app(cred)
 
+# MongoDB connection
 client = MongoClient(
     "mongodb+srv://sukoon_user:Tcks8x7wblpLL9OA@cluster0.o7vywoz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 )
@@ -23,6 +25,7 @@ applications_collection = db["becomesaarthis"]
 schedules_collection = db["schedules"]
 blogs_collection = db["blogposts"]
 
+# Ensure indexes
 calls_collection.create_index([("initiatedTime", DESCENDING)])
 users_collection.create_index([("createdDate", DESCENDING)])
 experts_collection.create_index([("createdDate", DESCENDING)])
@@ -30,7 +33,6 @@ experts_collection.create_index([("status", 1)])
 
 
 def updateProfile_status(user):
-    print(user)
     if "name" and "phoneNumber" and "city" and "birthDate" in user:
         if "name" != "" and "phoneNumber" != "" and "city" != "" and "birthDate" != "":
             users_collection.update_one(
@@ -61,25 +63,20 @@ def calculate_logged_in_hours(login_logs):
     return total_logged_in_hours
 
 
-def cancelFinalCall(record):
+def cancel_final_call(record):
     url = "http://localhost:7000/api/v1/cancelJob"
     payload = {"recordIds": [record]}
     requests.delete(url, json=payload)
 
 
-def cancelJob(record, level):
+def cancel_job(record, level):
     url = "http://localhost:7000/api/v1/cancelJob"
-    if level == "0":
-        payload = {"recordIds": [f"{record}-1", f"{record}-2"]}
-    elif level == "1":
-        payload = {"recordIds": [f"{record}-0", f"{record}-2"]}
-    else:
-        payload = {"recordIds": [f"{record}-0", f"{record}-1"]}
-
+    record_ids = [f"{record}-{i}" for i in range(3) if i != level]
+    payload = {"recordIds": record_ids}
     requests.post(url, json=payload)
 
 
-def FinalCallJob(
+def final_call_job(
     record,
     expert_id,
     user_id,
@@ -104,11 +101,10 @@ def FinalCallJob(
         "hours": hour,
         "minutes": minute,
     }
-    print(payload)
     requests.post(url, json=payload)
 
 
-def scheduleJob(
+def schedule_job(
     expert_name, user_name, year, month, day, hour, minute, expert_number, record
 ):
     url = "http://localhost:7000/api/v1/scheduleJob"
@@ -120,7 +116,6 @@ def scheduleJob(
         "year": year,
         "month": month,
         "day": day,
-        "year": year,
         "link": f"https://admin-sukoon.vercel.app/approve/{record}",
         "recordId": record,
         "saarthiNumber": expert_number,
@@ -132,26 +127,19 @@ def scheduleJob(
 
 def get_total_duration_in_seconds(time_str):
     hours, minutes, seconds = map(int, time_str.split(":"))
-    total_seconds = hours * 3600 + minutes * 60 + seconds
-    return total_seconds
+    return hours * 3600 + minutes * 60 + seconds
 
 
 def get_total_successful_calls_and_duration():
     successful_calls_data = get_calls(
         {"status": "successfull", "duration": {"$exists": True}}
     )
-    total_seconds = []
-    for call in successful_calls_data:
-        duration = call.get("duration", "00:00:00")
-        seconds = sum(
-            int(x) * 60**i for i, x in enumerate(reversed(duration.split(":")))
-        )
-        if seconds > 60:
-            total_seconds.append(seconds)
-
-    total_duration_seconds = sum(total_seconds)
-    total_successful_calls = len(total_seconds)
-    return total_successful_calls, total_duration_seconds
+    total_seconds = [
+        get_total_duration_in_seconds(call.get("duration", "00:00:00"))
+        for call in successful_calls_data
+        if get_total_duration_in_seconds(call.get("duration", "00:00:00")) > 60
+    ]
+    return len(total_seconds), sum(total_seconds)
 
 
 def get_online_saarthis():
@@ -175,15 +163,11 @@ def get_timedelta(duration_str):
 
 
 def is_valid_duration(duration_str):
-    parts = duration_str.split(":")
-    if len(parts) == 3:
-        try:
-            hours, minutes, seconds = map(int, parts)
-            if 0 <= hours < 24 and 0 <= minutes < 60 and 0 <= seconds < 60:
-                return True
-        except ValueError:
-            pass
-    return False
+    try:
+        hours, minutes, seconds = map(int, duration_str.split(":"))
+        return 0 <= hours < 24 and 0 <= minutes < 60 and 0 <= seconds < 60
+    except ValueError:
+        return False
 
 
 def format_call(call):
@@ -203,24 +187,19 @@ def format_call(call):
 
 
 def get_user_name(user_id):
-    if user_id in users_cache:
-        return users_cache[user_id]
-    user = users_collection.find_one({"_id": user_id}, {"name": 1})
-    if user:
-        if user.get("name"):
-            users_cache[user_id] = user["name"]
-            return user["name"]
-    return "Unknown"
+    if user_id not in users_cache:
+        user = users_collection.find_one({"_id": user_id}, {"name": 1})
+        users_cache[user_id] = user["name"] if user and user.get("name") else "Unknown"
+    return users_cache[user_id]
 
 
 def get_expert_name(expert_id):
-    if expert_id in experts_cache:
-        return experts_cache[expert_id]
-    expert = experts_collection.find_one({"_id": expert_id}, {"name": 1})
-    if expert:
-        experts_cache[expert_id] = expert["name"]
-        return expert["name"]
-    return "Unknown"
+    if expert_id not in experts_cache:
+        expert = experts_collection.find_one({"_id": expert_id}, {"name": 1})
+        experts_cache[expert_id] = (
+            expert["name"] if expert and expert.get("name") else "Unknown"
+        )
+    return experts_cache[expert_id]
 
 
 def format_duration(duration_in_seconds):
@@ -234,9 +213,8 @@ def format_duration(duration_in_seconds):
 
     if seconds >= 30:
         formatted_duration.append(f"{minutes + 1} m")
-    elif seconds > 0:
-        if minutes > 0:
-            formatted_duration.append(f"{minutes} m")
+    elif seconds > 0 and minutes > 0:
+        formatted_duration.append(f"{minutes} m")
 
     return " ".join(formatted_duration)
 
@@ -250,9 +228,7 @@ def send_push_notification(token, message):
     }
     headers = {"Authorization": "key=" + server_key, "Content-Type": "application/json"}
     response = requests.post(fcm_url, json=payload, headers=headers)
-    if response.status_code == 200:
-        pass
-    else:
+    if response.status_code != 200:
         print("Failed to send notification:", response.text)
 
 
