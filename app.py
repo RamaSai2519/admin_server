@@ -103,7 +103,7 @@ def handle_call(id):
 def get_users():
     users = list(
         users_collection.find(
-            # {"role": {"$ne": "admin"}, "name": {"$exists": True}},
+            {"role": {"$ne": "admin"}, "name": {"$exists": True}},
             {"name": {"$exists": True}},
             {"Customer Persona": 0},
         )
