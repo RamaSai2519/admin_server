@@ -1,3 +1,4 @@
+import pytz
 import requests
 import firebase_admin
 from bson.objectid import ObjectId
@@ -292,3 +293,37 @@ def get_calls(query={}, projection={}):
 
     calls = [format_call(call) for call in calls]
     return calls
+
+
+def callUser(expertId, userId):
+    url = "http://localhost:5020/api/call/make-call"
+    userId = str(userId)
+    payload = {"expertId": expertId, "userId": userId}
+    response = requests.post(url, json=payload)
+    return response.json()
+
+
+from datetime import datetime
+import pytz
+
+
+def checkValidity(call):
+    initiated_time = call["initiatedTime"]
+
+    if isinstance(initiated_time, str):
+        initiated_time = datetime.strptime(initiated_time, "%Y-%m-%d %H:%M:%S.%f")
+
+    utc_zone = pytz.utc
+    ist_zone = pytz.timezone("Asia/Kolkata")
+    initiated_time = initiated_time.replace(tzinfo=utc_zone).astimezone(ist_zone)
+
+    current_time = datetime.now(ist_zone)
+    time_difference = current_time - initiated_time
+
+    if time_difference.total_seconds() <= 600:
+        return True
+    else:
+        hours, remainder = divmod(time_difference.total_seconds(), 3600)
+        minutes, _ = divmod(remainder, 60)
+        response = f"The call is {int(hours)} hours and {int(minutes)} minutes old and can't be reconnected."
+        return response
