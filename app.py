@@ -26,6 +26,29 @@ def call_user():
         return jsonify({"error": str(e)}), 500
 
 
+@app.route("/api/connect", methods=["POST"])
+def connect():
+    try:
+        data = request.json
+        print("data", data)
+        expertId = data.get("expert")
+        userId = data.get("user")
+        response = callUser(expertId, userId)
+        print("response", response)
+        return response
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/remarks/<string:id>", methods=["GET"])
+def get_remarks(id):
+    remarks = list(
+        remarks_collection.find({"expert": ObjectId(id)}, {"expert": 0, "_id": 0})
+    )
+    print(remarks)
+    return jsonify(remarks)
+
+
 @app.route("/api/save-fcm-token", methods=["POST"])
 def save_fcm_token():
     data = request.json

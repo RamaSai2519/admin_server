@@ -24,7 +24,7 @@ categories_collection = db["categories"]
 statuslogs_collection = db["statuslogs"]
 applications_collection = db["becomesaarthis"]
 schedules_collection = db["schedules"]
-blogs_collection = db["blogposts"]
+remarks_collection = db["remarks"]
 
 # Ensure indexes
 calls_collection.create_index([("initiatedTime", DESCENDING)])
