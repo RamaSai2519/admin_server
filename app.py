@@ -30,11 +30,9 @@ def call_user():
 def connect():
     try:
         data = request.json
-        print("data", data)
         expertId = data.get("expert")
         userId = data.get("user")
         response = callUser(expertId, userId)
-        print("response", response)
         return response
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -45,7 +43,6 @@ def get_remarks(id):
     remarks = list(
         remarks_collection.find({"expert": ObjectId(id)}, {"expert": 0, "_id": 0})
     )
-    print(remarks)
     return jsonify(remarks)
 
 

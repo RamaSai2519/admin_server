@@ -303,27 +303,30 @@ def callUser(expertId, userId):
     return response.json()
 
 
-from datetime import datetime
-import pytz
-
-
 def checkValidity(call):
     initiated_time = call["initiatedTime"]
-
     if isinstance(initiated_time, str):
         initiated_time = datetime.strptime(initiated_time, "%Y-%m-%d %H:%M:%S.%f")
 
     utc_zone = pytz.utc
     ist_zone = pytz.timezone("Asia/Kolkata")
     initiated_time = initiated_time.replace(tzinfo=utc_zone).astimezone(ist_zone)
-
     current_time = datetime.now(ist_zone)
-    time_difference = current_time - initiated_time
 
-    if time_difference.total_seconds() <= 600:
-        return True
-    else:
-        hours, remainder = divmod(time_difference.total_seconds(), 3600)
-        minutes, _ = divmod(remainder, 60)
-        response = f"The call is {int(hours)} hours and {int(minutes)} minutes old and can't be reconnected."
-        return response
+    try:
+        if call["duration"] != "":
+            duration = get_total_duration_in_seconds(call["duration"])
+            duration_timedelta = timedelta(seconds=duration)
+            end_time = initiated_time + duration_timedelta
+            time_difference = current_time - end_time
+        else:
+            time_difference = current_time - initiated_time
+
+        if time_difference.total_seconds() <= 600:
+            return True
+        else:
+            hours, remainder = divmod(time_difference.total_seconds(), 3600)
+            minutes, _ = divmod(remainder, 60)
+            return f"The call is {int(hours)} hours and {int(minutes)} minutes old and can't be reconnected."
+    except Exception as e:
+        return f"Error: {e}"
