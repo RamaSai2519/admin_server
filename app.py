@@ -164,6 +164,8 @@ def handle_user(id):
         updateProfile_status(updated_user)
         return jsonify(updated_user)
     elif request.method == "DELETE":
+        user = users_collection.find_one({"_id": ObjectId(id)})
+        deleted_users_collection.insert_one(user)
         result = users_collection.delete_one({"_id": ObjectId(id)})
         return (
             (jsonify({"message": "User deleted successfully"}), 200)
@@ -293,10 +295,16 @@ def handle_expert(id):
         ]
         return jsonify(updated_expert)
     elif request.method == "DELETE":
-        result = experts_collection.delete_one({"_id": ObjectId(id)})
-        if result.deleted_count == 0:
-            return jsonify({"error": "Expert not found"}), 404
-        return jsonify({"message": "Expert deleted successfully"})
+        try:
+            expert = experts_collection.find_one({"_id": ObjectId(id)})
+            deleted_experts_collection.insert_one(expert)
+            result = experts_collection.delete_one({"_id": ObjectId(id)})
+            if result.deleted_count == 0:
+                return jsonify({"error": "Expert not found"}), 404
+            return jsonify({"message": "Expert deleted successfully"})
+        except Exception as e:
+            print(e)
+            return jsonify({"error": str(e)}), 500
     else:
         return jsonify({"error": "Invalid request method"}), 404
 
@@ -423,6 +431,8 @@ def update_schedule(id):
     elif request.method == "DELETE":
         try:
             cancel_final_call(id)
+            schedule = schedules_collection.find_one({"_id": ObjectId(id)})
+            deleted_schedules_collection.insert_one(schedule)
             result = schedules_collection.delete_one({"_id": ObjectId(id)})
             if result.deleted_count == 0:
                 return jsonify({"error": "Schedule not found"}), 404

@@ -14,17 +14,23 @@ firebase_admin.initialize_app(cred)
 client = MongoClient(
     "mongodb+srv://sukoon_user:Tcks8x7wblpLL9OA@cluster0.o7vywoz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 )
+# client = MongoClient(
+#     "mongodb+srv://techcouncil:2lfNFMZIjdfZJl2R@cluster0.h3kssoa.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+# )
 db = client["test"]
 calls_collection = db["calls"]
-experts_collection = db["experts"]
 users_collection = db["users"]
-fcm_tokens_collection = db["fcm_tokens"]
 logs_collection = db["errorlogs"]
+remarks_collection = db["remarks"]
+experts_collection = db["experts"]
+schedules_collection = db["schedules"]
+fcm_tokens_collection = db["fcm_tokens"]
 categories_collection = db["categories"]
 statuslogs_collection = db["statuslogs"]
+deleted_users_collection = db["deletedusers"]
 applications_collection = db["becomesaarthis"]
-schedules_collection = db["schedules"]
-remarks_collection = db["remarks"]
+deleted_experts_collection = db["deletedexperts"]
+deleted_schedules_collection = db["deletedschedules"]
 
 # Ensure indexes
 calls_collection.create_index([("initiatedTime", DESCENDING)])
