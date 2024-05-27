@@ -11,17 +11,17 @@ cred = credentials.Certificate("serviceAccountKey.json")
 firebase_admin.initialize_app(cred)
 
 # MongoDB connection
-client = MongoClient(
-    "mongodb+srv://sukoon_user:Tcks8x7wblpLL9OA@cluster0.o7vywoz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
-)
 # client = MongoClient(
-#     "mongodb+srv://techcouncil:2lfNFMZIjdfZJl2R@cluster0.h3kssoa.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+#     "mongodb+srv://sukoon_user:Tcks8x7wblpLL9OA@cluster0.o7vywoz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 # )
+client = MongoClient(
+    "mongodb+srv://techcouncil:2lfNFMZIjdfZJl2R@cluster0.h3kssoa.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+)
 db = client["test"]
+meta_collection = db["meta"]
 calls_collection = db["calls"]
 users_collection = db["users"]
 logs_collection = db["errorlogs"]
-remarks_collection = db["remarks"]
 experts_collection = db["experts"]
 schedules_collection = db["schedules"]
 fcm_tokens_collection = db["fcm_tokens"]
@@ -336,3 +336,45 @@ def checkValidity(call):
             return f"The call is {int(hours)} hours and {int(minutes)} minutes old and can't be reconnected."
     except Exception as e:
         return f"Error: {e}"
+
+
+def get_latest_call(id):
+    id = ObjectId(id)
+    call = calls_collection.find_one(
+        {"$or": [{"_id": id}, {"expert": id}, {"user": id}]},
+        sort=[("initiatedTime", DESCENDING)],
+    )
+    return call
+
+
+def get_user_context(user_id):
+    if meta_collection.find_one({"user": user_id}) is None:
+        return "User context not found."
+    else:
+        try:
+            document = meta_collection.find_one({"user": user_id})
+            if "context" in document and document["context"] != "":
+                context = document["context"]
+                context = context.split("\n")
+                return context
+            else:
+                return "User context not found."
+        except Exception as e:
+            print(e)
+            return "User context not found."
+
+
+def get_expert_remarks(id):
+    try:
+        documents = list(meta_collection.find({"expert": id}))
+        if len(documents) > 0:
+            remarks = []
+            for document in documents:
+                if "remark" in document and document["remark"] != "":
+                    remarks.append(document["remark"])
+            return remarks
+        else:
+            return ["No Remarks Found."]
+    except Exception as e:
+        print(e)
+        return ["No Remarks found."]

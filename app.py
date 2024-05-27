@@ -30,20 +30,21 @@ def call_user():
 def connect():
     try:
         data = request.json
-        expertId = data.get("expert")
-        userId = data.get("user")
+        expertId = data["expert"]
+        userId = data["user"]
         response = callUser(expertId, userId)
         return response
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 
-@app.route("/api/remarks/<string:id>", methods=["GET"])
-def get_remarks(id):
-    remarks = list(
-        remarks_collection.find({"expert": ObjectId(id)}, {"expert": 0, "_id": 0})
-    )
-    return jsonify(remarks)
+@app.route("/api/popupData/<string:id>", methods=["GET"])
+def get_popup_data(id):
+    latest_call = get_latest_call(id)
+    user_id = latest_call["user"]
+    userContext = get_user_context(ObjectId(user_id))
+    remarks = get_expert_remarks(ObjectId(id))
+    return jsonify({"userContext": userContext, "remarks": remarks})
 
 
 @app.route("/api/save-fcm-token", methods=["POST"])
@@ -303,7 +304,6 @@ def handle_expert(id):
                 return jsonify({"error": "Expert not found"}), 404
             return jsonify({"message": "Expert deleted successfully"})
         except Exception as e:
-            print(e)
             return jsonify({"error": str(e)}), 500
     else:
         return jsonify({"error": "Invalid request method"}), 404
