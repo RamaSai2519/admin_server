@@ -10,10 +10,10 @@ CORS(app)
 
 
 @app.route("/api/callUser", methods=["POST"])
-def call_user():
+def expert_call_user():
     try:
         data = request.json
-        expertId = data.get("expertId")
+        expertId = data["expertId"]
         calls = list(calls_collection.find({"expert": ObjectId(expertId)}))
         isValid = checkValidity(calls[-1])
         if isValid == True:
