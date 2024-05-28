@@ -38,13 +38,14 @@ def connect():
         return jsonify({"error": str(e)}), 500
 
 
-@app.route("/api/popupData/<string:id>", methods=["GET"])
-def get_popup_data(id):
-    latest_call = get_latest_call(id)
+@app.route("/api/popupData/<string:expertId>", methods=["GET"])
+def get_popup_data(expertId):
+    latest_call = get_latest_call(expertId)
     user_id = latest_call["user"]
     userContext = get_user_context(ObjectId(user_id))
-    remarks = get_expert_remarks(ObjectId(id))
-    return jsonify({"userContext": userContext, "remarks": remarks})
+    remarks = get_expert_remarks(ObjectId(expertId))
+    repeation = determine_user_repeation(ObjectId(user_id), ObjectId(expertId))
+    return jsonify({"userContext": userContext, "remarks": remarks, "repeation": repeation})
 
 
 @app.route("/api/save-fcm-token", methods=["POST"])
