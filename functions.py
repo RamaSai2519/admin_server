@@ -360,9 +360,11 @@ def get_user_context(user_id):
                     user = users_collection.find_one({"_id": user_id})
                     user_city = user["city"]
                     user_dob = user["birthDate"]
+                    user_name = user["name"]
                     user_age = datetime.now().year - user_dob.year
                     context.insert(0, f"City: {user_city}")
                     context.insert(0, f"Age: {user_age}")
+                    context.insert(0, f"Name: {user_name}")
                 return context
             else:
                 return "User context not found."
