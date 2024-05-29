@@ -28,15 +28,15 @@ class FormatManager:
         logged_in_hours = hf.calculate_logged_in_hours(login_logs)
         formatted_expert = {
             "_id": expert_id,
-            "name": expert["name"],
-            "phoneNumber": expert["phoneNumber"],
-            "score": expert["score"],
-            "status": expert["status"],
-            "createdDate": expert["createdDate"],
-            "loggedInHours": logged_in_hours,
-            "repeatRate": expert["repeat_score"],
-            "callsShare": expert["calls_share"],
-            "totalScore": expert["total_score"],
-            "isBusy": expert["isBusy"],
+            "name": expert["name"] if "name" in expert else None,
+            "phoneNumber": expert["phoneNumber"] if "phoneNumber" in expert else None,
+            "score": expert["score"] if "score" in expert else 0,
+            "status": expert["status"] if "status" in expert else None,
+            "createdDate": expert["createdDate"] if "createdDate" in expert else None,
+            "loggedInHours": logged_in_hours if logged_in_hours else 0,
+            "repeatRate": expert["repeat_score"] if "repeat_score" in expert else 0,
+            "callsShare": expert["calls_share"] if "calls_share" in expert else 0,
+            "totalScore": expert["total_score"] if "total_score" in expert else 0,
+            "isBusy": expert["isBusy"] if "isBusy" in expert else False,
         }
         return formatted_expert

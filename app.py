@@ -9,29 +9,29 @@ Routes from the admin server
         - ExpertService
     - Each service has its own routes
         - AppService
-            - /admin/service/schedule/<string:id>
-            - /admin/service/approve/<string:id>/<level>
-            - /admin/service/save-fcm-token
-            - /admin/service/dashboardstats
+            - /admin/service/schedule/<string:id> (tested)
+            - /admin/service/approve/<string:id>/<level> (tested)
+            - /admin/service/save-fcm-token (tested)
+            - /admin/service/dashboardstats (tested) (too long) 
         - CallService
-            - /admin/call/calls/<string:id>
-            - /admin/call/callUser
-            - /admin/call/connect
+            - /admin/call/calls/<string:id> (tested)
+            - /admin/call/callUser (tested)
+            - /admin/call/connect (tested)
         - DataService
-            - /admin/data/errorlogs
-            - /admin/data/calls
-            - /admin/data/applications
-            - /admin/data/users
-            - /admin/data/experts
-            - /admin/data/categories
-            - /admin/data/schedules
+            - /admin/data/errorlogs (tested)
+            - /admin/data/calls (tested) (too long)
+            - /admin/data/applications (tested)
+            - /admin/data/users (tested) (Will take long in future)
+            - /admin/data/experts (tested)
+            - /admin/data/categories (tested)
+            - /admin/data/schedules (tested) (too long)
         - UserService
-            - /admin/user/leads
-            - /admin/user/users/<string:id>
+            - /admin/user/leads (tested)
+            - /admin/user/users/<string:id> (tested)
         - ExpertService
-            - /admin/expert/experts/<string:id>
-            - /admin/expert/popupData/<string:expertId>
- - A total of 17 routes are present in the admin server
+            - /admin/expert/experts/<string:id> (tested)
+            - /admin/expert/popupData/<string:expertId> (tested)
+ - A total of 17 routes are present in the admin server @ 29/05/2024
 """
 
 from Utils.Services.ExpertService import ExpertService

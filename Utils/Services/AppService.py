@@ -5,6 +5,7 @@ from Utils.config import (
     experts_collection,
     users_collection,
 )
+from Utils.Helpers.UtilityFunctions import UtilityFunctions as uf
 from Utils.Helpers.ScheduleManager import ScheduleManager as sm
 from Utils.Helpers.HelperFunctions import HelperFunctions as hf
 from Utils.Helpers.ExpertManager import ExpertManager as em
@@ -34,9 +35,9 @@ class AppService:
         current_date = datetime.now(pytz.timezone("Asia/Kolkata"))
         today_start = datetime.combine(current_date, datetime.min.time())
         today_end = datetime.combine(current_date, datetime.max.time())
-        total_calls = len(cm.get_calls())
+        total_calls = len(uf.get_calls())
         today_calls_query = {"initiatedTime": {"$gte": today_start, "$lt": today_end}}
-        today_calls = cm.get_calls(today_calls_query, {})
+        today_calls = uf.get_calls(today_calls_query, {})
         today_successful_calls = sum(
             1 for call in today_calls if call["status"] == "successful"
         )

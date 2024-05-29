@@ -1,5 +1,11 @@
-from Utils.config import users_collection, experts_collection, experts_cache, users_cache
-from datetime import timedelta
+from Utils.config import (
+    experts_collection,
+    users_collection,
+    calls_collection,
+    experts_cache,
+    users_cache,
+)
+from datetime import timedelta, datetime
 import requests
 
 
@@ -73,3 +79,29 @@ class HelperFunctions:
             user = users_collection.find_one({"_id": user_id}, {"name": 1})
             users_cache[user_id] = user["name"] if user and user["name"] else "Unknown"
         return users_cache[user_id]
+
+    @staticmethod
+    def calculate_logged_in_hours(login_logs):
+        total_logged_in_hours = 0
+        last_logged_out_time = None
+
+        for log in login_logs:
+            if log["status"] == "online":
+                logged_in_at = log["date"]
+                logged_out_at = (
+                    datetime.now()
+                    if last_logged_out_time is None
+                    else last_logged_out_time
+                )
+            else:
+                logged_out_at = log["date"]
+                logged_in_at = last_logged_out_time
+            if logged_in_at is not None and logged_out_at is not None:
+                total_logged_in_hours += (
+                    logged_out_at - logged_in_at
+                ).total_seconds() / 3600
+            last_logged_out_time = logged_out_at
+
+        return total_logged_in_hours
+
+    

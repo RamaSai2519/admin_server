@@ -1,3 +1,4 @@
+from Utils.Helpers.FormatManager import FormatManager as fm
 from Utils.Helpers.CallManager import CallManager as cm
 from Utils.config import calls_collection
 from flask import request, jsonify
@@ -15,7 +16,10 @@ class CallService:
             if isValid == True:
                 userId = calls[-1]["user"]
                 response = cm.callUser(expertId, userId)
-                return response
+                if response["data"] == {}:
+                    return response["error"]
+                else:
+                    return "Call Initiated Successfully"
             else:
                 return isValid
         except Exception as e:
@@ -38,7 +42,7 @@ class CallService:
             call = calls_collection.find_one({"callId": id})
             if not call:
                 return jsonify({"error": "Call not found"}), 404
-            formatted_call = cm.format_call(call)
+            formatted_call = fm.format_call(call)
             return jsonify(formatted_call)
         elif (request.method) == "PUT":
             data = request.get_json()

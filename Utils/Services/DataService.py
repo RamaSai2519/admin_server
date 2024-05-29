@@ -6,9 +6,9 @@ from Utils.config import (
     categories_collection,
     schedules_collection,
 )
+from Utils.Helpers.UtilityFunctions import UtilityFunctions as uf
 from Utils.Helpers.ScheduleManager import ScheduleManager as sm
-from Utils.Helpers.ExpertManager import ExpertManager as em
-from Utils.Helpers.CallManager import CallManager as cm
+from Utils.Helpers.FormatManager import FormatManager as fm
 from datetime import datetime, timedelta
 from flask import jsonify, request
 from bson import ObjectId
@@ -31,12 +31,12 @@ class DataService:
 
     @staticmethod
     def get_all_calls():
-        return cm.get_calls()
+        return uf.get_calls()
 
     @staticmethod
     def get_experts():
         experts = list(experts_collection.find({}, {"categories": 0}))
-        formatted_experts = [em.get_formatted_expert(expert) for expert in experts]
+        formatted_experts = [fm.get_formatted_expert(expert) for expert in experts]
         return jsonify(formatted_experts)
 
     @staticmethod

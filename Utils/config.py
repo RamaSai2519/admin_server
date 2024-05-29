@@ -7,7 +7,7 @@ import os
 firebase_admin.initialize_app(credentials.Certificate("serviceAccountKey.json"))
 load_dotenv()
 
-client = MongoClient(os.getenv("PROD_DB_URL"))
+client = MongoClient(os.getenv("DEV_DB_URL"))
 db = client["test"]
 
 
