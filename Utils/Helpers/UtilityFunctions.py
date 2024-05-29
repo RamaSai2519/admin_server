@@ -1,4 +1,4 @@
-from Utils.config import calls_collection, users_collection
+from Utils.config import calls_collection, users_collection, admins
 from Utils.Helpers.FormatManager import FormatManager as fm
 
 class UtilityFunctions:
@@ -38,3 +38,11 @@ class UtilityFunctions:
 
         calls = [fm.format_call(call) for call in calls]
         return calls
+    
+    @staticmethod
+    def authenticate(username, password):
+        user = next(
+            (u for u in admins if u["username"] == username and u["password"] == password),
+            None,
+        )
+        return user

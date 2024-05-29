@@ -7,9 +7,13 @@ import os
 firebase_admin.initialize_app(credentials.Certificate("serviceAccountKey.json"))
 load_dotenv()
 
-client = MongoClient(os.getenv("DEV_DB_URL"))
-db = client["test"]
+JWT_SECRET_KEY = os.getenv("JWT_SECRET")
+JWT_ACCESS_TOKEN_EXPIRES = 900
+JWT_REFRESH_TOKEN_EXPIRES = 2592000
+admins = [{"id": 1, "username": "admin@sukoon.love", "password": "Care@sukoon123"}]
 
+client = MongoClient(os.getenv("PROD_DB_URL"))
+db = client["test"]
 
 deleted_schedules_collection = db["deletedschedules"]
 deleted_experts_collection = db["deletedexperts"]
