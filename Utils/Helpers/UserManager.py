@@ -2,9 +2,8 @@ from Utils.config import (
     users_collection,
     meta_collection,
     calls_collection,
-    users_cache,
 )
-from Utils.Helpers.ExpertManager import ExpertManager as em
+from Utils.Helpers.HelperFunctions import HelperFunctions as hf
 from datetime import datetime
 
 
@@ -65,7 +64,7 @@ class UserManager:
             else:
                 calls = list(calls_collection.find({"user": user_id}))
                 latest_call = calls[-2]
-                last_expert_name = em.get_expert_name(latest_call["expert"])
+                last_expert_name = hf.get_expert_name(latest_call["expert"])
                 return f"The user has spoken to {last_expert_name} in the last session."
         else:
             return "The user is new to the platform."
