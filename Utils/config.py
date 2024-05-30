@@ -8,8 +8,6 @@ firebase_admin.initialize_app(credentials.Certificate("serviceAccountKey.json"))
 load_dotenv()
 
 JWT_SECRET_KEY = os.getenv("JWT_SECRET")
-JWT_ACCESS_TOKEN_EXPIRES = 900
-JWT_REFRESH_TOKEN_EXPIRES = 2592000
 admins = [{"id": 1, "username": "admin@sukoon.love", "password": "Care@sukoon123"}]
 
 client = MongoClient(os.getenv("PROD_DB_URL"))
@@ -28,7 +26,7 @@ logs_collection = db["errorlogs"]
 calls_collection = db["calls"]
 users_collection = db["users"]
 meta_collection = db["meta"]
-
+admins_collection = db["admins"]
 
 calls_collection.create_index([("initiatedTime", DESCENDING)])
 experts_collection.create_index([("createdDate", DESCENDING)])

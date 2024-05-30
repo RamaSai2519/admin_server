@@ -1,7 +1,20 @@
 from Utils.config import calls_collection, users_collection, admins
 from Utils.Helpers.FormatManager import FormatManager as fm
 
+
 class UtilityFunctions:
+    @staticmethod
+    def authenticate(username, password):
+        user = next(
+            (
+                u
+                for u in admins
+                if u["username"] == username and u["password"] == password
+            ),
+            None,
+        )
+        return user
+
     @staticmethod
     def get_calls(query={}, projection={}):
         admin_ids = [
@@ -38,11 +51,3 @@ class UtilityFunctions:
 
         calls = [fm.format_call(call) for call in calls]
         return calls
-    
-    @staticmethod
-    def authenticate(username, password):
-        user = next(
-            (u for u in admins if u["username"] == username and u["password"] == password),
-            None,
-        )
-        return user
