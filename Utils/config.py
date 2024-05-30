@@ -9,7 +9,7 @@ load_dotenv()
 
 JWT_SECRET_KEY = os.getenv("JWT_SECRET")
 
-client = MongoClient(os.getenv("DEV_DB_URL"))
+client = MongoClient(os.getenv("PROD_DB_URL"))
 db = client["test"]
 
 deleted_schedules_collection = db["deletedschedules"]
