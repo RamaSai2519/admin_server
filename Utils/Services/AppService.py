@@ -51,10 +51,8 @@ class AppService:
             if total_successful_calls
             else "0 minutes"
         )
-
         total_failed_calls = total_calls - total_successful_calls
         today_failed_calls = today_total_calls - today_successful_calls
-
         stats_data = {
             "totalCalls": total_calls,
             "successfulCalls": total_successful_calls,
