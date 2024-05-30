@@ -1,6 +1,6 @@
 /Utils/__pycache__
 /Utils/Helpers/__pycache__
 /Utils/Services/__pycache__
-# /serviceAccountKey.json
+/serviceAccountKey.json
 jwtgenerator.py
-# .env
+.env
