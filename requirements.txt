@@ -2,5 +2,6 @@ flask
 flask_cors
 pytz
 requests
+flask_jwt_extended
 firebase_admin
 pymongo
