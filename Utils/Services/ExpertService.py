@@ -2,6 +2,7 @@ from Utils.config import (
     experts_collection,
     categories_collection,
     deleted_experts_collection,
+    experts_cache
 )
 from Utils.Helpers.ExpertManager import ExpertManager as em
 from Utils.Helpers.UserManager import UserManager as um
@@ -98,6 +99,7 @@ class ExpertService:
                 )
                 for category_id in updated_expert["categories"]
             ]
+            experts_cache[ObjectId(id)] = updated_expert["name"]
             return jsonify(updated_expert)
         elif request.method == "DELETE":
             try:

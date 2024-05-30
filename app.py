@@ -23,12 +23,14 @@ Routes from the admin server
             - /admin/call/connect (tested)
         - DataService
             - /admin/data/errorlogs (tested)
-            - /admin/data/calls (tested) (too long)
+            - /admin/data/calls (tested) 
+                (On Server Start: 5.16s) (Later: 228ms)
             - /admin/data/applications (tested)
-            - /admin/data/users (tested) (Will take long in future)
+            - /admin/data/users (tested) 
             - /admin/data/experts (tested)
             - /admin/data/categories (tested)
-            - /admin/data/schedules (tested) (too long)
+            - /admin/data/schedules (tested) 
+                (On Server Start: 2.49s) (Later: 78ms)
         - UserService
             - /admin/user/leads (tested)
             - /admin/user/users/<string:id> (tested)

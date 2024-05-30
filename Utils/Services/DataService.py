@@ -7,6 +7,7 @@ from Utils.config import (
     schedules_collection,
 )
 from Utils.Helpers.UtilityFunctions import UtilityFunctions as uf
+from Utils.Helpers.HelperFunctions import HelperFunctions as hf
 from Utils.Helpers.ScheduleManager import ScheduleManager as sm
 from Utils.Helpers.FormatManager import FormatManager as fm
 from datetime import datetime, timedelta
@@ -64,16 +65,8 @@ class DataService:
             schedules = list(schedules_collection.find())
             for schedule in schedules:
                 schedule["_id"] = str(schedule["_id"])
-                expert_id = schedule["expert"]
-                expert_id = experts_collection.find_one({"_id": expert_id}, {"name": 1})
-                schedule["expert"] = expert_id["name"] if expert_id else ""
-                user_id = schedule["user"]
-                user_id = users_collection.find_one({"_id": user_id}, {"name": 1})
-                schedule["user"] = user_id["name"] if user_id else ""
-                if isinstance(schedule["datetime"], datetime):
-                    schedule["datetime"] = schedule["datetime"].strftime(
-                        "%Y-%m-%d %H:%M:%S"
-                    )
+                schedule["expert"] = hf.get_expert_name(schedule["expert"])
+                schedule["user"] = hf.get_user_name(schedule["user"])
             return jsonify(schedules)
         elif request.method == "POST":
             data = request.json

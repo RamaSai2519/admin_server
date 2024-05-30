@@ -49,8 +49,8 @@ class UserService:
             )
             if result.modified_count == 0:
                 return jsonify({"error": "User not found"}), 404
-            users_cache.pop(id, None)
             updated_user = users_collection.find_one({"_id": ObjectId(id)}, {"_id": 0})
+            users_cache[ObjectId(id)] = updated_user["name"]
             um.updateProfile_status(updated_user)
             return jsonify(updated_user)
         elif request.method == "DELETE":
