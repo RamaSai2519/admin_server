@@ -110,7 +110,6 @@ def handle_call_route(id):
 
 
 @app.route("/admin/call/callUser", methods=["POST"])
-@jwt_required()
 def expert_call_user_route():
     return CallService.expert_call_user()
 
@@ -172,7 +171,6 @@ def handle_expert_route(id):
 
 
 @app.route("/admin/expert/popupData/<string:expertId>", methods=["GET"])
-@jwt_required()
 def get_popup_data_route(expertId):
     return ExpertService.get_popup_data(expertId)
 
