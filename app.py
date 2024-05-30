@@ -34,7 +34,9 @@ Routes from the admin server
  - A total of 17 routes are present in the admin server @ 29/05/2024
 """
 
+from flask_jwt_extended import JWTManager, jwt_required
 from Utils.Services.ExpertService import ExpertService
+from Utils.Services.AuthService import AuthService
 from Utils.Services.DataService import DataService
 from Utils.Services.CallService import CallService
 from Utils.Services.UserService import UserService
@@ -49,6 +51,26 @@ CORS(app, supports_credentials=True)
 app.config["JWT_SECRET_KEY"] = JWT_SECRET_KEY
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = 900
 app.config["JWT_REFRESH_TOKEN_EXPIRES"] = 2592000
+jwt = JWTManager(app)
+
+
+# Authentication Route
+@app.route("/admin/auth/login", methods=["POST"])
+def login_route():
+    return AuthService.login()
+
+
+# Refresh Token Route
+@app.route("/admin/auth/refresh", methods=["POST"])
+@jwt_required(refresh=True)
+def refresh_route():
+    return AuthService.refresh()
+
+
+@app.route("/admin/auth/register", methods=["POST"])
+def register_route():
+    return AuthService.register()
+
 
 # Below are the functional routes, prefixed with /service
 @app.route("/admin/service/schedule/<id>", methods=["PUT", "DELETE", "GET"])
@@ -89,6 +111,7 @@ def connect_route():
 
 # Below are the DataService routes, prefixed with /data
 @app.route("/admin/data/errorlogs")
+@jwt_required()
 def get_error_logs_route():
     return DataService.get_error_logs()
 
