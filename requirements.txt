@@ -2,7 +2,7 @@ flask
 flask_cors
 pytz
 requests
-dotenv
+python-dotenv
 flask_jwt_extended
 firebase_admin
 pymongo
