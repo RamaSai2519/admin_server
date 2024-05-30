@@ -30,7 +30,7 @@ Routes from the admin server
             - /admin/data/experts (tested)
             - /admin/data/categories (tested)
             - /admin/data/schedules (tested) 
-                (On Server Start: 2.49s) (Later: 78ms)
+                (On Server Start: 2.49s) (Later: 56ms)
         - UserService
             - /admin/user/leads (tested)
             - /admin/user/users/<string:id> (tested)
