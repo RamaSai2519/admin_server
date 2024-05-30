@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 import firebase_admin
 import os
 
-firebase_admin.initialize_app(credentials.Certificate("serviceAccountKey.json"))
+# firebase_admin.initialize_app(credentials.Certificate("serviceAccountKey.json"))
 load_dotenv()
 
 JWT_SECRET_KEY = os.getenv("JWT_SECRET")
