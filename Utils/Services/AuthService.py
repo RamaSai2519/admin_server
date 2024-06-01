@@ -12,13 +12,15 @@ from datetime import datetime
 class AuthService:
     @staticmethod
     def register():
-        username = request.json.get("email", None)
+        id = request.json.get("id", None)
+        name = request.json.get("name", None)
         password = request.json.get("password", None)
+        role = request.json.get("role", None)
 
-        if not username or not password:
-            return jsonify({"msg": "Missing email or password"}), 400
+        if not id or not password or not role:
+            return jsonify({"msg": "Missing email or password or role"}), 400
 
-        if admins_collection.find_one({"email": username}):
+        if admins_collection.find_one({"id": id}):
             return jsonify({"msg": "User already exists"}), 400
 
         hashed_password = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
@@ -26,31 +28,34 @@ class AuthService:
 
         admins_collection.insert_one(
             {
-                "email": username,
+                "id": id,
+                "name": name,
                 "password": hashed_password.decode("utf-8"),
                 "createdDate": createdDate,
-                "role": "admin",
+                "role": role,
             }
         )
         return jsonify({"msg": "User created"})
 
     @staticmethod
     def login():
-        email = request.json.get("email", None)
+        print(request.json)
+        id = request.json.get("id", None)
         password = request.json.get("password", None)
-        if not email or not password:
+        if not id or not password:
             return jsonify({"msg": "Missing email or password"}), 400
 
-        user = admins_collection.find_one({"email": email})
+        user = admins_collection.find_one({"id": id})
         if not user or not bcrypt.checkpw(
             password.encode("utf-8"), user["password"].encode("utf-8")
         ):
             return jsonify({"msg": "Bad credentials"}), 401
 
         id = str(user["_id"])
+        user["_id"] = id
         access_token = create_access_token(identity=id)
         refresh_token = create_refresh_token(identity=id)
-        return jsonify(access_token=access_token, refresh_token=refresh_token)
+        return jsonify(access_token=access_token, refresh_token=refresh_token, user=user)
 
     @staticmethod
     def refresh():
