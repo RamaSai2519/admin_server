@@ -1,6 +1,5 @@
 import requests
 
-
 class ScheduleManager:
     @staticmethod
     def cancel_final_call(record):

@@ -22,16 +22,15 @@ statuslogs_collection = db["statuslogs"]
 schedules_collection = db["schedules"]
 experts_collection = db["experts"]
 logs_collection = db["errorlogs"]
+admins_collection = db["admins"]
 calls_collection = db["calls"]
 users_collection = db["users"]
 meta_collection = db["meta"]
-admins_collection = db["admins"]
 
 calls_collection.create_index([("initiatedTime", DESCENDING)])
 experts_collection.create_index([("createdDate", DESCENDING)])
 users_collection.create_index([("createdDate", DESCENDING)])
 experts_collection.create_index([("status", 1)])
-
 
 experts_cache = {}
 users_cache = {}

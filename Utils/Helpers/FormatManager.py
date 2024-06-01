@@ -1,6 +1,4 @@
 from Utils.Helpers.HelperFunctions import HelperFunctions as hf
-from Utils.config import statuslogs_collection
-
 
 class FormatManager:
     @staticmethod

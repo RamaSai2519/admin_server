@@ -1,7 +1,6 @@
 from Utils.config import (
     experts_collection,
     users_collection,
-    calls_collection,
     experts_cache,
     users_cache,
 )

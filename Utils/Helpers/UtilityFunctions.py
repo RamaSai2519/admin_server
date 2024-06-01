@@ -1,5 +1,7 @@
 from Utils.config import calls_collection, users_collection, admins_collection
 from Utils.Helpers.FormatManager import FormatManager as fm
+from datetime import datetime, timedelta
+import jwt
 
 
 class UtilityFunctions:
@@ -44,3 +46,15 @@ class UtilityFunctions:
 
         calls = [fm.format_call(call) for call in calls]
         return calls
+
+    @staticmethod
+    def generate_token(name, user_id, phone_number):
+        payload = {
+            "name": name,
+            "userId": user_id,
+            "phoneNumber": phone_number,
+            "exp": datetime.now() + timedelta(seconds=24 * 60 * 60),
+        }
+        secret_key = "saltDemaze"
+        token = jwt.encode(payload, secret_key, algorithm="HS256")
+        return token

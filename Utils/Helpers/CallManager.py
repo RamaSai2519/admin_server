@@ -6,6 +6,7 @@ from pymongo import DESCENDING
 from bson import ObjectId
 import requests
 import pytz
+import json
 
 
 class CallManager:
@@ -22,11 +23,19 @@ class CallManager:
         return len(total_seconds), sum(total_seconds)
 
     @staticmethod
-    def callUser(expertId, userId):
-        url = "http://localhost:5020/api/call/make-call"
-        userId = str(userId)
-        payload = {"expertId": expertId, "userId": userId}
-        response = requests.post(url, json=payload)
+    def callUser(expertId, user):
+        url = "http://api.sukoon.love/api/call/make-call"
+        token = uf.generate_token(user["name"], str(user["_id"]), user["phoneNumber"])
+        payload = json.dumps(
+            {
+                "expertId": expertId,
+            }
+        )
+        headers = {
+            "Authorization": "Bearer " + token,
+            "Content-Type": "application/json",
+        }
+        response = requests.request("POST", url, headers=headers, data=payload)
         return response.json()
 
     @staticmethod

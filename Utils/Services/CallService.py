@@ -1,6 +1,6 @@
+from Utils.config import calls_collection, users_collection
 from Utils.Helpers.FormatManager import FormatManager as fm
 from Utils.Helpers.CallManager import CallManager as cm
-from Utils.config import calls_collection
 from flask import request, jsonify
 from bson import ObjectId
 
@@ -15,7 +15,8 @@ class CallService:
             isValid = cm.checkValidity(calls[-1])
             if isValid == True:
                 userId = calls[-1]["user"]
-                response = cm.callUser(expertId, userId)
+                user = users_collection.find_one({"_id": ObjectId(userId)})
+                response = cm.callUser(expertId, user)
                 if response["data"] == {}:
                     return response["error"]
                 else:
@@ -31,7 +32,8 @@ class CallService:
             data = request.json
             expertId = data["expert"]
             userId = data["user"]
-            response = cm.callUser(expertId, userId)
+            user = users_collection.find_one({"_id": ObjectId(userId)})
+            response = cm.callUser(expertId, user)
             return response
         except Exception as e:
             return jsonify({"error": str(e)}), 500

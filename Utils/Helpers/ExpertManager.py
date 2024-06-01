@@ -1,7 +1,5 @@
 from Utils.config import experts_collection, meta_collection
 from Utils.Helpers.FormatManager import FormatManager as fm
-from datetime import datetime
-
 
 class ExpertManager:
     @staticmethod
