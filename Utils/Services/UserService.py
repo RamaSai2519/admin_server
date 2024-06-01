@@ -44,6 +44,7 @@ class UserService:
                 "birthDate",
                 "numberOfCalls",
                 "context",
+                "source",
             ]
             if not any(user_data.get(field) for field in fields):
                 return (
@@ -59,7 +60,6 @@ class UserService:
                     elif field == "numberOfCalls":
                         value = int(value)
                     elif field == "context":
-                        print(value)
                         value = "\n".join(value)
                         meta_collection.update_one(
                             {"user": ObjectId(id)}, {"$set": {"context": value}}
