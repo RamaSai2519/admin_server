@@ -3,6 +3,7 @@ from Utils.config import (
     deleted_users_collection,
     meta_collection,
     users_cache,
+    applications_collection,
 )
 from Utils.Helpers.UserManager import UserManager as um
 from flask import request, jsonify
@@ -14,12 +15,16 @@ class UserService:
     @staticmethod
     def get_leads():
         final_leads = []
-        leads = list(users_collection.find({}, {"Customer Persona": 0}))
-        for lead in leads:
+        user_leads = list(users_collection.find({}, {"Customer Persona": 0}))
+        for lead in user_leads:
             if lead["profileCompleted"] is False:
                 lead["_id"] = str(lead["_id"])
                 lead["createdDate"] = lead["createdDate"]
                 final_leads.append(lead)
+        expert_leads = list(applications_collection.find({}, {"_id": 0}))
+        for lead in expert_leads:
+            lead["createdDate"] = lead["createdDate"]
+            final_leads.append(lead)
         return jsonify(final_leads)
 
     @staticmethod
