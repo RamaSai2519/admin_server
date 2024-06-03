@@ -14,7 +14,7 @@ class EventService:
     def get_users_by_event():
         params = request.args
         slug = params["slug"]
-        url = "http://localhost:5020/api/events/listUsersOfEvent"
+        url = "https://orca-app-du4na.ondigitalocean.app/api/events/listUsersOfEvent"
         payload = json.dumps({"slug": slug})
         headers = {"Content-Type": "application/json"}
         response = requests.request("GET", url, headers=headers, data=payload)
