@@ -197,7 +197,7 @@ def get_events_route():
     return EventService.get_events()
 
 
-@app.route("/admin/event/event", methods=["GET"])
+@app.route("/admin/event/event", methods=["GET", "PUT", "POST"])
 def get_event_route():
     return EventService.get_event()
 
