@@ -172,6 +172,10 @@ def schedules_route():
 def handle_expert_route(id):
     return ExpertService.handle_expert(id)
 
+@app.route("/admin/expert/create", methods=["POST"])
+@jwt_required()
+def create_expert_route():
+    return ExpertService.create_expert()
 
 @app.route("/admin/expert/popupData/<string:expertId>", methods=["GET"])
 def get_popup_data_route(expertId):

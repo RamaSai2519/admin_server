@@ -2,7 +2,7 @@ from Utils.config import (
     experts_collection,
     categories_collection,
     deleted_experts_collection,
-    experts_cache
+    experts_cache,
 )
 from Utils.Helpers.ExpertManager import ExpertManager as em
 from Utils.Helpers.UserManager import UserManager as um
@@ -12,6 +12,16 @@ from bson import ObjectId
 
 
 class ExpertService:
+    @staticmethod
+    def create_expert():
+        expert = experts_collection.insert_one(
+            {
+                "name": "Enter Name",
+                "proflieCompleted": True,
+            }
+        )
+        return jsonify(str(expert.inserted_id))
+
     @staticmethod
     def get_popup_data(expertId):
         latest_call = cm.get_latest_call(expertId)
@@ -30,12 +40,16 @@ class ExpertService:
             if not expert:
                 return jsonify({"error": "Expert not found"}), 404
             expert["_id"] = str(expert["_id"])
-            category_names = [
-                categories_collection.find_one({"_id": ObjectId(category_id)}).get(
-                    "name", ""
-                )
-                for category_id in expert["categories"]
-            ]
+            category_names = (
+                [
+                    categories_collection.find_one({"_id": ObjectId(category_id)}).get(
+                        "name", ""
+                    )
+                    for category_id in expert["categories"]
+                ]
+                if expert.get("categories")
+                else []
+            )
             expert["categories"] = category_names
             return jsonify(expert)
         elif request.method == "PUT":
@@ -49,6 +63,7 @@ class ExpertService:
                 "status",
                 "languages",
                 "score",
+                "active",
                 "calls_share",
                 "repeat_score",
                 "total_score",
