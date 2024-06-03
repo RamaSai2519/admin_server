@@ -154,7 +154,7 @@ def get_experts_route():
     return DataService.get_experts()
 
 
-@app.route("/admin/data/categories")
+@app.route("/admin/data/categories", methods=["GET", "POST"])
 @jwt_required()
 def get_categories_route():
     return DataService.get_categories()

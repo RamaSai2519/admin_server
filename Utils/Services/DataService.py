@@ -55,9 +55,16 @@ class DataService:
 
     @staticmethod
     def get_categories():
-        categories = list(categories_collection.find({}, {"_id": 0, "name": 1}))
-        category_names = [category["name"] for category in categories]
-        return jsonify(category_names)
+        if request.method == "GET":
+            categories = list(categories_collection.find({}, {"_id": 0, "name": 1}))
+            category_names = [category["name"] for category in categories]
+            return jsonify(category_names)
+        elif request.method == "POST":
+            data = request.json
+            category = data["name"]
+            createdDate = datetime.now()
+            categories_collection.insert_one({"name": category, "createdDate": createdDate, "active": True})
+            return jsonify({"message": "Category added successfully"})
 
     @staticmethod
     def schedules():
