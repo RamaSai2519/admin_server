@@ -42,6 +42,7 @@ Routes from the admin server
 
 from flask_jwt_extended import JWTManager, jwt_required
 from Utils.Services.ExpertService import ExpertService
+from Utils.Services.EventService import EventService
 from Utils.Services.AuthService import AuthService
 from Utils.Services.DataService import DataService
 from Utils.Services.CallService import CallService
@@ -50,7 +51,7 @@ from Utils.Services.AppService import AppService
 from Utils.config import JWT_SECRET_KEY
 from datetime import timedelta
 from flask_cors import CORS
-from flask import Flask
+from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
@@ -190,5 +191,21 @@ def handle_user_route(id):
     return UserService.handle_user(id)
 
 
+# Below are the EventService routes, prefixed with /event
+@app.route("/admin/event/events", methods=["GET"])
+def get_events_route():
+    return EventService.get_events()
+
+
+@app.route("/admin/event/event", methods=["GET"])
+def get_event_route():
+    return EventService.get_event()
+
+
+@app.route("/admin/event/users", methods=["GET"])
+def get_users_by_event_route():
+    return EventService.get_users_by_event()
+
+
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080)
+    app.run(host="0.0.0.0", port=8080, debug=True)

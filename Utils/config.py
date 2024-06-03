@@ -9,7 +9,7 @@ load_dotenv()
 JWT_SECRET_KEY = os.getenv("JWT_SECRET")
 firebase_admin.initialize_app(credentials.Certificate("serviceAccountKey.json"))
 
-client = MongoClient(os.getenv("PROD_DB_URL"))
+client = MongoClient(os.getenv("DEV_DB_URL"))
 db = client["test"]
 
 deleted_schedules_collection = db["deletedschedules"]
@@ -26,6 +26,8 @@ admins_collection = db["admins"]
 calls_collection = db["calls"]
 users_collection = db["users"]
 meta_collection = db["meta"]
+events_collection = db["events"]
+eventconfigs_collection = db["eventconfigs"]
 
 calls_collection.create_index([("initiatedTime", DESCENDING)])
 experts_collection.create_index([("createdDate", DESCENDING)])
