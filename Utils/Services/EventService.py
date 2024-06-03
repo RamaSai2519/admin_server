@@ -14,14 +14,23 @@ class EventService:
 
     @staticmethod
     def get_users_by_event():
-        params = request.args
-        slug = params["slug"]
-        url = "https://orca-app-du4na.ondigitalocean.app/api/events/listUsersOfEvent"
-        payload = json.dumps({"slug": slug})
-        headers = {"Content-Type": "application/json"}
-        response = requests.request("GET", url, headers=headers, data=payload)
-        data = response.json()["data"]
-        return data
+        try:
+            url = (
+                "https://orca-app-du4na.ondigitalocean.app/api/events/listUsersOfEvent"
+            )
+            headers = {"Content-Type": "application/json"}
+            if request.args:
+                params = request.args
+                slug = params["slug"]
+                payload = json.dumps({"slug": slug})
+                response = requests.get(url, headers=headers, data=payload)
+            else:
+                response = requests.get(url, headers=headers)
+            data = response.json()["data"]
+            return data
+        except Exception as e:
+            print(e)
+            return jsonify({"error": str(e)})
 
     @staticmethod
     def get_event():
