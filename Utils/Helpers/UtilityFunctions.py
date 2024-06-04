@@ -6,11 +6,6 @@ import jwt
 
 class UtilityFunctions:
     @staticmethod
-    def authenticate(username, password):
-        user = admins_collection.find_one({"email": username, "password": password})
-        return user
-
-    @staticmethod
     def get_calls(query={}, projection={}):
         admin_ids = [
             user["_id"] for user in users_collection.find({"role": "admin"}, {"_id": 1})
@@ -46,15 +41,3 @@ class UtilityFunctions:
 
         calls = [fm.format_call(call) for call in calls]
         return calls
-
-    @staticmethod
-    def generate_token(name, user_id, phone_number):
-        payload = {
-            "name": name,
-            "userId": user_id,
-            "phoneNumber": phone_number,
-            "exp": datetime.now() + timedelta(seconds=24 * 60 * 60),
-        }
-        secret_key = "saltDemaze"
-        token = jwt.encode(payload, secret_key, algorithm="HS256")
-        return token

@@ -9,6 +9,7 @@ from Utils.Helpers.UtilityFunctions import UtilityFunctions as uf
 from Utils.Helpers.ScheduleManager import ScheduleManager as sm
 from Utils.Helpers.HelperFunctions import HelperFunctions as hf
 from Utils.Helpers.ExpertManager import ExpertManager as em
+from Utils.Helpers.AuthManager import AuthManager as am
 from Utils.Helpers.CallManager import CallManager as cm
 from datetime import datetime, timedelta
 from flask import request, jsonify
@@ -74,22 +75,23 @@ class AppService:
                 expert = data["expert"]
                 expert = experts_collection.find_one({"name": expert})
                 expert = str(expert["_id"])
-                expert_number = (expert["phoneNumber"],)
-                user = (data["user"],)
+                expert_number = (expert["phoneNumber"])
+                user = (data["user"])
                 user = users_collection.find_one({"name": user})
-                user_number = (user["phoneNumber"],)
-                user = (str(user["_id"]),)
+                user_number = (user["phoneNumber"])
+                user = (str(user["_id"]))
                 time = data["datetime"]
                 ist_offset = timedelta(hours=5, minutes=30)
                 date_object = datetime.strptime(time, "%Y-%m-%dT%H:%M:%S.%fZ")
                 ist_time = date_object + ist_offset
 
                 sm.cancel_final_call(id)
-
+                admin_id = am.get_identity()
                 result = schedules_collection.update_one(
                     {"_id": ObjectId(id)},
                     {
                         "$set": {
+                            "lastModifiedBy": ObjectId(admin_id),
                             "expert": ObjectId(expert),
                             "user": ObjectId(user),
                             "datetime": time,

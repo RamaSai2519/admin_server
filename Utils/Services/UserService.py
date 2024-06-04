@@ -6,6 +6,7 @@ from Utils.config import (
     applications_collection,
 )
 from Utils.Helpers.UserManager import UserManager as um
+from Utils.Helpers.AuthManager import AuthManager as am
 from flask import request, jsonify
 from datetime import datetime
 from bson import ObjectId
@@ -31,6 +32,7 @@ class UserService:
     def handle_user(id):
         if request.method == "GET":
             user = users_collection.find_one({"_id": ObjectId(id)}, {"_id": 0})
+            user["lastModifiedBy"] = str(user["lastModifiedBy"]) if user["lastModifiedBy"] else ""
             meta_doc = meta_collection.find_one({"user": ObjectId(id)})
             if meta_doc:
                 user["context"] = str(meta_doc["context"]).split("\n")
@@ -70,13 +72,15 @@ class UserService:
                             {"user": ObjectId(id)}, {"$set": {"context": value}}
                         )
                     update_query[field] = value
-
+                    admin_id = am.get_identity()
+                    update_query["lastModifiedBy"] = ObjectId(admin_id)
             result = users_collection.update_one(
                 {"_id": ObjectId(id)}, {"$set": update_query}
             )
             if result.modified_count == 0:
                 return jsonify({"error": "User not found"}), 404
             updated_user = users_collection.find_one({"_id": ObjectId(id)}, {"_id": 0})
+            updated_user["lastModifiedBy"] = str(updated_user["lastModifiedBy"])
             users_cache[ObjectId(id)] = updated_user["name"]
             um.updateProfile_status(updated_user)
             return jsonify(updated_user)

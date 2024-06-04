@@ -1,5 +1,6 @@
-from Utils.Helpers.HelperFunctions import HelperFunctions as hf
 from Utils.Helpers.UtilityFunctions import UtilityFunctions as uf
+from Utils.Helpers.HelperFunctions import HelperFunctions as hf
+from Utils.Helpers.AuthManager import AuthManager as am
 from Utils.config import calls_collection
 from datetime import datetime, timedelta
 from pymongo import DESCENDING
@@ -25,7 +26,7 @@ class CallManager:
     @staticmethod
     def callUser(expertId, user):
         url = "http://api.sukoon.love/api/call/make-call"
-        token = uf.generate_token(user["name"], str(user["_id"]), user["phoneNumber"])
+        token = am.generate_token(user["name"], str(user["_id"]), user["phoneNumber"])
         payload = json.dumps(
             {
                 "expertId": expertId,

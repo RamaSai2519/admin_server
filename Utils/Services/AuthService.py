@@ -1,12 +1,13 @@
-import bcrypt
-from Utils.config import admins_collection
-from flask import jsonify, request
 from flask_jwt_extended import (
     create_access_token,
     create_refresh_token,
     get_jwt_identity,
 )
+from Utils.Helpers.AuthManager import AuthManager as am
+from Utils.config import admins_collection
+from flask import jsonify, request
 from datetime import datetime
+import bcrypt
 
 
 class AuthService:
@@ -55,7 +56,9 @@ class AuthService:
         user["_id"] = id
         access_token = create_access_token(identity=id)
         refresh_token = create_refresh_token(identity=id)
-        return jsonify(access_token=access_token, refresh_token=refresh_token, user=user)
+        return jsonify(
+            access_token=access_token, refresh_token=refresh_token, user=user
+        )
 
     @staticmethod
     def refresh():

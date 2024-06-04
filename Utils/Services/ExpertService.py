@@ -7,6 +7,7 @@ from Utils.config import (
 from Utils.Helpers.ExpertManager import ExpertManager as em
 from Utils.Helpers.UserManager import UserManager as um
 from Utils.Helpers.CallManager import CallManager as cm
+from Utils.Helpers.AuthManager import AuthManager as am
 from flask import jsonify, request
 from bson import ObjectId
 
@@ -40,6 +41,7 @@ class ExpertService:
             if not expert:
                 return jsonify({"error": "Expert not found"}), 404
             expert["_id"] = str(expert["_id"])
+            expert["lastModifiedBy"] = str(expert["lastModifiedBy"])
             category_names = (
                 [
                     categories_collection.find_one({"_id": ObjectId(category_id)}).get(
@@ -100,14 +102,18 @@ class ExpertService:
                             else expert_data[field]
                         )
                     )
+                    admin_id = am.get_identity()
+                    update_query["lastModifiedBy"] = ObjectId(admin_id)
             result = experts_collection.update_one(
                 {"_id": ObjectId(id)}, {"$set": update_query}
             )
             if result.modified_count == 0:
                 return jsonify({"error": "Expert not found"}), 404
             updated_expert = experts_collection.find_one(
-                {"_id": ObjectId(id)}, {"_id": 0}
+                {"_id": ObjectId(id)}
             )
+            updated_expert["_id"] = str(updated_expert["_id"])
+            updated_expert["lastModifiedBy"] = str(updated_expert["lastModifiedBy"])
             updated_expert["categories"] = [
                 categories_collection.find_one({"_id": ObjectId(category_id)}).get(
                     "name", ""

@@ -1,7 +1,9 @@
 from Utils.Helpers.EventManager import EventManager as evm
+from Utils.Helpers.AuthManager import AuthManager as am
 from Utils.config import eventconfigs_collection
 from flask import jsonify, request
 from datetime import datetime
+from bson import ObjectId
 import requests
 import json
 
@@ -38,6 +40,9 @@ class EventService:
             params = request.args
             slug = params["slug"]
             event = eventconfigs_collection.find_one({"slug": slug}, {"_id": 0})
+            event["lastModifiedBy"] = (
+                str(event["lastModifiedBy"]) if "lastModifiedBy" in event else ""
+            )
             return jsonify(event)
         elif request.method == "POST":
             data = request.json
@@ -54,6 +59,8 @@ class EventService:
             createdTime = datetime.now()
             data["createdAt"] = createdTime
             data["updatedAt"] = createdTime
+            admin_id = am.get_identity()
+            data["lastModifiedBy"] = ObjectId(admin_id)
             eventconfigs_collection.insert_one(data)
             event = eventconfigs_collection.find_one({"slug": slug}, {"_id": 0})
             return jsonify(event)

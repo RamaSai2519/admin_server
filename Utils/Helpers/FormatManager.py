@@ -1,5 +1,6 @@
 from Utils.Helpers.HelperFunctions import HelperFunctions as hf
 
+
 class FormatManager:
     @staticmethod
     def format_call(call):
@@ -10,6 +11,9 @@ class FormatManager:
         call["user"] = str(user_id)
         call["expertName"] = hf.get_expert_name(expert_id)
         call["expert"] = str(expert_id)
+        call["lastModifiedBy"] = (
+            str(call["lastModifiedBy"]) if "lastModifiedBy" in call else None
+        )
         call["ConversationScore"] = call.pop("Conversation Score", 0)
         if call["failedReason"] == "call missed":
             call["status"] = "missed"
@@ -31,5 +35,8 @@ class FormatManager:
             "callsShare": expert["calls_share"] if "calls_share" in expert else 0,
             "totalScore": expert["total_score"] if "total_score" in expert else 0,
             "isBusy": expert["isBusy"] if "isBusy" in expert else False,
+            "lastModifiedBy": (
+                str(expert["lastModifiedBy"]) if "lastModifiedBy" in expert else None
+            ),
         }
         return formatted_expert

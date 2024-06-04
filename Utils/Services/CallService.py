@@ -1,5 +1,6 @@
 from Utils.config import calls_collection, users_collection
 from Utils.Helpers.FormatManager import FormatManager as fm
+from Utils.Helpers.AuthManager import AuthManager as am
 from Utils.Helpers.CallManager import CallManager as cm
 from flask import request, jsonify
 from bson import ObjectId
@@ -49,9 +50,15 @@ class CallService:
         elif (request.method) == "PUT":
             data = request.get_json()
             new_conversation_score = data["ConversationScore"]
+            admin_id = am.get_identity()
             result = calls_collection.update_one(
                 {"callId": id},
-                {"$set": {"Conversation Score": float(new_conversation_score)}},
+                {
+                    "$set": {
+                        "Conversation Score": float(new_conversation_score),
+                        "lastModifiedBy": ObjectId(admin_id),
+                    }
+                },
             )
 
             if result.modified_count == 0:
