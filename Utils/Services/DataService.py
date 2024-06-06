@@ -55,6 +55,9 @@ class DataService:
                 str(user["lastModifiedBy"]) if "lastModifiedBy" in user else ""
             )
             user["createdDate"] = user["createdDate"].strftime("%Y-%m-%d")
+            user["userGameStats"] = (
+                str(user["userGameStats"]) if "userGameStats" in user else ""
+            )
         return jsonify(users)
 
     @staticmethod
@@ -80,7 +83,11 @@ class DataService:
                 schedule["_id"] = str(schedule["_id"])
                 schedule["expert"] = hf.get_expert_name(schedule["expert"])
                 schedule["user"] = hf.get_user_name(schedule["user"])
-                schedule["lastModifiedBy"] = str(schedule["lastModifiedBy"]) if "lastModifiedBy" in schedule else ""
+                schedule["lastModifiedBy"] = (
+                    str(schedule["lastModifiedBy"])
+                    if "lastModifiedBy" in schedule
+                    else ""
+                )
             return jsonify(schedules)
         elif request.method == "POST":
             data = request.json

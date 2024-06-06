@@ -38,12 +38,12 @@ class HelperFunctions:
 
         formatted_duration = []
         if hours > 0:
-            formatted_duration.append(f"{hours} h")
+            formatted_duration.append(f"{hours}h")
 
         if seconds >= 30:
-            formatted_duration.append(f"{minutes + 1} m")
+            formatted_duration.append(f"{minutes + 1}m")
         elif seconds > 0 and minutes > 0:
-            formatted_duration.append(f"{minutes} m")
+            formatted_duration.append(f"{minutes}m")
 
         return " ".join(formatted_duration)
 

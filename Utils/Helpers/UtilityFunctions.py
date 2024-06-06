@@ -1,7 +1,5 @@
-from Utils.config import calls_collection, users_collection, admins_collection
+from Utils.config import calls_collection, users_collection
 from Utils.Helpers.FormatManager import FormatManager as fm
-from datetime import datetime, timedelta
-import jwt
 
 
 class UtilityFunctions:
@@ -41,3 +39,11 @@ class UtilityFunctions:
 
         calls = [fm.format_call(call) for call in calls]
         return calls
+
+    @staticmethod
+    def get_calls_count(query={}):
+        admin_ids = [
+            user["_id"] for user in users_collection.find({"role": "admin"}, {"_id": 1})
+        ]
+        count = calls_collection.count_documents({"user": {"$nin": admin_ids}, **query})
+        return count

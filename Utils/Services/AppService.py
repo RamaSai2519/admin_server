@@ -33,35 +33,77 @@ class AppService:
 
     @staticmethod
     def get_dashboard_stats():
+        # Get today's date and time
         current_date = datetime.now(pytz.timezone("Asia/Kolkata"))
         today_start = datetime.combine(current_date, datetime.min.time())
         today_end = datetime.combine(current_date, datetime.max.time())
-        total_calls = len(uf.get_calls())
         today_calls_query = {"initiatedTime": {"$gte": today_start, "$lt": today_end}}
-        today_calls = uf.get_calls(today_calls_query, {})
-        today_successful_calls = sum(
-            1 for call in today_calls if call["status"] == "successful"
-        )
-        today_total_calls = len(today_calls)
-        online_saarthis = em.get_online_saarthis()
+
+        # Total calls
+        total_calls = uf.get_calls_count()
+        today_total_calls = uf.get_calls_count(today_calls_query)
+
+        # Successful calls
         total_successful_calls, total_duration_seconds = (
             cm.get_total_successful_calls_and_duration()
         )
+        today_successful_calls = uf.get_calls_count(
+            {"status": "successfull", "failedReason": "", **today_calls_query}
+        )
+
+        # Failed calls
+        failed_calls_query = {"status": "failed"}
+        total_failed_calls = uf.get_calls_count(failed_calls_query)
+        today_failed_calls_query = {"status": "failed", **today_calls_query}
+        today_failed_calls = uf.get_calls_count(today_failed_calls_query)
+
+        # Missed calls
+        missed_calls_query = {"failedReason": "call missed"}
+        total_missed_calls = uf.get_calls_count(missed_calls_query)
+        today_missed_calls_query = {"failedReason": "call missed", **today_calls_query}
+        today_missed_calls = uf.get_calls_count(today_missed_calls_query)
+
+        # Average call duration
         average_call_duration = (
             hf.format_duration(total_duration_seconds / total_successful_calls)
             if total_successful_calls
             else "0 minutes"
         )
-        total_failed_calls = total_calls - total_successful_calls
-        today_failed_calls = today_total_calls - today_successful_calls
+
+        # Total duration
+        total_duration = hf.format_duration(total_duration_seconds)
+
+        # Scheduled calls
+        successful_scheduled_calls = cm.get_successful_scheduled_calls()
+        scheduled_calls_percentage = round(
+            (
+                successful_scheduled_calls / total_successful_calls * 100
+                if total_successful_calls
+                else 0
+            ),
+            2,
+        )
+
+        # Average conversation score
+        average_conversation_score = cm.calculate_average_conversation_score()
+
+        # Online saarthis
+        online_saarthis = em.get_online_saarthis()
+
+        # Stats data
         stats_data = {
             "totalCalls": total_calls,
-            "successfulCalls": total_successful_calls,
             "todayCalls": today_total_calls,
+            "successfulCalls": total_successful_calls,
+            "todaySuccessfulCalls": today_successful_calls,
             "failedCalls": total_failed_calls,
             "todayFailedCalls": today_failed_calls,
-            "todaySuccessfulCalls": today_successful_calls,
+            "missedCalls": total_missed_calls,
+            "todayMissedCalls": today_missed_calls,
             "averageCallDuration": average_call_duration,
+            "totalDuration": total_duration,
+            "scheduledCallsPercentage": scheduled_calls_percentage,
+            "averageConversationScore": average_conversation_score,
             "onlineSaarthis": online_saarthis,
         }
 
@@ -75,11 +117,11 @@ class AppService:
                 expert = data["expert"]
                 expert = experts_collection.find_one({"name": expert})
                 expert = str(expert["_id"])
-                expert_number = (expert["phoneNumber"])
-                user = (data["user"])
+                expert_number = expert["phoneNumber"]
+                user = data["user"]
                 user = users_collection.find_one({"name": user})
-                user_number = (user["phoneNumber"])
-                user = (str(user["_id"]))
+                user_number = user["phoneNumber"]
+                user = str(user["_id"])
                 time = data["datetime"]
                 ist_offset = timedelta(hours=5, minutes=30)
                 date_object = datetime.strptime(time, "%Y-%m-%dT%H:%M:%S.%fZ")
