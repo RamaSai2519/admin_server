@@ -4,8 +4,8 @@ from Utils.Helpers.HelperFunctions import HelperFunctions as hf
 class FormatManager:
     @staticmethod
     def format_call(call):
-        user_id = call["user"]
-        expert_id = call["expert"]
+        user_id = call["user"] if "user" in call else None
+        expert_id = call["expert"] if "expert" in call else None
         call["_id"] = str(call["_id"]) if "_id" in call else None
         call["userName"] = hf.get_user_name(user_id)
         call["user"] = str(user_id)
@@ -15,10 +15,11 @@ class FormatManager:
             str(call["lastModifiedBy"]) if "lastModifiedBy" in call else None
         )
         call["ConversationScore"] = call.pop("Conversation Score", 0)
-        if call["failedReason"] == "call missed":
-            call["status"] = "missed"
-        if call["status"] == "successfull":
-            call["status"] = "successful"
+        if "failedReason" in call:
+            if call["failedReason"] == "call missed":
+                call["status"] = "missed"
+            if call["status"] == "successfull":
+                call["status"] = "successful"
         return call
 
     @staticmethod
