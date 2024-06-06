@@ -1,5 +1,7 @@
+from Utils.Helpers.AuthManager import AuthManager as am
 from Utils.config import eventconfigs_collection
 from datetime import datetime
+from bson import ObjectId
 
 
 class EventManager:
@@ -11,6 +13,8 @@ class EventManager:
                 update_query[field] = data[field]
         updatedTime = datetime.now()
         update_query["updatedAt"] = updatedTime
+        admin_id = am.get_identity()
+        update_query["lastModifiedBy"] = ObjectId(admin_id)
         eventconfigs_collection.update_one(
             {"slug": data["slug"]}, {"$set": update_query}
         )

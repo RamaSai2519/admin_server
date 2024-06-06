@@ -1,5 +1,6 @@
-from Utils.Helpers.HelperFunctions import HelperFunctions as hf
 from Utils.Helpers.UtilityFunctions import UtilityFunctions as uf
+from Utils.Helpers.HelperFunctions import HelperFunctions as hf
+from Utils.Helpers.AuthManager import AuthManager as am
 from Utils.config import calls_collection
 from datetime import datetime, timedelta
 from pymongo import DESCENDING
@@ -11,9 +12,21 @@ import json
 
 class CallManager:
     @staticmethod
+    def calculate_average_conversation_score():
+        query = {"Conversation Score": {"$gt": 0}}
+        projection = {"Conversation Score": 1, "_id": 0}
+        documents = calls_collection.find(query, projection)
+        scores = [doc["Conversation Score"] for doc in documents]
+        if scores:
+            average_score = sum(scores) / len(scores)
+        else:
+            average_score = 0
+        return round(average_score, 2)
+
+    @staticmethod
     def get_total_successful_calls_and_duration():
         successful_calls_data = uf.get_calls(
-            {"status": "successfull", "duration": {"$exists": True}}
+            {"failedReason": "", "status": "successfull", "duration": {"$exists": True}}
         )
         total_seconds = [
             hf.get_total_duration_in_seconds(call.get("duration", "00:00:00"))
@@ -23,9 +36,24 @@ class CallManager:
         return len(total_seconds), sum(total_seconds)
 
     @staticmethod
+    def get_successful_scheduled_calls():
+        successful_scheduled_calls = uf.get_calls(
+            {"status": "successfull", "type": "scheduled"}
+        )
+        for call in successful_scheduled_calls:
+            seconds = (
+                hf.get_total_duration_in_seconds(call["duration"])
+                if "duration" in call
+                else 0
+            )
+            if seconds < 60:
+                successful_scheduled_calls.remove(call)
+        return len(successful_scheduled_calls)
+
+    @staticmethod
     def callUser(expertId, user):
         url = "http://api.sukoon.love/api/call/make-call"
-        token = uf.generate_token(user["name"], str(user["_id"]), user["phoneNumber"])
+        token = am.generate_token(user["name"], str(user["_id"]), user["phoneNumber"])
         payload = json.dumps(
             {
                 "expertId": expertId,

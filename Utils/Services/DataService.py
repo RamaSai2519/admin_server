@@ -10,6 +10,7 @@ from Utils.Helpers.UtilityFunctions import UtilityFunctions as uf
 from Utils.Helpers.HelperFunctions import HelperFunctions as hf
 from Utils.Helpers.ScheduleManager import ScheduleManager as sm
 from Utils.Helpers.FormatManager import FormatManager as fm
+from Utils.Helpers.AuthManager import AuthManager as am
 from datetime import datetime, timedelta
 from flask import jsonify, request
 from bson import ObjectId
@@ -50,7 +51,13 @@ class DataService:
         )
         for user in users:
             user["_id"] = str(user["_id"])
+            user["lastModifiedBy"] = (
+                str(user["lastModifiedBy"]) if "lastModifiedBy" in user else ""
+            )
             user["createdDate"] = user["createdDate"].strftime("%Y-%m-%d")
+            user["userGameStats"] = (
+                str(user["userGameStats"]) if "userGameStats" in user else ""
+            )
         return jsonify(users)
 
     @staticmethod
@@ -63,7 +70,9 @@ class DataService:
             data = request.json
             category = data["name"]
             createdDate = datetime.now()
-            categories_collection.insert_one({"name": category, "createdDate": createdDate, "active": True})
+            categories_collection.insert_one(
+                {"name": category, "createdDate": createdDate, "active": True}
+            )
             return jsonify({"message": "Category added successfully"})
 
     @staticmethod
@@ -74,11 +83,17 @@ class DataService:
                 schedule["_id"] = str(schedule["_id"])
                 schedule["expert"] = hf.get_expert_name(schedule["expert"])
                 schedule["user"] = hf.get_user_name(schedule["user"])
+                schedule["lastModifiedBy"] = (
+                    str(schedule["lastModifiedBy"])
+                    if "lastModifiedBy" in schedule
+                    else ""
+                )
             return jsonify(schedules)
         elif request.method == "POST":
             data = request.json
             expert_id = data["expert"]
             user_id = data["user"]
+            admin_id = am.get_identity()
             time = data["datetime"]
             ist_offset = timedelta(hours=5, minutes=30)
             date_object = datetime.strptime(time, "%Y-%m-%dT%H:%M:%S.%fZ")
@@ -87,6 +102,7 @@ class DataService:
             document = {
                 "expert": ObjectId(expert_id),
                 "user": ObjectId(user_id),
+                "lastModifiedBy": ObjectId(admin_id),
                 "datetime": ist_time,
                 "status": "pending",
             }

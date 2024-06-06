@@ -1,15 +1,8 @@
-from Utils.config import calls_collection, users_collection, admins_collection
+from Utils.config import calls_collection, users_collection
 from Utils.Helpers.FormatManager import FormatManager as fm
-from datetime import datetime, timedelta
-import jwt
 
 
 class UtilityFunctions:
-    @staticmethod
-    def authenticate(username, password):
-        user = admins_collection.find_one({"email": username, "password": password})
-        return user
-
     @staticmethod
     def get_calls(query={}, projection={}):
         admin_ids = [
@@ -48,13 +41,9 @@ class UtilityFunctions:
         return calls
 
     @staticmethod
-    def generate_token(name, user_id, phone_number):
-        payload = {
-            "name": name,
-            "userId": user_id,
-            "phoneNumber": phone_number,
-            "exp": datetime.now() + timedelta(seconds=24 * 60 * 60),
-        }
-        secret_key = "saltDemaze"
-        token = jwt.encode(payload, secret_key, algorithm="HS256")
-        return token
+    def get_calls_count(query={}):
+        admin_ids = [
+            user["_id"] for user in users_collection.find({"role": "admin"}, {"_id": 1})
+        ]
+        count = calls_collection.count_documents({"user": {"$nin": admin_ids}, **query})
+        return count

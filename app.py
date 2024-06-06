@@ -40,7 +40,7 @@ Routes from the admin server
  - A total of 20 routes are present in the admin server @ 30/05/2024
 """
 
-from flask_jwt_extended import JWTManager, jwt_required
+from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity
 from Utils.Services.ExpertService import ExpertService
 from Utils.Services.EventService import EventService
 from Utils.Services.AuthService import AuthService
@@ -49,9 +49,9 @@ from Utils.Services.CallService import CallService
 from Utils.Services.UserService import UserService
 from Utils.Services.AppService import AppService
 from Utils.config import JWT_SECRET_KEY
+from flask import Flask, jsonify
 from datetime import timedelta
 from flask_cors import CORS
-from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
@@ -172,10 +172,12 @@ def schedules_route():
 def handle_expert_route(id):
     return ExpertService.handle_expert(id)
 
+
 @app.route("/admin/expert/create", methods=["POST"])
 @jwt_required()
 def create_expert_route():
     return ExpertService.create_expert()
+
 
 @app.route("/admin/expert/popupData/<string:expertId>", methods=["GET"])
 def get_popup_data_route(expertId):
@@ -197,16 +199,19 @@ def handle_user_route(id):
 
 # Below are the EventService routes, prefixed with /event
 @app.route("/admin/event/events", methods=["GET"])
+@jwt_required()
 def get_events_route():
     return EventService.get_events()
 
 
 @app.route("/admin/event/event", methods=["GET", "PUT", "POST"])
+@jwt_required()
 def get_event_route():
     return EventService.get_event()
 
 
 @app.route("/admin/event/users", methods=["GET"])
+@jwt_required()
 def get_users_by_event_route():
     return EventService.get_users_by_event()
 
