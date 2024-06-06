@@ -29,25 +29,36 @@ class CallManager:
             {
                 "failedReason": "",
                 "status": "successfull",
-                "durationInSeconds": {"$exists": True},
+                "duration": {"$exists": True},
             },
-            {"durationInSeconds": 1},
+            {"duration": 1, "_id": 0},
+            False,
             False,
         )
-        total_seconds = [call["durationInSeconds"] for call in successful_calls_data]
+        total_seconds = [
+            hf.get_total_duration_in_seconds(call["duration"])
+            for call in successful_calls_data
+            if hf.get_total_duration_in_seconds(call["duration"]) > 60
+        ]
         return len(total_seconds), sum(total_seconds)
 
     @staticmethod
     def get_successful_scheduled_calls():
-        successful_scheduled_calls = uf.get_calls_count(
-            {
-                "status": "successfull",
-                "failedReason": "",
-                "type": "scheduled",
-                "durationInSeconds": {"$gte": 60},
-            }
+        successful_scheduled_calls = uf.get_calls(
+            {"status": "successfull", "type": "scheduled"},
+            {"duration": 1, "_id": 0},
+            False,
+            False,
         )
-        return successful_scheduled_calls
+        for call in successful_scheduled_calls:
+            seconds = (
+                hf.get_total_duration_in_seconds(call["duration"])
+                if "duration" in call
+                else 0
+            )
+            if seconds < 60:
+                successful_scheduled_calls.remove(call)
+        return len(successful_scheduled_calls)
 
     @staticmethod
     def callUser(expertId, user):
