@@ -12,6 +12,10 @@ class EventService:
     @staticmethod
     def get_events():
         allEvents = list(eventconfigs_collection.find({}, {"_id": 0}))
+        for event in allEvents:
+            event["lastModifiedBy"] = (
+                str(event["lastModifiedBy"]) if "lastModifiedBy" in event else ""
+            )
         return jsonify(allEvents)
 
     @staticmethod

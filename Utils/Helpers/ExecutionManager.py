@@ -1,11 +1,12 @@
 from Utils.Helpers.UtilityFunctions import UtilityFunctions as uf
-from Utils.Helpers.CallManager import CallManager as cm
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from Utils.Helpers.HelperFunctions import HelperFunctions as hf
 from Utils.Helpers.ExpertManager import ExpertManager as em
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from Utils.Helpers.CallManager import CallManager as cm
+from Utils.config import users_collection
 from datetime import datetime
-import pytz
 from flask import jsonify
+import pytz
 
 
 class ExecutionManager:
@@ -110,3 +111,46 @@ class ExecutionManager:
                 stats_data[key] = future.result()
 
         return jsonify(stats_data)
+
+    @staticmethod
+    def get_call_insights():
+        successful_calls = uf.get_calls(
+            {"status": "successfull", "failedReason": ""}, {"duration": 1}, False, False
+        )
+        users = list(
+            users_collection.find(
+                {"role": {"$ne": "admin"}, "name": {"$exists": True}},
+                {"Customer Persona": 0},
+            )
+        )
+        for user in users:
+            calls = uf.get_calls({"user": user["_id"]}, {"duration": 1}, False, False)
+            if calls:
+                if calls == 1:
+                    user["type"] = "first call active"
+                elif calls == 2:
+                    user["type"] = "second call active"
+                else:
+                    user["type"] = "active"
+                    
+
+        def lt_15_min():
+            return len([call for call in successful_calls if call["duration"] < 900])
+
+        def gt_15_min_lt_30_min():
+            return len(
+                [call for call in successful_calls if 900 <= call["duration"] < 1800]
+            )
+
+        def gt_30_min_lt_45_min():
+            return len(
+                [call for call in successful_calls if 1800 <= call["duration"] < 2700]
+            )
+
+        def gt_45_min_lt_60_min():
+            return len(
+                [call for call in successful_calls if 2700 <= call["duration"] < 3600]
+            )
+
+        def gt_60_min():
+            return len([call for call in successful_calls if call["duration"] >= 3600])

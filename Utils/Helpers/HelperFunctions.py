@@ -30,7 +30,7 @@ class HelperFunctions:
         except ValueError:
             return False
 
-    @staticmethod   
+    @staticmethod
     def format_duration(duration_in_seconds):
         hours = duration_in_seconds // 3600
         minutes = (duration_in_seconds % 3600) // 60
@@ -41,6 +41,7 @@ class HelperFunctions:
             formatted_duration.append(f"{hours}h")
 
         if minutes > 0:
+            minutes = int(minutes)
             formatted_duration.append(f"{minutes}m")
 
         if seconds > 0:
@@ -48,7 +49,6 @@ class HelperFunctions:
             formatted_duration.append(f"{seconds}s")
 
         return " ".join(formatted_duration) if formatted_duration else "0s"
-
 
     @staticmethod
     def send_push_notification(token, message):
@@ -105,5 +105,3 @@ class HelperFunctions:
             last_logged_out_time = logged_out_at
 
         return total_logged_in_hours
-
-    
