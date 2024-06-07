@@ -1,12 +1,14 @@
 """
 Routes from the admin server
  - All the routes are prefixed with /admin
-    - The routes are divided into 5 services
+    - The routes are divided into 7 services
+        - AuthService
         - AppService
         - CallService
         - DataService
         - UserService
         - ExpertService
+        - EventService
     - Each service has its own routes
         - AuthService
             - /admin/auth/login (tested)
@@ -16,7 +18,16 @@ Routes from the admin server
             - /admin/service/schedule/<string:id> (tested)
             - /admin/service/approve/<string:id>/<level> (tested)
             - /admin/service/save-fcm-token (tested)
-            - /admin/service/dashboardstats (tested) (too long) (data)
+            - /admin/service/dashboardstats (tested) (too long)
+                Total Time: 850s
+                All Calls: 150ms
+                Successful Calls: 200ms
+                Failed Calls: 150ms
+                Missed Calls: 125ms
+                Duration: 130ms
+                Scheduled Calls: 200ms
+                Avg. Score: 200ms
+                Online Saarthis: 140ms
         - CallService
             - /admin/call/calls/<string:id> (tested)
             - /admin/call/callUser (tested)
@@ -37,10 +48,14 @@ Routes from the admin server
         - ExpertService
             - /admin/expert/experts/<string:id> (tested)
             - /admin/expert/popupData/<string:expertId> (tested)
- - A total of 20 routes are present in the admin server @ 30/05/2024
+        - EventService
+            - /admin/event/events (tested)
+            - /admin/event/event (tested)
+            - /admin/event/users (tested)
+ - A total of 24 routes are present in the admin server @ 07/06/2024
 """
 
-from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity
+from flask_jwt_extended import JWTManager, jwt_required
 from Utils.Services.ExpertService import ExpertService
 from Utils.Services.EventService import EventService
 from Utils.Services.AuthService import AuthService
@@ -48,6 +63,7 @@ from Utils.Services.DataService import DataService
 from Utils.Services.CallService import CallService
 from Utils.Services.UserService import UserService
 from Utils.Services.AppService import AppService
+from Utils.Helpers.ExecutionManager import ExecutionManager
 from Utils.config import JWT_SECRET_KEY
 from flask import Flask, jsonify
 from datetime import timedelta
@@ -102,7 +118,7 @@ def save_fcm_token_route():
 @app.route("/admin/service/dashboardstats")
 @jwt_required()
 def get_dashboard_stats_route():
-    return AppService.get_dashboard_stats()
+    return ExecutionManager.get_dashboard_stats()
 
 
 # Below are the CallService routes, prefixed with /call
@@ -217,4 +233,4 @@ def get_users_by_event_route():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080, debug=True)
+    app.run(host="0.0.0.0", port=8080)

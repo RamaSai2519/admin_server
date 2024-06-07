@@ -71,7 +71,7 @@ class AppService:
         )
 
         # Total duration
-        total_duration = hf.format_duration(total_duration_seconds)
+        total_duration = hf.format_duration(cm.get_total_duration())
 
         # Scheduled calls
         successful_scheduled_calls = cm.get_successful_scheduled_calls()

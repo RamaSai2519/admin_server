@@ -24,6 +24,15 @@ class CallManager:
         return round(average_score, 2)
 
     @staticmethod
+    def get_total_duration():
+        total_duration = 0
+        calls = uf.get_calls({}, {"duration": 1, "_id": 0}, False, False)
+        for call in calls:
+            if "duration" in call and call["duration"] != "":
+                total_duration += hf.get_total_duration_in_seconds(call["duration"])
+        return total_duration
+
+    @staticmethod
     def get_total_successful_calls_and_duration():
         successful_calls_data = uf.get_calls(
             {
