@@ -127,13 +127,13 @@ class ExecutionManager:
                 if duration_sec < 900:
                     return "_15min"
                 elif 900 <= duration_sec < 1800:
-                    return "15_30min"
+                    return "_15_30min"
                 elif 1800 <= duration_sec < 2700:
-                    return "30_45min"
+                    return "_30_45min"
                 elif 2700 <= duration_sec < 3600:
-                    return "45_60min"
+                    return "_45_60min"
                 else:
-                    return "60min_"
+                    return "_60min_"
 
             duration_counts = {
                 "_15min": 0,
