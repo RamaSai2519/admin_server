@@ -121,6 +121,12 @@ def get_dashboard_stats_route():
     return ExecutionManager.get_dashboard_stats()
 
 
+@app.route("/admin/service/callinsights")
+@jwt_required()
+def get_call_insights_route():
+    return ExecutionManager.get_call_insights()
+
+
 # Below are the CallService routes, prefixed with /call
 @app.route("/admin/call/calls/<string:id>", methods=["GET", "PUT"])
 @jwt_required()
@@ -233,4 +239,4 @@ def get_users_by_event_route():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080)
+    app.run(host="0.0.0.0", port=8080, debug=True)

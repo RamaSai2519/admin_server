@@ -114,43 +114,89 @@ class ExecutionManager:
 
     @staticmethod
     def get_call_insights():
+        # Retrieve all necessary data in bulk
         successful_calls = uf.get_calls(
-            {"status": "successfull", "failedReason": ""}, {"duration": 1}, False, False
+            {"status": "successfull", "failedReason": ""},
+            {"duration": 1, "user": 1},
+            False,
+            False,
         )
+
         users = list(
             users_collection.find(
                 {"role": {"$ne": "admin"}, "name": {"$exists": True}},
-                {"Customer Persona": 0},
+                {"_id": 1},
             )
         )
-        for user in users:
-            calls = uf.get_calls({"user": user["_id"]}, {"duration": 1}, False, False)
-            if calls:
+
+        user_call_counts = {user["_id"]: 0 for user in users}
+
+        # Update user call counts
+        for call in successful_calls:
+            user_id = call.get("user")
+            if user_id in user_call_counts:
+                user_call_counts[user_id] += 1
+
+        def classify_users():
+            user_types = {
+                "inactive": 0,
+                "first call active": 0,
+                "second call active": 0,
+                "active": 0,
+            }
+            for user in users:
+                calls = user_call_counts.get(user["_id"], 0)
                 if calls == 1:
-                    user["type"] = "first call active"
+                    user_type = "first call active"
                 elif calls == 2:
-                    user["type"] = "second call active"
+                    user_type = "second call active"
+                elif calls > 2:
+                    user_type = "active"
                 else:
-                    user["type"] = "active"
-                    
+                    user_type = "inactive"
+                user_types[user_type] += 1
+            return user_types
 
-        def lt_15_min():
-            return len([call for call in successful_calls if call["duration"] < 900])
+        def classify_durations():
+            def duration_category(call):
+                duration_sec = hf.get_total_duration_in_seconds(call["duration"])
+                if duration_sec < 900:
+                    return "lt_15_min"
+                elif 900 <= duration_sec < 1800:
+                    return "gt_15_min_lt_30_min"
+                elif 1800 <= duration_sec < 2700:
+                    return "gt_30_min_lt_45_min"
+                elif 2700 <= duration_sec < 3600:
+                    return "gt_45_min_lt_60_min"
+                else:
+                    return "gt_60_min"
 
-        def gt_15_min_lt_30_min():
-            return len(
-                [call for call in successful_calls if 900 <= call["duration"] < 1800]
-            )
+            duration_counts = {
+                "lt_15_min": 0,
+                "gt_15_min_lt_30_min": 0,
+                "gt_30_min_lt_45_min": 0,
+                "gt_45_min_lt_60_min": 0,
+                "gt_60_min": 0,
+            }
 
-        def gt_30_min_lt_45_min():
-            return len(
-                [call for call in successful_calls if 1800 <= call["duration"] < 2700]
-            )
+            for call in successful_calls:
+                category = duration_category(call)
+                duration_counts[category] += 1
 
-        def gt_45_min_lt_60_min():
-            return len(
-                [call for call in successful_calls if 2700 <= call["duration"] < 3600]
-            )
+            total_calls = len(successful_calls)
+            for key in duration_counts:
+                duration_counts[key] = round((duration_counts[key] / total_calls) * 100, 2)
 
-        def gt_60_min():
-            return len([call for call in successful_calls if call["duration"] >= 3600])
+            return duration_counts
+
+        with ThreadPoolExecutor() as executor:
+            futures = {
+                executor.submit(fn): fn.__name__
+                for fn in [classify_users, classify_durations]
+            }
+
+            insights_data = {}
+            for future in as_completed(futures):
+                insights_data.update(future.result())
+
+        return jsonify(insights_data)
