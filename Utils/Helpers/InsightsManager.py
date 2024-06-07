@@ -8,7 +8,7 @@ from flask import jsonify
 import pytz
 
 
-class ExecutionManager:
+class InsightsManager:
     @staticmethod
     def get_dashboard_stats():
         # Get today's date and time
@@ -127,13 +127,13 @@ class ExecutionManager:
                 if duration_sec < 900:
                     return "_15min"
                 elif 900 <= duration_sec < 1800:
-                    return "15_30min"
+                    return "_15_30min"
                 elif 1800 <= duration_sec < 2700:
-                    return "30_45min"
+                    return "_30_45min"
                 elif 2700 <= duration_sec < 3600:
-                    return "45_60min"
+                    return "_45_60min"
                 else:
-                    return "60min_"
+                    return "_60min_"
 
             duration_counts = {
                 "_15min": 0,
@@ -244,19 +244,14 @@ class ExecutionManager:
             """
             This is the final insights_data dictionary:
             {
-            # Duration distribution
                 "_15min": "52.05%",
                 "15_30min": "22.13%",
                 "30_45min": "14.96%",
                 "45_60min": "6.15%",
                 "60min_": "4.71%",
-                
-            # Call type distribution
                 "first_calls_split": "9.22%",
                 "second_calls_split": "11.89%",
                 "repeat_calls_split": "78.89%",
-
-            # Average durations
                 "one_call": "17m 44s",
                 "two_calls": "14m 8s"
                 "repeat_calls": "20m 39s",
@@ -265,4 +260,4 @@ class ExecutionManager:
             }
             """
 
-        return jsonify(insights_data)
+        return insights_data
