@@ -23,42 +23,36 @@ class ExecutionManager:
 
         # Define functions for each calculation
         def totalCalls():
-            total_calls = uf.get_calls_count()
-            return total_calls
+            return uf.get_calls_count()
 
         def todayCalls():
-            today_total_calls = uf.get_calls_count(today_calls_query)
-            return today_total_calls
+            return uf.get_calls_count(today_calls_query)
 
         def successfulCalls():
-            successful_calls = uf.get_calls_count(
-                {"status": "successfull", "failedReason": ""}
-            )
-            return successful_calls
+            return uf.get_calls_count({"status": "successfull", "failedReason": ""})
 
         def todaySuccessfulCalls():
-            today_successful_calls = uf.get_calls_count(
+            return uf.get_calls_count(
                 {"status": "successfull", "failedReason": "", **today_calls_query}
             )
-            return today_successful_calls
 
         def failedCalls():
-            failed_calls = uf.get_calls_count({"status": "failed"})
-            return failed_calls
+            return uf.get_calls_count({"status": "failed"})
 
         def todayFailedCalls():
             today_failed_calls_query = {"status": "failed", **today_calls_query}
-            today_failed_calls = uf.get_calls_count(today_failed_calls_query)
-            return today_failed_calls
+            return uf.get_calls_count(today_failed_calls_query)
 
         def missedCalls():
-            missed_calls = uf.get_calls_count({"status": "missed"})
-            return missed_calls
+            missed_calls_query = {"failedReason": "call missed"}
+            return uf.get_calls_count(missed_calls_query)
 
         def todayMissedCalls():
-            today_missed_calls_query = {"status": "missed", **today_calls_query}
-            today_missed_calls = uf.get_calls_count(today_missed_calls_query)
-            return today_missed_calls
+            today_missed_calls_query = {
+                "failedReason": "call missed",
+                **today_calls_query,
+            }
+            return uf.get_calls_count(today_missed_calls_query)
 
         def totalDuration():
             return hf.format_duration(cm.get_total_duration())
@@ -84,12 +78,10 @@ class ExecutionManager:
             return scheduled_calls_percentage
 
         def averageConversationScore():
-            average_conversation_score = cm.calculate_average_conversation_score()
-            return average_conversation_score
+            return cm.calculate_average_conversation_score()
 
         def onlineSaarthis():
-            online_saarthis = em.get_online_saarthis()
-            return online_saarthis
+            return em.get_online_saarthis()
 
         # Use ThreadPoolExecutor to run calculations concurrently
         with ThreadPoolExecutor() as executor:
