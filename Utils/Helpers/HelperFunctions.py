@@ -30,7 +30,7 @@ class HelperFunctions:
         except ValueError:
             return False
 
-    @staticmethod
+    @staticmethod   
     def format_duration(duration_in_seconds):
         hours = duration_in_seconds // 3600
         minutes = (duration_in_seconds % 3600) // 60
@@ -40,12 +40,15 @@ class HelperFunctions:
         if hours > 0:
             formatted_duration.append(f"{hours}h")
 
-        if seconds >= 30:
-            formatted_duration.append(f"{minutes + 1}m")
-        elif seconds > 0 and minutes > 0:
+        if minutes > 0:
             formatted_duration.append(f"{minutes}m")
 
-        return " ".join(formatted_duration)
+        if seconds > 0:
+            seconds = round(seconds, 2)
+            formatted_duration.append(f"{seconds}s")
+
+        return " ".join(formatted_duration) if formatted_duration else "0s"
+
 
     @staticmethod
     def send_push_notification(token, message):

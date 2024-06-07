@@ -41,7 +41,7 @@ class ExpertService:
             if not expert:
                 return jsonify({"error": "Expert not found"}), 404
             expert["_id"] = str(expert["_id"])
-            expert["lastModifiedBy"] = str(expert["lastModifiedBy"])
+            expert["lastModifiedBy"] = str(expert["lastModifiedBy"]) if "lastModifiedBy" in expert else ""
             category_names = (
                 [
                     categories_collection.find_one({"_id": ObjectId(category_id)}).get(
