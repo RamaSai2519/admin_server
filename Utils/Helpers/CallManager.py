@@ -55,7 +55,7 @@ class CallManager:
     def get_successful_scheduled_calls():
         successful_scheduled_calls = uf.get_calls(
             {"status": "successfull", "type": "scheduled"},
-            {"duration": 1, "_id": 0},
+            {"duration": 1, "type": 1, "_id": 0},
             False,
             False,
         )
@@ -67,7 +67,7 @@ class CallManager:
             )
             if seconds < 60:
                 successful_scheduled_calls.remove(call)
-        return len(successful_scheduled_calls)
+        return successful_scheduled_calls
 
     @staticmethod
     def callUser(expertId, user):
