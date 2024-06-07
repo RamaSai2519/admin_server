@@ -63,7 +63,7 @@ from Utils.Services.DataService import DataService
 from Utils.Services.CallService import CallService
 from Utils.Services.UserService import UserService
 from Utils.Services.AppService import AppService
-from Utils.Helpers.ExecutionManager import ExecutionManager
+from Utils.Helpers.InsightsManager import ExecutionManager
 from Utils.config import JWT_SECRET_KEY
 from flask import Flask, jsonify
 from datetime import timedelta

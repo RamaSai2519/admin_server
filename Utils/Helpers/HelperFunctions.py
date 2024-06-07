@@ -45,7 +45,7 @@ class HelperFunctions:
             formatted_duration.append(f"{minutes}m")
 
         if seconds > 0:
-            seconds = round(seconds, 2)
+            seconds = int(seconds)
             formatted_duration.append(f"{seconds}s")
 
         return " ".join(formatted_duration) if formatted_duration else "0s"
