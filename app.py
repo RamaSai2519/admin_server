@@ -63,7 +63,7 @@ from Utils.Services.DataService import DataService
 from Utils.Services.CallService import CallService
 from Utils.Services.UserService import UserService
 from Utils.Services.AppService import AppService
-from Utils.Helpers.InsightsManager import ExecutionManager
+from Utils.Helpers.InsightsManager import InsightsManager
 from Utils.config import JWT_SECRET_KEY
 from flask import Flask, jsonify
 from datetime import timedelta
@@ -118,13 +118,13 @@ def save_fcm_token_route():
 @app.route("/admin/service/dashboardstats")
 @jwt_required()
 def get_dashboard_stats_route():
-    return ExecutionManager.get_dashboard_stats()
+    return InsightsManager.get_dashboard_stats()
 
 
 @app.route("/admin/service/callinsights")
 @jwt_required()
 def get_call_insights_route():
-    return ExecutionManager.get_call_insights()
+    return AppService.get_insights()
 
 
 # Below are the CallService routes, prefixed with /call
