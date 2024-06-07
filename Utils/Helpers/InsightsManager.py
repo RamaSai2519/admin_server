@@ -137,10 +137,10 @@ class ExecutionManager:
 
             duration_counts = {
                 "_15min": 0,
-                "15_30min": 0,
-                "30_45min": 0,
-                "45_60min": 0,
-                "60min_": 0,
+                "_15_30min": 0,
+                "_30_45min": 0,
+                "_45_60min": 0,
+                "_60min_": 0,
             }
 
             for call in successful_calls:
