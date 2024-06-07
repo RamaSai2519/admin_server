@@ -29,22 +29,22 @@ class AppService:
             {
                 "key": "2",
                 "category": "15-30 mins",
-                "value": insights.get("15_30min", "0%"),
+                "value": insights.get("_15_30min", "0%"),
             },
             {
                 "key": "3",
                 "category": "30-45 mins",
-                "value": insights.get("30_45min", "0%"),
+                "value": insights.get("_30_45min", "0%"),
             },
             {
                 "key": "4",
                 "category": "45-60 mins",
-                "value": insights.get("45_60min", "0%"),
+                "value": insights.get("_45_60min", "0%"),
             },
             {
                 "key": "5",
                 "category": "> 60 mins",
-                "value": insights.get("60min_", "0%"),
+                "value": insights.get("_60min_", "0%"),
             },
         ]
 
