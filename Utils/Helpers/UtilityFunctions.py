@@ -27,6 +27,8 @@ class UtilityFunctions:
             "transcript_url": 0,
             "flow": 0,
             "closingGreeting": 0,
+            "Customer Persona": 0,
+            "transcript": 0,
         }
         if exclusion:
             projection = {**exclusion_projection, **projection}
