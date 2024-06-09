@@ -55,6 +55,7 @@ Routes from the admin server
  - A total of 24 routes are present in the admin server @ 07/06/2024
 """
 
+from Utils.Helpers.InsightsManager import InsightsManager
 from flask_jwt_extended import JWTManager, jwt_required
 from Utils.Services.ExpertService import ExpertService
 from Utils.Services.EventService import EventService
@@ -63,11 +64,10 @@ from Utils.Services.DataService import DataService
 from Utils.Services.CallService import CallService
 from Utils.Services.UserService import UserService
 from Utils.Services.AppService import AppService
-from Utils.Helpers.InsightsManager import InsightsManager
 from Utils.config import JWT_SECRET_KEY
-from flask import Flask, jsonify
 from datetime import timedelta
 from flask_cors import CORS
+from flask import Flask
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True)

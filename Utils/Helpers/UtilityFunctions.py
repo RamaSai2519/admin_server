@@ -1,6 +1,5 @@
 from Utils.config import calls_collection, users_collection
 from Utils.Helpers.FormatManager import FormatManager as fm
-import time
 
 
 class UtilityFunctions:
@@ -18,8 +17,8 @@ class UtilityFunctions:
             "initiatedTime": 1,
             "duration": 1,
             "lastModifiedBy": 1,
-            "Conversation Score": 1,
             "failedReason": 1,
+            "Conversation Score": 1,
         }
         if exclusion:
             projection = {**exclusion_projection, **projection}

@@ -1,4 +1,4 @@
-from Utils.config import calls_collection, users_collection
+from Utils.config import calls_collection, users_collection, callsmeta_collection
 from Utils.Helpers.FormatManager import FormatManager as fm
 from Utils.Helpers.AuthManager import AuthManager as am
 from Utils.Helpers.CallManager import CallManager as cm
@@ -46,6 +46,14 @@ class CallService:
             if not call:
                 return jsonify({"error": "Call not found"}), 404
             formatted_call = fm.format_call(call)
+            callmeta = callsmeta_collection.find_one({"callId": id}, {"_id": 0})
+            if callmeta:
+                formatted_call["Topics"] = callmeta["Topics"]
+                formatted_call["Summary"] = callmeta["Summary"]
+                formatted_call["User Callback"] = callmeta["User Callback"]
+                formatted_call["Score Breakup"] = callmeta["Score Breakup"]
+                formatted_call["transcript_url"] = callmeta["transcript_url"]
+                formatted_call["Saarthi Feedback"] = callmeta["Saarthi Feedback"]
             return jsonify(formatted_call)
         elif (request.method) == "PUT":
             data = request.get_json()
@@ -60,7 +68,6 @@ class CallService:
                     }
                 },
             )
-
             if result.modified_count == 0:
                 return jsonify({"error": "Failed to update Conversation Score"}), 400
             else:
