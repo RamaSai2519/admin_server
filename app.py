@@ -65,9 +65,9 @@ from Utils.Services.CallService import CallService
 from Utils.Services.UserService import UserService
 from Utils.Services.AppService import AppService
 from Utils.config import JWT_SECRET_KEY
-from flask import Flask, jsonify
 from datetime import timedelta
 from flask_cors import CORS
+from flask import Flask
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True)

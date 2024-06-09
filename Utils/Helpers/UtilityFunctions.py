@@ -18,6 +18,7 @@ class UtilityFunctions:
             "duration": 1,
             "lastModifiedBy": 1,
             "failedReason": 1,
+            "Conversation Score": 1,
         }
         if exclusion:
             projection = {**exclusion_projection, **projection}
