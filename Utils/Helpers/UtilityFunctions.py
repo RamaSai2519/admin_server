@@ -1,6 +1,5 @@
 from Utils.config import calls_collection, users_collection, callsmeta_cache
 from Utils.Helpers.FormatManager import FormatManager as fm
-from pprint import pprint
 
 
 class UtilityFunctions:
@@ -29,7 +28,6 @@ class UtilityFunctions:
         )
         if format:
             calls = [fm.format_call(call) for call in calls]
-            pprint(callsmeta_cache)
         return calls
 
     @staticmethod
