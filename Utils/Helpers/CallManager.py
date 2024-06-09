@@ -1,7 +1,7 @@
 from Utils.Helpers.UtilityFunctions import UtilityFunctions as uf
 from Utils.Helpers.HelperFunctions import HelperFunctions as hf
 from Utils.Helpers.AuthManager import AuthManager as am
-from Utils.config import calls_collection, callsmeta_collection
+from Utils.config import calls_collection
 from datetime import datetime, timedelta
 from pymongo import DESCENDING
 from bson import ObjectId
@@ -15,7 +15,7 @@ class CallManager:
     def calculate_average_conversation_score():
         query = {"Conversation Score": {"$gt": 0}}
         projection = {"Conversation Score": 1, "_id": 0}
-        documents = callsmeta_collection.find(query, projection)
+        documents = calls_collection.find(query, projection)
         scores = [doc["Conversation Score"] for doc in documents]
         if scores:
             average_score = sum(scores) / len(scores)
