@@ -1,5 +1,4 @@
 from Utils.Helpers.HelperFunctions import HelperFunctions as hf
-from Utils.config import callsmeta_collection, callsmeta_cache
 
 
 class FormatManager:
@@ -15,14 +14,9 @@ class FormatManager:
         call["lastModifiedBy"] = (
             str(call["lastModifiedBy"]) if "lastModifiedBy" in call else None
         )
-        if call["callId"] in callsmeta_cache:
-            callmeta = callsmeta_cache[call["callId"]]
-        else:
-            callmeta = callsmeta_collection.find_one(
-                {"callId": call["callId"]}, {"Conversation Score": 1, "_id": 0}
-            )
-            callsmeta_cache[call["callId"]] = callmeta
-        call["ConversationScore"] = (callmeta["Conversation Score"]) if callmeta else 0
+        call["ConversationScore"] = (
+            call["Conversation Score"] if "Conversation Score" in call else 0
+        )
         if "failedReason" in call:
             if call["failedReason"] == "call missed":
                 call["status"] = "missed"

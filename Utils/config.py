@@ -34,6 +34,5 @@ experts_collection.create_index([("createdDate", DESCENDING)])
 users_collection.create_index([("createdDate", DESCENDING)])
 experts_collection.create_index([("status", 1)])
 
-callsmeta_cache = {}
 experts_cache = {}
 users_cache = {}

@@ -1,9 +1,4 @@
-from Utils.config import (
-    calls_collection,
-    users_collection,
-    callsmeta_collection,
-    callsmeta_cache,
-)
+from Utils.config import calls_collection, users_collection, callsmeta_collection
 from Utils.Helpers.FormatManager import FormatManager as fm
 from Utils.Helpers.AuthManager import AuthManager as am
 from Utils.Helpers.CallManager import CallManager as cm
@@ -64,7 +59,7 @@ class CallService:
             data = request.get_json()
             new_conversation_score = data["ConversationScore"]
             admin_id = am.get_identity()
-            result = callsmeta_collection.update_one(
+            result = calls_collection.update_one(
                 {"callId": id},
                 {
                     "$set": {
@@ -73,7 +68,6 @@ class CallService:
                     }
                 },
             )
-            callsmeta_cache[id] = {"Conversation Score": float(new_conversation_score)}
             if result.modified_count == 0:
                 return jsonify({"error": "Failed to update Conversation Score"}), 400
             else:
