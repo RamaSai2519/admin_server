@@ -20,6 +20,7 @@ eventconfigs_collection = db["eventconfigs"]
 fcm_tokens_collection = db["fcm_tokens"]
 categories_collection = db["categories"]
 schedules_collection = db["schedules"]
+callsmeta_collection = db["callsmeta"]
 experts_collection = db["experts"]
 logs_collection = db["errorlogs"]
 events_collection = db["events"]
@@ -33,5 +34,6 @@ experts_collection.create_index([("createdDate", DESCENDING)])
 users_collection.create_index([("createdDate", DESCENDING)])
 experts_collection.create_index([("status", 1)])
 
+callsmeta_cache = {}
 experts_cache = {}
 users_cache = {}

@@ -5,3 +5,4 @@ jwtgenerator.py
 /serviceAccountKey.json
 .env
 experimentor.py
+__pycache__/app.cpython-312.pyc

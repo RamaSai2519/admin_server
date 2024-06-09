@@ -1,6 +1,6 @@
-from Utils.config import calls_collection, users_collection
+from Utils.config import calls_collection, users_collection, callsmeta_cache
 from Utils.Helpers.FormatManager import FormatManager as fm
-import time
+from pprint import pprint
 
 
 class UtilityFunctions:
@@ -18,7 +18,6 @@ class UtilityFunctions:
             "initiatedTime": 1,
             "duration": 1,
             "lastModifiedBy": 1,
-            "Conversation Score": 1,
             "failedReason": 1,
         }
         if exclusion:
@@ -30,6 +29,7 @@ class UtilityFunctions:
         )
         if format:
             calls = [fm.format_call(call) for call in calls]
+            pprint(callsmeta_cache)
         return calls
 
     @staticmethod
