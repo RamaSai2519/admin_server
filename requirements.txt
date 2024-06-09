@@ -7,3 +7,4 @@ python-dotenv
 flask_jwt_extended
 firebase_admin
 pymongo
+gunicorn
