@@ -78,7 +78,7 @@ class DataService:
     @staticmethod
     def schedules():
         if request.method == "GET":
-            schedules = list(schedules_collection.find())
+            schedules = list(schedules_collection.find().sort("datetime", 1))
             for schedule in schedules:
                 schedule["_id"] = str(schedule["_id"])
                 schedule["expert"] = hf.get_expert_name(schedule["expert"])
