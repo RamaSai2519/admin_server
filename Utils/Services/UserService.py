@@ -33,6 +33,7 @@ class UserService:
         if request.method == "GET":
             user = users_collection.find_one({"_id": ObjectId(id)}, {"_id": 0})
             user["lastModifiedBy"] = str(user["lastModifiedBy"]) if "lastModifiedBy" in user else ""
+            user["Customer Persona"] = str(user["Customer Persona"]).split("\n") if "Customer Persona" in user else ""
             meta_doc = meta_collection.find_one({"user": ObjectId(id)})
             if meta_doc:
                 user["context"] = str(meta_doc["context"]).split("\n")

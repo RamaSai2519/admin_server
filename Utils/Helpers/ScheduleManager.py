@@ -1,4 +1,7 @@
+from Utils.config import schedules_collection, calls_collection
+from datetime import timedelta, datetime
 import requests
+
 
 class ScheduleManager:
     @staticmethod
@@ -62,3 +65,53 @@ class ScheduleManager:
             "superAdminNumber": "9398036558",
         }
         requests.post(url, json=payload)
+
+    @staticmethod
+    def update_schedule_status():
+        schedules = list(schedules_collection.find())
+
+        for schedule in schedules:
+            schedule_user = schedule["user"]
+            schedule_expert = schedule["expert"]
+
+            # Adjust schedule time to match call time (assuming your schedule time is in UTC and call time is in local time)
+            schedule_time = schedule["datetime"] - timedelta(hours=5, minutes=30)
+
+            # Find calls for the same user and expert within a small time window around the schedule time
+            calls = list(
+                calls_collection.find(
+                    {
+                        "user": schedule_user,
+                        "expert": schedule_expert,
+                        "initiatedTime": {
+                            "$gte": schedule_time - timedelta(minutes=1),
+                            "$lte": schedule_time + timedelta(minutes=1),
+                        },
+                    }
+                )
+            )
+
+            if calls:
+                schedules_collection.update_one(
+                    {"_id": schedule["_id"]}, {"$set": {"status": "completed"}}
+                )
+                for call in calls:
+                    # Update the call type in the database
+                    call_type = "scheduled"
+                    calls_collection.update_one(
+                        {"_id": call["_id"]}, {"$set": {"type": call_type}}
+                    )
+                    print(
+                        f"Updated call type for call initiated at {call['initiatedTime']}"
+                    )
+            else:
+                if schedule_time < datetime.now():
+                    schedules_collection.update_one(
+                        {"_id": schedule["_id"]}, {"$set": {"status": "missed"}}
+                    )
+                    print(f"Updated status for missed schedule at {schedule_time}")
+                else:
+                    schedules_collection.update_one(
+                        {"_id": schedule["_id"]}, {"$set": {"status": "pending"}}
+                    )
+                    print(f"Updated status for pending schedule at {schedule_time}")
