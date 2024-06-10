@@ -50,7 +50,7 @@ class UserManager:
                         context = context.split("\n") if context != "" else "Unknown"
                 except Exception as e:
                     print(e, "@52")
-                    context = "Unkown"
+                    context = []
                 return {
                     "personal_info": personal_info,
                     "context": context,
