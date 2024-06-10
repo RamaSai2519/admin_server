@@ -27,7 +27,7 @@ class UserManager:
         if meta_collection.find_one({"user": user_id}) is None:
             return "User context not found."
         else:
-            # try:
+            try:
                 if users_collection.find_one({"_id": user_id}) is not None:
                     user = users_collection.find_one(
                         {"_id": user_id}, {"_id": 0, "phoneNumber": 0}
@@ -56,10 +56,9 @@ class UserManager:
                         "persona": user_persona,
                     }
                 else:
-                    return "User context not found."
-            # except Exception as e:
-            #     print(e)
-            #     return "User context not found."
+                    return "No user found."
+            except Exception as e:
+                return "Something Went Wrong."
 
     @staticmethod
     def determine_user_repeation(user_id, expert_id):

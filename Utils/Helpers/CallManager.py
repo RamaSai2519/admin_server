@@ -116,7 +116,12 @@ class CallManager:
 
     @staticmethod
     def get_latest_call(expertId):
-        expertId = ObjectId(expertId)
+        try:
+            expertId = ObjectId(expertId)
+        except Exception as e:
+            time = datetime.now()
+            print(f"{time} - 123@CallManager.py: {e}")
+            expertId = "Unknown"
         call = calls_collection.find_one(
             {"$or": [{"_id": expertId}, {"expert": expertId}, {"user": expertId}]},
             sort=[("initiatedTime", DESCENDING)],
