@@ -14,7 +14,7 @@ class CallService:
             expertId = data["expertId"]
             calls = list(calls_collection.find({"expert": ObjectId(expertId)}))
             isValid = cm.checkValidity(calls[-1])
-            if isValid == True:
+            if isValid:
                 userId = calls[-1]["user"]
                 user = users_collection.find_one({"_id": ObjectId(userId)})
                 response = cm.callUser(expertId, user)

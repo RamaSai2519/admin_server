@@ -18,5 +18,5 @@ class AuthManager:
 
     @staticmethod
     def get_identity():
-       identity = get_jwt_identity()
-       return identity
+        identity = get_jwt_identity()
+        return identity
