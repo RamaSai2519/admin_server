@@ -4,25 +4,113 @@ from Utils.config import (
     meta_collection,
     users_cache,
     applications_collection,
+    calls_collection,
 )
 from Utils.Helpers.UserManager import UserManager as um
 from Utils.Helpers.AuthManager import AuthManager as am
 from flask import request, jsonify
 from datetime import datetime
 from bson import ObjectId
+from pprint import pprint
 
 
 class UserService:
     @staticmethod
+    def get_engagement_data():
+        meta_fields = ["remarks", "poc", "saarthi", "status"]
+        if request.method == "GET":
+            page = int(request.args.get('page'))
+            size = int(request.args.get('size'))
+            offset = (page - 1) * size
+            time = datetime.now()
+
+            user_data = list(
+                users_collection.find(
+                    {"role": {"$ne": "admin"}},
+                    {"Customer Persona": 0, "lastModifiedBy": 0}
+                ).sort("createdDate", 1).skip(offset).limit(size)
+            )
+
+            total_users = users_collection.count_documents(
+                {"role": {"$ne": "admin"}})
+
+            for user in user_data:
+                user["_id"] = str(user["_id"])
+                user["createdDate"] = f"{user['createdDate'].strftime(
+                    '%d-%m-%Y')} / {(time - user['createdDate']).days}"
+                if "birthDate" in user and user["birthDate"] is not None:
+                    age = int((time - user["birthDate"]).days) // 365
+                    user["birthDate"] = f"{
+                        user['birthDate'].strftime('%d-%m-%Y')} / {age}"
+
+                last_call = calls_collection.find_one(
+                    {"user": ObjectId(user["_id"])},
+                    {"_id": 0, "initiatedTime": 1},
+                    sort=[("initiatedTime", -1)],
+                )
+                days_since_last_call = (
+                    time - last_call["initiatedTime"]).days if last_call else 0
+                user["lastCallDate"] = f"{last_call['initiatedTime'].strftime(
+                    '%d-%m-%Y')} / {days_since_last_call}" if last_call else "No Calls"
+                user["callsDone"] = calls_collection.count_documents(
+                    {"user": ObjectId(user["_id"])})
+
+                user_meta = meta_collection.find_one(
+                    {"user": ObjectId(user["_id"])})
+                for field in meta_fields:
+                    if field in user_meta:
+                        user[field] = user_meta[field]
+                    else:
+                        user[field] = ""
+
+            return jsonify({
+                "data": user_data,
+                "total": total_users,
+                "page": page,
+                "pageSize": size
+            })
+        if request.method == "POST":
+            try:
+                user_id = request.json["key"]
+                if not users_collection.find_one({"_id": ObjectId(user_id)}):
+                    return jsonify({"error": "User not found"}), 404
+                user_field = request.json["field"]
+                user_value = request.json["value"]
+                if user_field in meta_fields:
+                    update = meta_collection.update_one(
+                        {"user": ObjectId(user_id)}, {
+                            "$set": {user_field: user_value}}
+                    )
+                    if update.modified_count == 0:
+                        return jsonify({"message": "Value already exists"}), 200
+                    return jsonify({"message": "User updated successfully"}), 200
+                else:
+                    update = users_collection.update_one(
+                        {"_id": ObjectId(user_id)}, {
+                            "$set": {user_field: user_value}}
+                    )
+                    if update.modified_count == 0:
+                        return jsonify({"error": "Something Went Wrong"}), 500
+                return jsonify({"message": "User updated successfully"}), 200
+            except Exception as e:
+                return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "Invalid request method"}), 404
+
+    @staticmethod
     def get_leads():
         final_leads = []
-        user_leads = list(users_collection.find({}, {"Customer Persona": 0}))
+        user_leads = list(
+            users_collection.find(
+                {}, {"Customer Persona": 0}).sort("createdDate", 1)
+        )
         for lead in user_leads:
             if lead["profileCompleted"] is False:
                 lead["_id"] = str(lead["_id"])
                 lead["createdDate"] = lead["createdDate"]
                 final_leads.append(lead)
-        expert_leads = list(applications_collection.find({}, {"_id": 0}))
+        expert_leads = list(
+            applications_collection.find({}, {"_id": 0}).sort("createdDate", 1)
+        )
         for lead in expert_leads:
             lead["createdDate"] = lead["createdDate"]
             final_leads.append(lead)
@@ -34,9 +122,6 @@ class UserService:
             user = users_collection.find_one({"_id": ObjectId(id)}, {"_id": 0})
             user["lastModifiedBy"] = (
                 str(user["lastModifiedBy"]) if "lastModifiedBy" in user else ""
-            )
-            user["Customer Persona"] = (
-                str(user["Customer Persona"]) if "Customer Persona" in user else ""
             )
             meta_doc = meta_collection.find_one({"user": ObjectId(id)})
             if meta_doc:
@@ -60,7 +145,8 @@ class UserService:
             ]
             if not any(user_data.get(field) for field in fields):
                 return (
-                    jsonify({"error": "At least one field is required for update"}),
+                    jsonify(
+                        {"error": "At least one field is required for update"}),
                     400,
                 )
             update_query = {}
@@ -74,7 +160,8 @@ class UserService:
                     elif field == "context":
                         value = "\n".join(value)
                         meta_collection.update_one(
-                            {"user": ObjectId(id)}, {"$set": {"context": value}}
+                            {"user": ObjectId(id)}, {
+                                "$set": {"context": value}}
                         )
                     update_query[field] = value
                     admin_id = am.get_identity()
@@ -84,8 +171,10 @@ class UserService:
             )
             if result.modified_count == 0:
                 return jsonify({"error": "User not found"}), 404
-            updated_user = users_collection.find_one({"_id": ObjectId(id)}, {"_id": 0})
-            updated_user["lastModifiedBy"] = str(updated_user["lastModifiedBy"])
+            updated_user = users_collection.find_one(
+                {"_id": ObjectId(id)}, {"_id": 0})
+            updated_user["lastModifiedBy"] = str(
+                updated_user["lastModifiedBy"])
             users_cache[ObjectId(id)] = updated_user["name"]
             um.updateProfile_status(updated_user)
             return jsonify(updated_user)
