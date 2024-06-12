@@ -37,7 +37,7 @@ class DataService:
 
     @staticmethod
     def get_experts():
-        experts = list(experts_collection.find({}, {"categories": 0}))
+        experts = list(experts_collection.find({}, {"categories": 0}).sort("name", 1))
         formatted_experts = [fm.get_formatted_expert(expert) for expert in experts]
         return jsonify(formatted_experts)
 

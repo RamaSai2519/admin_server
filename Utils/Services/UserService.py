@@ -5,13 +5,13 @@ from Utils.config import (
     users_cache,
     applications_collection,
     calls_collection,
+    events_collection
 )
 from Utils.Helpers.UserManager import UserManager as um
 from Utils.Helpers.AuthManager import AuthManager as am
 from flask import request, jsonify
 from datetime import datetime
 from bson import ObjectId
-from pprint import pprint
 
 
 class UserService:
@@ -99,21 +99,45 @@ class UserService:
     @staticmethod
     def get_leads():
         final_leads = []
+        users = list(users_collection.find({}, {"phoneNumber": 1}))
         user_leads = list(
             users_collection.find(
-                {}, {"Customer Persona": 0}).sort("createdDate", 1)
+                {"name": {"$exists": False}},
+                {"Customer Persona": 0}).sort("name", 1)
         )
-        for lead in user_leads:
-            if lead["profileCompleted"] is False:
-                lead["_id"] = str(lead["_id"])
-                lead["createdDate"] = lead["createdDate"]
-                final_leads.append(lead)
+        for user in user_leads:
+            final_leads.append(user)
         expert_leads = list(
-            applications_collection.find({}, {"_id": 0}).sort("createdDate", 1)
+            applications_collection.find().sort("name", 1)
         )
-        for lead in expert_leads:
-            lead["createdDate"] = lead["createdDate"]
-            final_leads.append(lead)
+        event_leads = list(
+            events_collection.find().sort("name", 1)
+        )
+        for exlead in expert_leads:
+            exlead["source"] = "Saarthi Application"
+            final_leads.append(exlead)
+        for evlead in event_leads:
+            if evlead["phoneNumber"] in [flead["phoneNumber"] for flead in final_leads if flead != evlead]:
+                continue
+            if evlead["phoneNumber"] in [user["phoneNumber"] for user in users]:
+                continue
+            evlead["source"] = "Events"
+            final_leads.append(evlead)
+        for flead in final_leads:
+            if (flead["phoneNumber"] in [user["phoneNumber"] for user in users] or
+               flead["phoneNumber"] in [flead["phoneNumber"] for flead in final_leads if flead != flead]):
+                final_leads.remove(flead)
+        for flead in final_leads:
+            flead["_id"] = str(flead["_id"]) if "_id" in flead else ""
+            flead["name"] = flead["name"] if "name" in flead else ""
+            flead["source"] = flead["source"] if "source" in flead else "Users Lead"
+            flead["lastModifiedBy"] = (
+                str(flead["lastModifiedBy"]
+                    ) if "lastModifiedBy" in flead else ""
+            )
+            flead["lastCallDate"] = "No Calls"
+            flead["callsDone"] = 0
+        final_leads = sorted(final_leads, key=lambda x: x["name"])
         return jsonify(final_leads)
 
     @staticmethod

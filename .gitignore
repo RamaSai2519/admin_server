@@ -7,3 +7,4 @@ jwtgenerator.py
 experimentor.py
 __pycache__/app.cpython-312.pyc
 venv/
+.vscode/
