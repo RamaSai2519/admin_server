@@ -1,4 +1,6 @@
+from asyncio import Timeout
 from re import sub
+from sqlite3 import Time
 from Utils.config import (
     experts_collection,
     categories_collection,
@@ -163,9 +165,11 @@ class ExpertService:
             subscribers[expert_id_str].append(q)
             try:
                 while True:
-                    # Add timeout to handle empty queue
-                    result = q.get()
-                    yield f"data: {result}\n\n"
+                    try:
+                        result = q.get()
+                        yield f"data: {result}\n\n"
+                    except queue.Empty:
+                        yield "data: lalala \n\n"
             except GeneratorExit:
                 if expert_id_str in subscribers:
                     subscribers[expert_id_str].remove(q)
