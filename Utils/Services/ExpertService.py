@@ -163,14 +163,9 @@ class ExpertService:
             subscribers[expert_id_str].append(q)
             try:
                 while True:
-                    try:
-                        # Add timeout to handle empty queue
-                        result = q.get()
-                        yield f"data: {result}\n\n"
-                    except queue.Empty:
-                        yield f"data: no new events\n\n"
-                    except Exception as e:
-                        yield f"data: error - {str(e)}\n\n"
+                    # Add timeout to handle empty queue
+                    result = q.get()
+                    yield f"data: {result}\n\n"
             except GeneratorExit:
                 if expert_id_str in subscribers:
                     subscribers[expert_id_str].remove(q)
