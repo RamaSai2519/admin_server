@@ -37,15 +37,18 @@ class DataService:
 
     @staticmethod
     def get_experts():
-        experts = list(experts_collection.find({}, {"categories": 0}).sort("name", 1))
-        formatted_experts = [fm.get_formatted_expert(expert) for expert in experts]
+        experts = list(experts_collection.find(
+            {}, {"categories": 0}).sort("name", 1))
+        formatted_experts = [fm.get_formatted_expert(
+            expert) for expert in experts]
         return jsonify(formatted_experts)
 
     @staticmethod
     def get_users():
         users = list(
             users_collection.find(
-                {"role": {"$ne": "admin"}, "name": {"$exists": True}},
+                {"role": {"$ne": "admin"}, "profileCompleted": True,
+                    "city": {"$exists": True}},
                 {"Customer Persona": 0},
             )
         )
@@ -63,7 +66,8 @@ class DataService:
     @staticmethod
     def get_categories():
         if request.method == "GET":
-            categories = list(categories_collection.find({}, {"_id": 0, "name": 1}))
+            categories = list(categories_collection.find(
+                {}, {"_id": 0, "name": 1}))
             category_names = [category["name"] for category in categories]
             return jsonify(category_names)
         elif request.method == "POST":
@@ -114,7 +118,8 @@ class DataService:
             month = ist_time.month - 1
             day = ist_time.day
 
-            expert_docment = experts_collection.find_one({"_id": ObjectId(expert_id)})
+            expert_docment = experts_collection.find_one(
+                {"_id": ObjectId(expert_id)})
             expert_number = expert_docment["phoneNumber"]
 
             user = users_collection.find_one({"_id": ObjectId(user_id)})
