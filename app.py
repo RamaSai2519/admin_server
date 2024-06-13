@@ -207,10 +207,15 @@ def get_popup_data_route(expertId):
 
 
 # Below are the UserService routes, prefixed with /user
-@app.route("/admin/user/leads", methods=["GET"])
+@app.route("/admin/user/leads", methods=["GET", "POST"])
 @jwt_required()
 def get_leads_route():
     return UserService.get_leads()
+
+@app.route("/admin/user/leadRemarks", methods=["POST"])
+@jwt_required()
+def add_lead_remarks_route():
+    return UserService.add_lead_remarks()
 
 
 @app.route("/admin/user/users/<string:id>", methods=["GET", "PUT", "DELETE"])

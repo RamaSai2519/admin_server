@@ -4,6 +4,8 @@ from Utils.config import (
     meta_collection,
     users_cache,
     applications_collection,
+    events_collection,
+    calls_collection
 )
 from Utils.Helpers.UserManager import UserManager as um
 from Utils.Helpers.AuthManager import AuthManager as am
@@ -14,19 +16,184 @@ from bson import ObjectId
 
 class UserService:
     @staticmethod
+    def get_engagement_data():
+        meta_fields = ["remarks", "poc", "saarthi", "status"]
+        if request.method == "GET":
+            page = int(request.args.get('page'))
+            size = int(request.args.get('size'))
+            offset = (page - 1) * size
+            time = datetime.now()
+
+            user_data = list(
+                users_collection.find(
+                    {"role": {"$ne": "admin"}},
+                    {"Customer Persona": 0, "lastModifiedBy": 0}
+                ).sort("createdDate", 1).skip(offset).limit(size)
+            )
+
+            total_users = users_collection.count_documents(
+                {"role": {"$ne": "admin"}})
+
+            for user in user_data:
+                user["_id"] = str(user["_id"])
+                user["createdDate"] = f"{user['createdDate'].strftime(
+                    '%d-%m-%Y')} / {(time - user['createdDate']).days}"
+                if "birthDate" in user and user["birthDate"] is not None:
+                    age = int((time - user["birthDate"]).days) // 365
+                    user["birthDate"] = f"{
+                        user['birthDate'].strftime('%d-%m-%Y')} / {age}"
+
+                last_call = calls_collection.find_one(
+                    {"user": ObjectId(user["_id"])},
+                    {"_id": 0, "initiatedTime": 1},
+                    sort=[("initiatedTime", -1)],
+                )
+                days_since_last_call = (
+                    time - last_call["initiatedTime"]).days if last_call else 0
+                user["lastCallDate"] = f"{last_call['initiatedTime'].strftime(
+                    '%d-%m-%Y')} / {days_since_last_call}" if last_call else "No Calls"
+                user["callsDone"] = calls_collection.count_documents(
+                    {"user": ObjectId(user["_id"])})
+
+                user_meta = meta_collection.find_one(
+                    {"user": ObjectId(user["_id"])})
+                for field in meta_fields:
+                    if field in user_meta:
+                        user[field] = user_meta[field]
+                    else:
+                        user[field] = ""
+
+            return jsonify({
+                "data": user_data,
+                "total": total_users,
+                "page": page,
+                "pageSize": size
+            })
+        if request.method == "POST":
+            try:
+                user_id = request.json["key"]
+                if not users_collection.find_one({"_id": ObjectId(user_id)}):
+                    return jsonify({"error": "User not found"}), 404
+                user_field = request.json["field"]
+                user_value = request.json["value"]
+                if user_field in meta_fields:
+                    update = meta_collection.update_one(
+                        {"user": ObjectId(user_id)}, {
+                            "$set": {user_field: user_value}}
+                    )
+                    if update.modified_count == 0:
+                        return jsonify({"message": "Value already exists"}), 200
+                    return jsonify({"message": "User updated successfully"}), 200
+                else:
+                    update = users_collection.update_one(
+                        {"_id": ObjectId(user_id)}, {
+                            "$set": {user_field: user_value}}
+                    )
+                    if update.modified_count == 0:
+                        return jsonify({"error": "Something Went Wrong"}), 500
+                return jsonify({"message": "User updated successfully"}), 200
+            except Exception as e:
+                return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "Invalid request method"}), 404
+
+    @staticmethod
+    def add_lead_remarks():
+        if request.method == "POST":
+            print(request.json)
+            user_id = request.json["key"]
+            value = request.json["value"]
+            if users_collection.find_one({"_id": ObjectId(user_id)}):
+                users_collection.update_one(
+                    {"_id": ObjectId(user_id)}, {
+                        "$set": {"remarks": value}}
+                )
+                return jsonify({"message": "User updated successfully"}), 200
+            elif applications_collection.find_one({"_id": ObjectId(user_id)}):
+                applications_collection.update_one(
+                    {"_id": ObjectId(user_id)}, {
+                        "$set": {"remarks": value}}
+                )
+                return jsonify({"message": "User updated successfully"}), 200
+            elif events_collection.find_one({"_id": ObjectId(user_id)}):
+                events_collection.update_one(
+                    {"_id": ObjectId(user_id)}, {
+                        "$set": {"remarks": value}}
+                )
+                return jsonify({"message": "User updated successfully"}), 200
+            return jsonify({"error": "User not found"}), 404
+        return jsonify({"error": "Invalid request method"}), 404
+
+    @staticmethod
     def get_leads():
-        final_leads = []
-        user_leads = list(users_collection.find({}, {"Customer Persona": 0}))
-        for lead in user_leads:
-            if lead["profileCompleted"] is False:
-                lead["_id"] = str(lead["_id"])
-                lead["createdDate"] = lead["createdDate"]
-                final_leads.append(lead)
-        expert_leads = list(applications_collection.find({}, {"_id": 0}))
-        for lead in expert_leads:
-            lead["createdDate"] = lead["createdDate"]
-            final_leads.append(lead)
-        return jsonify(final_leads)
+        if request.method == "GET":
+            final_leads = []
+            users = list(users_collection.find({}, {"phoneNumber": 1}))
+            user_leads = list(
+                users_collection.find(
+                    {"name": {"$exists": False}, "hidden": {"$exists": False}},
+                    {"Customer Persona": 0}).sort("name", 1)
+            )
+            for user in user_leads:
+                final_leads.append(user)
+            expert_leads = list(
+                applications_collection.find(
+                    {"hidden": {"$exists": False}},
+                ).sort("name", 1)
+            )
+            event_leads = list(
+                events_collection.find(
+                    {"hidden": {"$exists": False}},
+                ).sort("name", 1)
+            )
+            for exlead in expert_leads:
+                exlead["source"] = "Saarthi Application"
+                final_leads.append(exlead)
+            for evlead in event_leads:
+                if evlead["phoneNumber"] in [flead["phoneNumber"] for flead in final_leads if flead != evlead]:
+                    continue
+                if evlead["phoneNumber"] in [user["phoneNumber"] for user in users]:
+                    continue
+                evlead["source"] = "Events"
+                evlead["createdDate"] = evlead["createdAt"]
+                final_leads.append(evlead)
+            for flead in final_leads:
+                if (flead["phoneNumber"] in [user["phoneNumber"] for user in users] or
+                        flead["phoneNumber"] in [flead["phoneNumber"] for flead in final_leads if flead != flead]):
+                    final_leads.remove(flead)
+            for flead in final_leads:
+                flead["_id"] = str(flead["_id"]) if "_id" in flead else ""
+                flead["name"] = flead["name"] if "name" in flead else ""
+                flead["source"] = flead["source"] if "source" in flead else "Users Lead"
+                flead["lastModifiedBy"] = (
+                    str(flead["lastModifiedBy"]
+                        ) if "lastModifiedBy" in flead else ""
+                )
+                flead["lastCallDate"] = "No Calls"
+                flead["callsDone"] = 0
+            final_leads = sorted(
+                final_leads, key=lambda x: x["createdDate"], reverse=True)
+            return jsonify(final_leads)
+        elif request.method == "POST":
+            data = request.json
+            userId = data["user"]["_id"]
+            source = data["user"]["source"]
+            print(userId, source)
+            if source == "Users Lead":
+                return jsonify({"error": "Invalid source"}), 400
+            if source == "Events":
+                result = events_collection.update_one(
+                    {"_id": ObjectId(userId)}, {"$set": {"hidden": True}}
+                )
+                print(result.modified_count)
+                if result.modified_count == 0:
+                    return jsonify({"error": "Event not found"}), 400
+            elif source == "Saarthi Application":
+                result = applications_collection.update_one(
+                    {"_id": ObjectId(userId)}, {"$set": {"hidden": True}}
+                )
+                if result.modified_count == 0:
+                    return jsonify({"error": "Application not found"}), 400
+            return jsonify({"message": "Lead deleted successfully"}), 200
 
     @staticmethod
     def handle_user(id):
