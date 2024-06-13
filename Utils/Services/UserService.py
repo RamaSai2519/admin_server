@@ -4,8 +4,8 @@ from Utils.config import (
     meta_collection,
     users_cache,
     applications_collection,
-    calls_collection,
-    events_collection
+    events_collection,
+    calls_collection    
 )
 from Utils.Helpers.UserManager import UserManager as um
 from Utils.Helpers.AuthManager import AuthManager as am
