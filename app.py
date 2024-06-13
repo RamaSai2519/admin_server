@@ -224,6 +224,12 @@ def handle_user_route(id):
     return UserService.handle_user(id)
 
 
+@app.route("/admin/user/engagementData", methods=["GET", "POST", "DELETE"])
+@jwt_required()
+def get_online_users_route():
+    return UserService.get_engagement_data()
+
+
 # Below are the EventService routes, prefixed with /event
 @app.route("/admin/event/events", methods=["GET"])
 @jwt_required()
@@ -244,4 +250,4 @@ def get_users_by_event_route():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080)
+    app.run(host="0.0.0.0", port=8080, debug=True)

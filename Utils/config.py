@@ -7,6 +7,7 @@ import os
 load_dotenv()
 
 JWT_SECRET_KEY = os.getenv("JWT_SECRET")
+FB_SERVER_KEY = os.getenv("FB_SERVER_KEY")
 firebase_admin.initialize_app(credentials.Certificate("serviceAccountKey.json"))
 
 client = MongoClient(os.getenv("PROD_DB_URL"))

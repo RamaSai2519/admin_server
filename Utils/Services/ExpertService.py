@@ -26,6 +26,10 @@ class ExpertService:
     @staticmethod
     def get_popup_data(expertId):
         latest_call = cm.get_latest_call(expertId)
+        if latest_call is None:
+            return jsonify(
+                {"userContext": "", "remarks": "No Calls Found", "repeation": ""}
+            )
         user_id = latest_call["user"]
         userContext = um.get_user_context(ObjectId(user_id))
         remarks = em.get_expert_remarks(ObjectId(expertId))
@@ -41,7 +45,9 @@ class ExpertService:
             if not expert:
                 return jsonify({"error": "Expert not found"}), 404
             expert["_id"] = str(expert["_id"])
-            expert["lastModifiedBy"] = str(expert["lastModifiedBy"]) if "lastModifiedBy" in expert else ""
+            expert["lastModifiedBy"] = (
+                str(expert["lastModifiedBy"]) if "lastModifiedBy" in expert else ""
+            )
             category_names = (
                 [
                     categories_collection.find_one({"_id": ObjectId(category_id)}).get(
@@ -109,9 +115,7 @@ class ExpertService:
             )
             if result.modified_count == 0:
                 return jsonify({"error": "Expert not found"}), 404
-            updated_expert = experts_collection.find_one(
-                {"_id": ObjectId(id)}
-            )
+            updated_expert = experts_collection.find_one({"_id": ObjectId(id)})
             updated_expert["_id"] = str(updated_expert["_id"])
             updated_expert["lastModifiedBy"] = str(updated_expert["lastModifiedBy"])
             updated_expert["categories"] = [

@@ -37,7 +37,7 @@ class DataService:
 
     @staticmethod
     def get_experts():
-        experts = list(experts_collection.find({}, {"categories": 0}))
+        experts = list(experts_collection.find({}, {"categories": 0}).sort("name", 1))
         formatted_experts = [fm.get_formatted_expert(expert) for expert in experts]
         return jsonify(formatted_experts)
 
@@ -78,7 +78,7 @@ class DataService:
     @staticmethod
     def schedules():
         if request.method == "GET":
-            schedules = list(schedules_collection.find())
+            schedules = list(schedules_collection.find().sort("datetime", 1))
             for schedule in schedules:
                 schedule["_id"] = str(schedule["_id"])
                 schedule["expert"] = hf.get_expert_name(schedule["expert"])

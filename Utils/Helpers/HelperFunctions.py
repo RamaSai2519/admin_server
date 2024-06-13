@@ -3,6 +3,7 @@ from Utils.config import (
     users_collection,
     experts_cache,
     users_cache,
+    FB_SERVER_KEY,
 )
 from datetime import timedelta, datetime
 import requests
@@ -53,7 +54,7 @@ class HelperFunctions:
     @staticmethod
     def send_push_notification(token, message):
         fcm_url = "https://fcm.googleapis.com/fcm/send"
-        server_key = "AAAAM5jkbNg:APA91bG80zQ8CzD1AeQmV45YT4yWuwSgJ5VwvyLrNynAJBk4AcyCb6vbCSGlIQeQFPAndS0TbXrgEL8HFYQq4DMXmSoJ4ek7nFcCwOEDq3Oi5Or_SibSpywYFrnolM4LSxpRkVeiYGDv"
+        server_key = FB_SERVER_KEY
         payload = {
             "to": token,
             "notification": {"title": "Notification", "body": message},
