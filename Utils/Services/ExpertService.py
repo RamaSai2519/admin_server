@@ -174,7 +174,7 @@ class ExpertService:
                 if expert_id_str in subscribers:
                     subscribers[expert_id_str].remove(q)
 
-        return Response(event_stream(), content_type='text/event-stream')
+        return Response(event_stream(), content_type='text/event-stream', headers={'Connection': 'keep-alive'})
 
     @staticmethod
     def watch_changes():
