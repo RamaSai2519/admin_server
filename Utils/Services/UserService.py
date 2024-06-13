@@ -215,7 +215,8 @@ class UserService:
             )
             meta_doc = meta_collection.find_one({"user": ObjectId(id)})
             if meta_doc:
-                user["context"] = str(meta_doc["context"]).split("\n") if "context" in meta_doc else []
+                user["context"] = str(meta_doc["context"]).split(
+                    "\n") if "context" in meta_doc else []
                 user["source"] = meta_doc["source"] if "source" in meta_doc else ""
             return (
                 (jsonify(user), 200)
