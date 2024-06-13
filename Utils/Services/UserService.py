@@ -167,8 +167,7 @@ class UserService:
                     str(flead["lastModifiedBy"]
                         ) if "lastModifiedBy" in flead else ""
                 )
-                flead["lastCallDate"] = "No Calls"
-                flead["callsDone"] = 0
+                flead["remarks"] = flead["remarks"] if "remarks" in flead else ""
             final_leads = sorted(
                 final_leads, key=lambda x: x["createdDate"], reverse=True)
             return jsonify(final_leads)
