@@ -166,7 +166,7 @@ class ExpertService:
             try:
                 while True:
                     try:
-                        result = q.get(timeout=1)
+                        result = q.get()
                         yield f"data: {result}\n\n"
                     except queue.Empty:
                         yield "data: lalala \n\n"
@@ -174,7 +174,7 @@ class ExpertService:
                 if expert_id_str in subscribers:
                     subscribers[expert_id_str].remove(q)
 
-        return Response(event_stream(), content_type='text/event-stream', headers={'Connection': 'keep-alive'})
+        return Response(event_stream(), content_type='text/event-stream')
 
     @staticmethod
     def watch_changes():
