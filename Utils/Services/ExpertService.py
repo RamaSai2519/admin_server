@@ -15,6 +15,7 @@ from flask import jsonify, request, Response
 from bson import ObjectId
 import queue
 
+
 class ExpertService:
     @staticmethod
     def create_expert():
@@ -162,10 +163,17 @@ class ExpertService:
             subscribers[expert_id_str].append(q)
             try:
                 while True:
-                    result = q.get()
-                    yield f"data: {result}\n\n"
+                    try:
+                        # Add timeout to handle empty queue
+                        result = q.get()
+                        yield f"data: {result}\n\n"
+                    except queue.Empty:
+                        yield f"data: no new events\n\n"
+                    except Exception as e:
+                        yield f"data: error - {str(e)}\n\n"
             except GeneratorExit:
-                subscribers[expert_id_str].remove(q)
+                if expert_id_str in subscribers:
+                    subscribers[expert_id_str].remove(q)
 
         return Response(event_stream(), content_type='text/event-stream')
 
