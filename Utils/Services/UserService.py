@@ -1,3 +1,4 @@
+from tkinter import N
 from Utils.config import (
     users_collection,
     deleted_users_collection,
@@ -69,7 +70,8 @@ class UserService:
                         else:
                             user[field] = ""
                 if user["expert"] == "" if "expert" in user else True:
-                    expert = hf.get_expert_name(last_call["expert"]) if last_call else ""
+                    expert = hf.get_expert_name(
+                        last_call["expert"]) if last_call else ""
                     user["expert"] = expert if expert else ""
             return jsonify({
                 "data": user_data,
@@ -90,7 +92,11 @@ class UserService:
                             "$set": {user_field: user_value}}
                     )
                     if update.modified_count == 0:
-                        return jsonify({"message": "Value already exists"}), 200
+                        update = meta_collection.insert_one(
+                            {"user": ObjectId(user_id), user_field: user_value}
+                        )
+                        if update.inserted_id == None:
+                            return jsonify({"error": "Something Went Wrong"}), 400
                     return jsonify({"message": "User updated successfully"}), 200
                 else:
                     update = users_collection.update_one(
