@@ -1,4 +1,3 @@
-from tkinter import N
 from Utils.config import (
     users_collection,
     deleted_users_collection,
