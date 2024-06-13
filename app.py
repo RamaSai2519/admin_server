@@ -64,10 +64,11 @@ from Utils.Services.DataService import DataService
 from Utils.Services.CallService import CallService
 from Utils.Services.UserService import UserService
 from Utils.Services.AppService import AppService
-from Utils.config import JWT_SECRET_KEY
+from Utils.config import JWT_SECRET_KEY, subscribers
 from datetime import timedelta
 from flask_cors import CORS
 from flask import Flask
+import threading
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
@@ -201,6 +202,11 @@ def create_expert_route():
     return ExpertService.create_expert()
 
 
+@app.route("/admin/expert/callStream")
+def call_stream_route():
+    return ExpertService.call_stream()
+
+
 @app.route("/admin/expert/popupData/<string:expertId>", methods=["GET"])
 def get_popup_data_route(expertId):
     return ExpertService.get_popup_data(expertId)
@@ -249,10 +255,10 @@ def get_event_route():
 def get_users_by_event_route():
     return EventService.get_users_by_event()
 
-
 if __name__ == "__main__":
+    threading.Thread(target=ExpertService.watch_changes, daemon=True).start()
     app.run(
         host="0.0.0.0",
         port=8080,
-        # debug=True,
+        debug=True,
     )

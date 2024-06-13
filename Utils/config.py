@@ -8,7 +8,8 @@ load_dotenv()
 
 JWT_SECRET_KEY = os.getenv("JWT_SECRET")
 FB_SERVER_KEY = os.getenv("FB_SERVER_KEY")
-firebase_admin.initialize_app(credentials.Certificate("serviceAccountKey.json"))
+firebase_admin.initialize_app(
+    credentials.Certificate("serviceAccountKey.json"))
 
 client = MongoClient(os.getenv("PROD_DB_URL"))
 db = client["test"]
@@ -37,3 +38,4 @@ experts_collection.create_index([("status", 1)])
 
 experts_cache = {}
 users_cache = {}
+subscribers = {}
