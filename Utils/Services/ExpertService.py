@@ -166,7 +166,7 @@ class ExpertService:
             try:
                 while True:
                     try:
-                        result = q.get()
+                        result = q.get(timeout=1)
                         yield f"data: {result}\n\n"
                     except queue.Empty:
                         yield "data: lalala \n\n"
