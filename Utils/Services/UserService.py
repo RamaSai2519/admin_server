@@ -18,7 +18,7 @@ from bson import ObjectId
 class UserService:
     @staticmethod
     def get_engagement_data():
-        meta_fields = ["remarks", "poc", "saarthi", "status"]
+        meta_fields = ["remarks", "poc", "expert", "status", "userStatus"]
         if request.method == "GET":
             page = int(request.args.get('page'))
             size = int(request.args.get('size'))
@@ -215,8 +215,8 @@ class UserService:
             )
             meta_doc = meta_collection.find_one({"user": ObjectId(id)})
             if meta_doc:
-                user["context"] = str(meta_doc["context"]).split("\n")
-                user["source"] = meta_doc["source"]
+                user["context"] = str(meta_doc["context"]).split("\n") if "context" in meta_doc else []
+                user["source"] = meta_doc["source"] if "source" in meta_doc else ""
             return (
                 (jsonify(user), 200)
                 if user
