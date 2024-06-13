@@ -9,6 +9,7 @@ from Utils.config import (
 )
 from Utils.Helpers.UserManager import UserManager as um
 from Utils.Helpers.AuthManager import AuthManager as am
+from Utils.Helpers.HelperFunctions import HelperFunctions as hf
 from flask import request, jsonify
 from datetime import datetime
 from bson import ObjectId
@@ -28,7 +29,7 @@ class UserService:
                 users_collection.find(
                     {"role": {"$ne": "admin"}},
                     {"Customer Persona": 0, "lastModifiedBy": 0}
-                ).sort("createdDate", 1).skip(offset).limit(size)
+                ).sort("createdDate", -1).skip(offset).limit(size)
             )
 
             total_users = users_collection.count_documents(
@@ -36,33 +37,40 @@ class UserService:
 
             for user in user_data:
                 user["_id"] = str(user["_id"])
-                user["createdDate"] = f"{user['createdDate'].strftime(
-                    '%d-%m-%Y')} / {(time - user['createdDate']).days}"
+                user["slDays"] = int((time - user["createdDate"]).days)
+                user["createdDate"] = str(
+                    user['createdDate'].strftime('%d-%m-%Y'))
                 if "birthDate" in user and user["birthDate"] is not None:
-                    age = int((time - user["birthDate"]).days) // 365
                     user["birthDate"] = f"{
-                        user['birthDate'].strftime('%d-%m-%Y')} / {age}"
+                        user['birthDate'].strftime('%d-%m-%Y')}"
 
                 last_call = calls_collection.find_one(
-                    {"user": ObjectId(user["_id"])},
-                    {"_id": 0, "initiatedTime": 1},
+                    {"user": ObjectId(
+                        user["_id"]), "status": "successfull", "failedReason": ""},
+                    {"_id": 0, "initiatedTime": 1, "expert": 1},
                     sort=[("initiatedTime", -1)],
                 )
                 days_since_last_call = (
                     time - last_call["initiatedTime"]).days if last_call else 0
                 user["lastCallDate"] = f"{last_call['initiatedTime'].strftime(
-                    '%d-%m-%Y')} / {days_since_last_call}" if last_call else "No Calls"
+                    '%d-%m-%Y')}" if last_call else "No Calls"
+                user["callAge"] = days_since_last_call if last_call else 0
                 user["callsDone"] = calls_collection.count_documents(
-                    {"user": ObjectId(user["_id"])})
+                    {"user": ObjectId(user["_id"]), "status": "successfull", "failedReason": ""})
+                user["callStatus"] = "First call Pending" if user["callsDone"] == 0 else "First call Done" if user[
+                    "callsDone"] == 1 else "Second call Done" if user["callsDone"] == 2 else "Third call Done" if user["callsDone"] == 3 else "Engaged"
 
                 user_meta = meta_collection.find_one(
                     {"user": ObjectId(user["_id"])})
-                for field in meta_fields:
-                    if field in user_meta:
-                        user[field] = user_meta[field]
-                    else:
-                        user[field] = ""
-
+                if user_meta:
+                    for field in meta_fields:
+                        if field in user_meta:
+                            user[field] = user_meta[field]
+                        else:
+                            user[field] = ""
+                if user["expert"] == "" if "expert" in user else True:
+                    expert = hf.get_expert_name(last_call["expert"]) if last_call else ""
+                    user["expert"] = expert if expert else ""
             return jsonify({
                 "data": user_data,
                 "total": total_users,
