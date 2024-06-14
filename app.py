@@ -63,6 +63,7 @@ from Utils.Services.AuthService import AuthService
 from Utils.Services.DataService import DataService
 from Utils.Services.CallService import CallService
 from Utils.Services.UserService import UserService
+from Utils.Services.GameService import GameService
 from Utils.Services.AppService import AppService
 from Utils.config import JWT_SECRET_KEY
 from datetime import timedelta
@@ -258,6 +259,13 @@ def get_event_route():
 @jwt_required()
 def get_users_by_event_route():
     return EventService.get_users_by_event()
+
+
+# Below are the GameService routes, prefixed with /game
+@app.route("/games/profiles", methods=["GET"])
+def get_profiles_route():
+    print("Called")
+    return GameService.get_profiles()
 
 
 if __name__ == "__main__":
