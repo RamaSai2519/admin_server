@@ -268,6 +268,16 @@ def get_profiles_route():
     return GameService.get_profiles()
 
 
+@app.route("/admin/games/addQuestion", methods=["POST"])
+def add_question_route():
+    return GameService.add_question()
+
+
+@app.route("/admin/games/quizQuestions", methods=["GET"])
+def get_questions_route():
+    return GameService.get_questions()
+
+
 if __name__ == "__main__":
     app.run(
         host="0.0.0.0",
