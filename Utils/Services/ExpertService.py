@@ -1,6 +1,3 @@
-from asyncio import Timeout
-from re import sub
-from sqlite3 import Time
 from Utils.config import (
     experts_collection,
     categories_collection,
@@ -16,6 +13,7 @@ from Utils.Helpers.AuthManager import AuthManager as am
 from flask import jsonify, request, Response
 from bson import ObjectId
 import queue
+import time
 
 
 class ExpertService:
@@ -193,3 +191,19 @@ class ExpertService:
                     if expert_id in subscribers:
                         for subscriber in subscribers[expert_id]:
                             subscriber.put("call ended")
+
+    @staticmethod
+    def close_sse_connections():
+        print("Resetting SSE connections and clearing subscribers.")
+        for expert_id in list(subscribers.keys()):
+            for q in subscribers[expert_id]:
+                q.put("connection closed")
+            subscribers[expert_id].clear()
+        subscribers.clear()
+
+    @staticmethod
+    # Function to periodically reset SSE connections
+    def periodic_reset_sse_connections():
+        while True:
+            time.sleep(600)  # 10 minutes
+            ExpertService.close_sse_connections()

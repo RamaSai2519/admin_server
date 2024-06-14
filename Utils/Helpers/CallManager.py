@@ -29,7 +29,8 @@ class CallManager:
         calls = uf.get_calls({}, {"duration": 1, "_id": 0}, False, False)
         for call in calls:
             if "duration" in call and call["duration"] != "":
-                total_duration += hf.get_total_duration_in_seconds(call["duration"])
+                total_duration += hf.get_total_duration_in_seconds(
+                    call["duration"])
         return total_duration
 
     @staticmethod
@@ -72,7 +73,8 @@ class CallManager:
     @staticmethod
     def callUser(expertId, user):
         url = "http://api.sukoon.love/api/call/make-call"
-        token = am.generate_token(user["name"], str(user["_id"]), user["phoneNumber"])
+        token = am.generate_token(user["name"], str(
+            user["_id"]), user["phoneNumber"])
         payload = json.dumps(
             {
                 "expertId": expertId,
@@ -89,11 +91,13 @@ class CallManager:
     def checkValidity(call):
         initiated_time = call["initiatedTime"]
         if isinstance(initiated_time, str):
-            initiated_time = datetime.strptime(initiated_time, "%Y-%m-%d %H:%M:%S.%f")
+            initiated_time = datetime.strptime(
+                initiated_time, "%Y-%m-%d %H:%M:%S.%f")
 
         utc_zone = pytz.utc
         ist_zone = pytz.timezone("Asia/Kolkata")
-        initiated_time = initiated_time.replace(tzinfo=utc_zone).astimezone(ist_zone)
+        initiated_time = initiated_time.replace(
+            tzinfo=utc_zone).astimezone(ist_zone)
         current_time = datetime.now(ist_zone)
 
         try:
@@ -108,7 +112,8 @@ class CallManager:
             if time_difference.total_seconds() <= 600:
                 return True
             else:
-                hours, remainder = divmod(time_difference.total_seconds(), 3600)
+                hours, remainder = divmod(
+                    time_difference.total_seconds(), 3600)
                 minutes, _ = divmod(remainder, 60)
                 return f"The call is {int(hours)} hours and {int(minutes)} minutes old and can't be reconnected."
         except Exception as e:

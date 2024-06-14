@@ -79,6 +79,9 @@ app.config["JWT_REFRESH_TOKEN_EXPIRES"] = timedelta(weeks=1)
 jwt = JWTManager(app)
 
 threading.Thread(target=ExpertService.watch_changes, daemon=True).start()
+threading.Thread(
+    target=ExpertService.periodic_reset_sse_connections, daemon=True).start()
+
 
 # Authentication Route
 @app.route("/admin/auth/login", methods=["POST"])
@@ -255,6 +258,7 @@ def get_event_route():
 @jwt_required()
 def get_users_by_event_route():
     return EventService.get_users_by_event()
+
 
 if __name__ == "__main__":
     app.run(
