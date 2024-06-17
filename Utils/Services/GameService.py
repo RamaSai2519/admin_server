@@ -4,6 +4,7 @@ from flask import request, jsonify
 from pymongo import MongoClient
 from dotenv import load_dotenv
 from bson import ObjectId
+from pprint import pprint
 import requests
 import json
 import os
@@ -40,7 +41,6 @@ class GameService:
     @staticmethod
     def add_question():
         data = request.json
-        print(data)
         payload = json.dumps({
             "question": data["question"],
             "options": [
@@ -63,10 +63,11 @@ class GameService:
             'Content-Type': 'application/json'
         }
 
-        response = requests.request("POST", url, headers=headers, data=payload)
+        response = requests.request(
+            "POST", url, headers=headers, data=payload)
 
         if response.status_code != 200:
-            return jsonify({"message": "Failed to add question"}), 400
+            return jsonify(response.json()), 400
 
         return jsonify({"message": "Question added successfully"}), 200
 
