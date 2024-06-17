@@ -183,7 +183,8 @@ class AppService:
                 return jsonify({"error": "Schedule not found"}), 404
             schedule["_id"] = (str(schedule["_id"]),)
             expert_id = (schedule["expert"],)
-            expert = experts_collection.find_one({"_id": expert_id}, {"name": 1})
+            expert = experts_collection.find_one(
+                {"_id": expert_id}, {"name": 1})
             schedule["expert"] = expert["name"] if expert else ""
             user_id = schedule["user"]
             user = users_collection.find_one({"_id": user_id}, {"name": 1})

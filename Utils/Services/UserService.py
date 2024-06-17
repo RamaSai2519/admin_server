@@ -86,6 +86,11 @@ class UserService:
                 user_field = request.json["field"]
                 user_value = request.json["value"]
                 if user_field in meta_fields:
+                    prev_meta = meta_collection.find_one(
+                        {"user": ObjectId(user_id)})
+                    if prev_meta:
+                        if user_field in prev_meta and prev_meta[user_field] == user_value:
+                            return jsonify({"message": "Value already exists"}), 200
                     update = meta_collection.update_one(
                         {"user": ObjectId(user_id)}, {
                             "$set": {user_field: user_value}}
