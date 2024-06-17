@@ -70,7 +70,8 @@ class HelperFunctions:
     @staticmethod
     def get_expert_name(expert_id):
         if expert_id not in experts_cache:
-            expert = experts_collection.find_one({"_id": expert_id}, {"name": 1})
+            expert = experts_collection.find_one(
+                {"_id": expert_id}, {"name": 1})
             experts_cache[expert_id] = (
                 expert["name"] if expert and expert["name"] else "Unknown"
             )
@@ -80,7 +81,10 @@ class HelperFunctions:
     def get_user_name(user_id):
         if user_id not in users_cache:
             user = users_collection.find_one({"_id": user_id}, {"name": 1})
-            users_cache[user_id] = user["name"] if user and user["name"] else "Unknown"
+            try:
+                users_cache[user_id] = user["name"]
+            except:
+                users_cache[user_id] = "Unknown"
         return users_cache[user_id]
 
     @staticmethod

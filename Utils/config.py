@@ -2,14 +2,26 @@ from pymongo import MongoClient, DESCENDING
 from firebase_admin import credentials
 from dotenv import load_dotenv
 import firebase_admin
+import boto3
 import os
 
 load_dotenv()
 
 JWT_SECRET_KEY = os.getenv("JWT_SECRET")
 FB_SERVER_KEY = os.getenv("FB_SERVER_KEY")
+REGION = os.getenv("REGION")
+ACCESS_KEY = os.getenv("ACCESS_KEY")
+SECRET_ACCESS_KEY = os.getenv("SECRET_ACCESS_KEY")
+
 firebase_admin.initialize_app(
     credentials.Certificate("serviceAccountKey.json"))
+
+s3_client = boto3.client(
+    "s3",
+    region_name=REGION,
+    aws_access_key_id=ACCESS_KEY,
+    aws_secret_access_key=SECRET_ACCESS_KEY
+)
 
 client = MongoClient(os.getenv("PROD_DB_URL"))
 db = client["test"]
@@ -39,3 +51,9 @@ experts_collection.create_index([("status", 1)])
 experts_cache = {}
 users_cache = {}
 subscribers = {}
+
+ALLOWED_MIME_TYPES = [
+    "image/jpeg", "image/pipeg", "image/png", "application/octet-stream",
+    "image/svg+xml", "video/mp4", "video/webm", "video/quicktime",
+    "video/x-matroska"
+]

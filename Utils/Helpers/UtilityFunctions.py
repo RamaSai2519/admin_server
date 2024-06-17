@@ -1,4 +1,4 @@
-from Utils.config import calls_collection, users_collection
+from Utils.config import calls_collection, users_collection, users_cache
 from Utils.Helpers.FormatManager import FormatManager as fm
 
 
@@ -36,5 +36,6 @@ class UtilityFunctions:
         admin_ids = [
             user["_id"] for user in users_collection.find({"role": "admin"}, {"_id": 1})
         ]
-        count = calls_collection.count_documents({"user": {"$nin": admin_ids}, **query})
+        count = calls_collection.count_documents(
+            {"user": {"$nin": admin_ids}, **query})
         return count
