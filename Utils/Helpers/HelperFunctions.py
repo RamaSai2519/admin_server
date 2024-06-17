@@ -81,7 +81,10 @@ class HelperFunctions:
     def get_user_name(user_id):
         if user_id not in users_cache:
             user = users_collection.find_one({"_id": user_id}, {"name": 1})
-            users_cache[user_id] = user["name"] if user and "name" in user else "Unknown"
+            try:
+                users_cache[user_id] = user["name"]
+            except:
+                users_cache[user_id] = "Unknown"
         return users_cache[user_id]
 
     @staticmethod
