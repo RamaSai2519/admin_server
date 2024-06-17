@@ -133,6 +133,11 @@ def get_call_insights_route():
     return AppService.get_insights()
 
 
+@app.route("/admin/service/upload", methods=["POST"])
+def upload_route():
+    return AppService.upload()
+
+
 # Below are the CallService routes, prefixed with /call
 @app.route("/admin/call/calls/<string:id>", methods=["GET", "PUT"])
 @jwt_required()
