@@ -14,7 +14,8 @@ class EventService:
         allEvents = list(eventconfigs_collection.find({}, {"_id": 0}))
         for event in allEvents:
             event["lastModifiedBy"] = (
-                str(event["lastModifiedBy"]) if "lastModifiedBy" in event else ""
+                str(event["lastModifiedBy"]
+                    ) if "lastModifiedBy" in event else ""
             )
         return jsonify(allEvents)
 
@@ -43,14 +44,17 @@ class EventService:
         if request.method == "GET":
             params = request.args
             slug = params["slug"]
-            event = eventconfigs_collection.find_one({"slug": slug}, {"_id": 0})
+            event = eventconfigs_collection.find_one(
+                {"slug": slug}, {"_id": 0})
             event["lastModifiedBy"] = (
-                str(event["lastModifiedBy"]) if "lastModifiedBy" in event else ""
+                str(event["lastModifiedBy"]
+                    ) if "lastModifiedBy" in event else ""
             )
             return jsonify(event)
         elif request.method == "POST":
             data = request.json
-            fields = ["name", "mainTitle", "subTitle"]
+            fields = ["date", "duration", "expert", "mainTitle",
+                      "name", "slug", "subTitle", "zoomLink", "imageUrl"]
             if not all(data[field] for field in fields):
                 return (
                     jsonify({"error": "All fields are required for create"}),
@@ -58,22 +62,23 @@ class EventService:
                 )
             slug = data["slug"]
             if eventconfigs_collection.find_one({"slug": slug}):
-                event = evm.update_event(data, fields)
-                return jsonify(event)
+                return jsonify({"message": "Event already exists"}), 400
             createdTime = datetime.now()
             data["createdAt"] = createdTime
             data["updatedAt"] = createdTime
             admin_id = am.get_identity()
             data["lastModifiedBy"] = ObjectId(admin_id)
-            eventconfigs_collection.insert_one(data)
-            event = eventconfigs_collection.find_one({"slug": slug}, {"_id": 0})
-            return jsonify(event)
+            result = eventconfigs_collection.insert_one(data)
+            if result.inserted_id is None:
+                return jsonify({"error": "Failed to create event"}), 400
+            return jsonify({"message": "Event created successfully"}), 200
         elif request.method == "PUT":
             data = request.json
             fields = ["name", "mainTitle", "subTitle"]
             if not any(data[field] for field in fields):
                 return (
-                    jsonify({"error": "At least one field is required for update"}),
+                    jsonify(
+                        {"error": "At least one field is required for update"}),
                     400,
                 )
             event = evm.update_event(data, fields)
