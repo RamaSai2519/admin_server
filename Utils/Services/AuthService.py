@@ -24,7 +24,8 @@ class AuthService:
         if admins_collection.find_one({"id": id}):
             return jsonify({"msg": "User already exists"}), 400
 
-        hashed_password = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
+        hashed_password = bcrypt.hashpw(
+            password.encode("utf-8"), bcrypt.gensalt())
         createdDate = datetime.now()
 
         admins_collection.insert_one(
@@ -40,7 +41,6 @@ class AuthService:
 
     @staticmethod
     def login():
-        print(request.json)
         id = request.json.get("id", None)
         password = request.json.get("password", None)
         if not id or not password:
