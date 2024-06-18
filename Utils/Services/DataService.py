@@ -1,10 +1,10 @@
 from Utils.config import (
-    logs_collection,
     applications_collection,
-    experts_collection,
-    users_collection,
     categories_collection,
     schedules_collection,
+    experts_collection,
+    users_collection,
+    logs_collection,
 )
 from Utils.Helpers.UtilityFunctions import UtilityFunctions as uf
 from Utils.Helpers.HelperFunctions import HelperFunctions as hf
@@ -142,3 +142,39 @@ class DataService:
             return jsonify({"message": "Data received successfully"})
         else:
             return jsonify({"error": "Invalid request method"}), 404
+
+    @staticmethod
+    def get_slots():
+        data = request.json
+        expert_id = data["expert"]
+        date = data["datetime"]
+        day = datetime.strptime(date, "%Y-%m-%dT%H:%M:%S.%fZ").strftime("%A")
+        slots = sm.slots_calculater(expert_id, day)
+
+        if not slots:
+            return jsonify([])  # Return empty list if no slots are available
+
+        # Get the start time dynamically from the first slot
+        first_slot = str(slots[0])
+        slot_start_time = datetime.strptime(
+            first_slot.split(' - ')[0], "%H:%M")
+
+        slot_duration = 30  # Assuming each slot is 30 minutes
+        output_slots = []
+
+        for slot in slots:
+            slot_start = slot_start_time.time()
+            slot_start_datetime = datetime.combine(
+                datetime.strptime(date, "%Y-%m-%dT%H:%M:%S.%fZ"), slot_start)
+            slot_end_datetime = slot_start_datetime + \
+                timedelta(minutes=slot_duration)
+            slot_start_datetime = slot_start_datetime - \
+                timedelta(hours=5, minutes=30)
+            slot_dict = {
+                "slot": slot,
+                "datetime": slot_start_datetime.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+            }
+            output_slots.append(slot_dict)
+            slot_start_time = slot_end_datetime
+
+        return jsonify(output_slots)
