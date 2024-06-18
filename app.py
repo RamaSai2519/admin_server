@@ -57,6 +57,7 @@ Routes from the admin server
 
 from Utils.Helpers.InsightsManager import InsightsManager
 from flask_jwt_extended import JWTManager, jwt_required
+from Utils.Services.ContentService import ContentService
 from Utils.Services.ExpertService import ExpertService
 from Utils.Services.EventService import EventService
 from Utils.Services.AuthService import AuthService
@@ -274,13 +275,31 @@ def get_profiles_route():
 
 
 @app.route("/admin/games/addQuestion", methods=["POST"])
+@jwt_required()
 def add_question_route():
     return GameService.add_question()
 
 
 @app.route("/admin/games/quizQuestions", methods=["GET"])
+@jwt_required()
 def get_questions_route():
     return GameService.get_questions()
+
+# Below are the ContentService routes, prefixed with /content
+@app.route("/admin/content/shorts", methods=["GET"])
+@jwt_required()
+def get_contents_route():
+    return ContentService.get_shorts()
+
+@app.route("/admin/content/videoUrl", methods=["GET"])
+@jwt_required()
+def get_video_url_route():
+    return ContentService.get_video_url()
+
+@app.route("/admin/content/Video", methods=["POST"])
+@jwt_required()
+def approve_video_route():
+    return ContentService.approve_video()
 
 
 if __name__ == "__main__":
