@@ -23,7 +23,7 @@ s3_client = boto3.client(
     aws_secret_access_key=SECRET_ACCESS_KEY
 )
 
-client = MongoClient(os.getenv("PROD_DB_URL"))
+client = MongoClient(os.getenv("DEV_DB_URL"))
 db = client["test"]
 
 deleted_schedules_collection = db["deletedschedules"]
