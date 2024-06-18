@@ -199,6 +199,11 @@ def get_categories_route():
 def schedules_route():
     return DataService.schedules()
 
+@app.route("/admin/data/slots", methods=["POST"])
+@jwt_required()
+def slots_route():
+    return DataService.get_slots()
+
 
 # Below are the ExpertService routes, prefixed with /expert
 @app.route("/admin/expert/experts/<string:id>", methods=["GET", "PUT", "DELETE"])
