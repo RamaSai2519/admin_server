@@ -173,10 +173,10 @@ class AppService:
                 return jsonify({"error": str(e)}), 500
         elif request.method == "DELETE":
             try:
-                sm.cancel_final_call(id)
                 schedule = schedules_collection.find_one({"_id": ObjectId(id)})
                 deleted_schedules_collection.insert_one(schedule)
                 result = schedules_collection.delete_one({"_id": ObjectId(id)})
+                sm.cancel_final_call(id)
                 if result.deleted_count == 0:
                     return jsonify({"error": "Schedule not found"}), 404
                 return jsonify({"message": "Schedule deleted successfully"}), 200
@@ -276,6 +276,6 @@ class AppService:
                 s3_client.meta.endpoint_url}/sukoon-media/{unique_filename}"
 
             return jsonify({"message": "File uploaded successfully", "file_url": file_url})
-        
+
         except Exception as e:
             return jsonify({"error": str(e)}), 500
