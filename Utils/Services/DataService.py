@@ -101,9 +101,46 @@ class DataService:
             expert_id = data["expert"]
             admin_id = am.get_identity()
             duration = data["duration"]
+
+            current_date = datetime.now(pytz.timezone("Asia/Kolkata"))
+            today_start = datetime.combine(current_date, datetime.min.time())
+            today_end = datetime.combine(current_date, datetime.max.time())
+
+            prev_schedules = list(
+                schedules_collection.find(
+                    {
+                        "user": ObjectId(user_id),
+                        "status": "pending",
+                        "datetime": {"$gte": today_start, "$lt": today_end},
+                    }
+                )
+            )
+
+            if len(prev_schedules) > 2:
+                return jsonify(
+                    {"error": "User already has 2 pending scheduled calls for today"}
+                )
+
             ist_offset = timedelta(hours=5, minutes=30)
             date_object = datetime.strptime(time, "%Y-%m-%dT%H:%M:%S.%fZ")
             ist_time = date_object + ist_offset
+
+            same_schedules = list(
+                schedules_collection.find(
+                    {
+                        "user": ObjectId(user_id),
+                        "status": "pending",
+                        "datetime": {
+                            "$gte": ist_time - timedelta(hours=1),
+                            "$lt": ist_time + timedelta(hours=1),
+                        },
+                    }
+                )
+            )
+
+            if same_schedules:
+                return jsonify(
+                    {"error": "User already has a pending scheduled call(s) in the same hour"})
 
             document = {
                 "expert": ObjectId(expert_id),
@@ -146,7 +183,7 @@ class DataService:
         else:
             return jsonify({"error": "Invalid request method"}), 404
 
-    @staticmethod
+    @ staticmethod
     def get_slots():
         # Parse input data
         data = request.json
