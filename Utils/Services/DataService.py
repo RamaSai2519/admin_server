@@ -96,10 +96,10 @@ class DataService:
             return jsonify(schedules)
         elif request.method == "POST":
             data = request.json
-            expert_id = data["expert"]
             user_id = data["user"]
-            admin_id = am.get_identity()
             time = data["datetime"]
+            expert_id = data["expert"]
+            admin_id = am.get_identity()
             duration = data["duration"]
             ist_offset = timedelta(hours=5, minutes=30)
             date_object = datetime.strptime(time, "%Y-%m-%dT%H:%M:%S.%fZ")
