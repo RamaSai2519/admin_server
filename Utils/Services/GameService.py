@@ -154,7 +154,7 @@ class GameService:
                 return_document=True
             )
 
-            if result and result["status"] is False:
+            if result and result.get("status") is False:
                 return jsonify({"message": "Please wait..."}), 200
             elif result:
                 return jsonify({"message": "Room already exists"}), 400
