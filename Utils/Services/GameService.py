@@ -115,8 +115,6 @@ class GameService:
     def watch_room_changes():
         with devdb["gameRooms"].watch([{'$match': {'operationType': 'update'}}]) as stream:
             for change in stream:
-                pprint(change)
-                print(change['documentKey'])
                 doc_id = change["documentKey"]["_id"]
                 doc = devdb["gameRooms"].find_one({"_id": doc_id})
                 roomId = doc["roomId"]
@@ -156,12 +154,11 @@ class GameService:
                 return_document=True
             )
 
-            if result and result.get("status") is False:
+            if result and result["status"] is False:
                 return jsonify({"message": "Please wait..."}), 200
             elif result:
                 return jsonify({"message": "Room already exists"}), 400
             else:
-                print("Room created when user asked")
                 return jsonify({"message": "Room created"}), 200
 
         elif role == "saarthi":
