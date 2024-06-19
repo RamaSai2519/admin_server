@@ -53,6 +53,7 @@ experts_collection.create_index([("status", 1)])
 experts_cache = {}
 users_cache = {}
 subscribers = {}
+players = {}
 
 ALLOWED_MIME_TYPES = [
     "image/jpeg", "image/pipeg", "image/png", "application/octet-stream",

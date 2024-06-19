@@ -1,17 +1,17 @@
-from Utils.config import (
-    experts_collection,
-    categories_collection,
-    deleted_experts_collection,
-    calls_collection,
-    experts_cache,
-    subscribers,
-)
 from Utils.Helpers.ExpertManager import ExpertManager as em
 from Utils.Helpers.UserManager import UserManager as um
 from Utils.Helpers.CallManager import CallManager as cm
 from Utils.Helpers.AuthManager import AuthManager as am
 from flask import jsonify, request, Response
 from bson import ObjectId
+from Utils.config import (
+    deleted_experts_collection,
+    categories_collection,
+    experts_collection,
+    calls_collection,
+    experts_cache,
+    subscribers,
+)
 import queue
 import time
 
@@ -152,7 +152,7 @@ class ExpertService:
     def call_stream():
         expert_id = request.args.get('expertId')
         if not expert_id:
-            return "expertId query parameter is required", 400
+            return jsonify("expertId query parameter is required"), 400
 
         expert_id_str = str(expert_id)
 
@@ -169,8 +169,13 @@ class ExpertService:
                     except queue.Empty:
                         yield "data: lalala \n\n"
             except GeneratorExit:
-                if expert_id_str in subscribers:
+                if expert_id_str in subscribers and q in subscribers[expert_id_str]:
                     subscribers[expert_id_str].remove(q)
+                raise
+            except BrokenPipeError:
+                if expert_id_str in subscribers and q in subscribers[expert_id_str]:
+                    subscribers[expert_id_str].remove(q)
+                raise
 
         return Response(event_stream(), content_type='text/event-stream')
 
@@ -180,21 +185,20 @@ class ExpertService:
             for change in stream:
                 if change['operationType'] == 'insert':
                     doc = change['fullDocument']
-                    expert_id = str(doc.get('expert'))
+                    expert_id = str(doc["expert"])
                     if expert_id in subscribers:
                         for subscriber in subscribers[expert_id]:
                             subscriber.put("call started")
                 elif change['operationType'] == 'update':
                     doc_id = change['documentKey']['_id']
                     doc = calls_collection.find_one({'_id': doc_id})
-                    expert_id = str(doc.get('expert'))
+                    expert_id = str(doc["expert"])
                     if expert_id in subscribers:
                         for subscriber in subscribers[expert_id]:
                             subscriber.put("call ended")
 
     @staticmethod
     def close_sse_connections():
-        print("Resetting SSE connections and clearing subscribers.")
         for expert_id in list(subscribers.keys()):
             for q in subscribers[expert_id]:
                 q.put("connection closed")
@@ -202,7 +206,6 @@ class ExpertService:
         subscribers.clear()
 
     @staticmethod
-    # Function to periodically reset SSE connections
     def periodic_reset_sse_connections():
         while True:
             time.sleep(600)  # 10 minutes

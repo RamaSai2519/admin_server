@@ -83,6 +83,7 @@ jwt = JWTManager(app)
 threading.Thread(target=ExpertService.watch_changes, daemon=True).start()
 threading.Thread(
     target=ExpertService.periodic_reset_sse_connections, daemon=True).start()
+threading.Thread(target=GameService.watch_room_changes, daemon=True).start()
 
 
 # Authentication Route
@@ -199,6 +200,7 @@ def get_categories_route():
 def schedules_route():
     return DataService.schedules()
 
+
 @app.route("/admin/data/slots", methods=["POST"])
 @jwt_required()
 def slots_route():
@@ -290,16 +292,29 @@ def add_question_route():
 def get_questions_route():
     return GameService.get_questions()
 
+
+@app.route("/admin/games/roomStatus", methods=["GET", "POST"])
+def room_status_route():
+    return GameService.room_status()
+
+
+@app.route("/admin/games/roomStream")
+def room_stream_route():
+    return GameService.room_stream()
+
+
 # Below are the ContentService routes, prefixed with /content
 @app.route("/admin/content/shorts", methods=["GET"])
 @jwt_required()
 def get_contents_route():
     return ContentService.get_shorts()
 
+
 @app.route("/admin/content/videoUrl", methods=["GET"])
 @jwt_required()
 def get_video_url_route():
     return ContentService.get_video_url()
+
 
 @app.route("/admin/content/Video", methods=["POST"])
 @jwt_required()
