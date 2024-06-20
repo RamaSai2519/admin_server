@@ -205,6 +205,12 @@ def slots_route():
     return DataService.get_slots()
 
 
+@app.route("/admin/data/timings", methods=["GET", "POST"])
+@jwt_required()
+def timings_route():
+    return DataService.get_timings()
+
+
 # Below are the ExpertService routes, prefixed with /expert
 @app.route("/admin/expert/experts/<string:id>", methods=["GET", "PUT", "DELETE"])
 @jwt_required()

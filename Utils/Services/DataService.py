@@ -1,10 +1,11 @@
 from Utils.config import (
     applications_collection,
     categories_collection,
+    errorlogs_collection,
     schedules_collection,
     experts_collection,
+    timings_collection,
     users_collection,
-    errorlogs_collection,
 )
 from Utils.Helpers.UtilityFunctions import UtilityFunctions as uf
 from Utils.Helpers.HelperFunctions import HelperFunctions as hf
@@ -99,7 +100,10 @@ class DataService:
             user_id = data["user"]
             time = data["datetime"]
             expert_id = data["expert"]
-            admin_id = am.get_identity()
+            try:
+                admin_id = am.get_identity()
+            except Exception as e:
+                admin_id = ObjectId("665b5b5310b36290eaa59d27")
             duration = data["duration"]
 
             current_date = datetime.now(pytz.timezone("Asia/Kolkata"))
@@ -222,7 +226,6 @@ class DataService:
             slot_dict = {
                 "slot": slot,
                 "datetime": slot_start_utc_str,
-                # Compare two aware datetime objects
                 "available": slot_start_utc >= datetime.now(utc_zone)
             }
             output_slots.append(slot_dict)
@@ -246,3 +249,15 @@ class DataService:
                             slots.remove(next_slot)
 
         return jsonify(output_slots)
+
+    @staticmethod
+    def get_timings():
+        if request.method == "GET":
+            expertId = request.args.get("expert")
+            timings = list(timings_collection.find({
+                "expert": ObjectId(expertId)
+            }))
+            for timing in timings:
+                timing["_id"] = str(timing["_id"])
+                timing["expert"] = str(timing["expert"])
+            return jsonify(timings)
