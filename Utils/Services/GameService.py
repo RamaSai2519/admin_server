@@ -164,6 +164,8 @@ class GameService:
         elif role == "saarthi":
             room = devdb["gameRooms"].find_one({"roomId": roomId})
             if room:
+                if room["status"] is True:
+                    return jsonify({"message": "Game already started"}), 200
                 devdb["gameRooms"].update_one({"roomId": roomId}, {
                     "$set": {"status": True}
                 })
