@@ -196,13 +196,11 @@ def get_categories_route():
 
 
 @app.route("/admin/data/schedules", methods=["POST", "GET"])
-@jwt_required()
 def schedules_route():
     return DataService.schedules()
 
 
 @app.route("/admin/data/slots", methods=["POST"])
-@jwt_required()
 def slots_route():
     return DataService.get_slots()
 
