@@ -68,7 +68,7 @@ class ScheduleManager:
         requests.post(url, json=payload)
 
     @staticmethod
-    def slots_calculater(expert_id, day):
+    def slots_calculater(expert_id, day, duration=30):
         timings = list(timings_collection.find(
             {"expert": ObjectId(expert_id)}))
 
@@ -87,8 +87,8 @@ class ScheduleManager:
             slots = []
 
             current_time = start_time
-            while current_time + timedelta(minutes=30) <= end_time:
-                end_slot_time = current_time + timedelta(minutes=30)
+            while current_time + timedelta(minutes=duration) <= end_time:
+                end_slot_time = current_time + timedelta(minutes=duration)
                 slots.append(f"{current_time.strftime(
                     '%H:%M')} - {end_slot_time.strftime('%H:%M')}")
                 current_time = end_slot_time

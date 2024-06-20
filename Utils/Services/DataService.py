@@ -4,7 +4,7 @@ from Utils.config import (
     schedules_collection,
     experts_collection,
     users_collection,
-    logs_collection,
+    errorlogs_collection,
 )
 from Utils.Helpers.UtilityFunctions import UtilityFunctions as uf
 from Utils.Helpers.HelperFunctions import HelperFunctions as hf
@@ -14,12 +14,13 @@ from Utils.Helpers.AuthManager import AuthManager as am
 from datetime import datetime, timedelta
 from flask import jsonify, request
 from bson import ObjectId
+import pytz
 
 
 class DataService:
     @staticmethod
     def get_error_logs():
-        error_logs = list(logs_collection.find())
+        error_logs = list(errorlogs_collection.find())
         for log in error_logs:
             log["_id"] = str(log["_id"])
         return jsonify(error_logs)
@@ -95,13 +96,51 @@ class DataService:
             return jsonify(schedules)
         elif request.method == "POST":
             data = request.json
-            expert_id = data["expert"]
             user_id = data["user"]
-            admin_id = am.get_identity()
             time = data["datetime"]
+            expert_id = data["expert"]
+            admin_id = am.get_identity()
+            duration = data["duration"]
+
+            current_date = datetime.now(pytz.timezone("Asia/Kolkata"))
+            today_start = datetime.combine(current_date, datetime.min.time())
+            today_end = datetime.combine(current_date, datetime.max.time())
+
+            prev_schedules = list(
+                schedules_collection.find(
+                    {
+                        "user": ObjectId(user_id),
+                        "status": "pending",
+                        "datetime": {"$gte": today_start, "$lt": today_end},
+                    }
+                )
+            )
+
+            if len(prev_schedules) > 2:
+                return jsonify(
+                    {"error": "User already has 2 pending scheduled calls for today"}
+                )
+
             ist_offset = timedelta(hours=5, minutes=30)
             date_object = datetime.strptime(time, "%Y-%m-%dT%H:%M:%S.%fZ")
             ist_time = date_object + ist_offset
+
+            same_schedules = list(
+                schedules_collection.find(
+                    {
+                        "user": ObjectId(user_id),
+                        "status": "pending",
+                        "datetime": {
+                            "$gte": ist_time - timedelta(hours=1),
+                            "$lt": ist_time + timedelta(hours=1),
+                        },
+                    }
+                )
+            )
+
+            if same_schedules:
+                return jsonify(
+                    {"error": "User already has a pending scheduled call(s) in the same hour"})
 
             document = {
                 "expert": ObjectId(expert_id),
@@ -109,6 +148,7 @@ class DataService:
                 "lastModifiedBy": ObjectId(admin_id),
                 "datetime": ist_time,
                 "status": "pending",
+                "duration": int(duration),
             }
             schedules_collection.insert_one(document)
             time = datetime.strptime(time, "%Y-%m-%dT%H:%M:%S.%fZ")
@@ -127,6 +167,7 @@ class DataService:
 
             record = schedules_collection.find_one(document, {"_id": 1})
             record = str(record["_id"])
+
             sm.final_call_job(
                 record,
                 expert_id,
@@ -143,38 +184,65 @@ class DataService:
         else:
             return jsonify({"error": "Invalid request method"}), 404
 
-    @staticmethod
+    @ staticmethod
     def get_slots():
+        # Parse input data
         data = request.json
         expert_id = data["expert"]
-        date = data["datetime"]
-        day = datetime.strptime(date, "%Y-%m-%dT%H:%M:%S.%fZ").strftime("%A")
-        slots = sm.slots_calculater(expert_id, day)
+        utc_date = data["datetime"]
+        duration = int(data["duration"])
 
+        # Convert UTC datetime to IST and extract the day
+        utc_datetime = datetime.strptime(utc_date, "%Y-%m-%dT%H:%M:%S.%fZ")
+        ist_datetime = utc_datetime + timedelta(hours=5, minutes=30)
+        day_name = ist_datetime.strftime("%A")
+        print(day_name)
+
+        # Calculate available slots
+        slots = sm.slots_calculater(expert_id, day_name, duration)
         if not slots:
-            return jsonify([])  # Return empty list if no slots are available
+            return jsonify([])
 
-        # Get the start time dynamically from the first slot
-        first_slot = str(slots[0])
-        slot_start_time = datetime.strptime(
-            first_slot.split(' - ')[0], "%H:%M")
-
-        slot_duration = 30  # Assuming each slot is 30 minutes
         output_slots = []
+        utc_zone = pytz.utc
 
+        # Iterate through the slots
         for slot in slots:
-            slot_start = slot_start_time.time()
-            slot_start_datetime = datetime.combine(
-                datetime.strptime(date, "%Y-%m-%dT%H:%M:%S.%fZ"), slot_start)
-            slot_end_datetime = slot_start_datetime + \
-                timedelta(minutes=slot_duration)
-            slot_start_datetime = slot_start_datetime - \
-                timedelta(hours=5, minutes=30)
+            slot_start_str = slot.split(' - ')[0]
+            slot_start_time = datetime.strptime(slot_start_str, "%H:%M").time()
+
+            slot_start_ist = datetime.combine(
+                ist_datetime.date(), slot_start_time)
+            slot_start_utc = (slot_start_ist - timedelta(hours=5, minutes=30)
+                              # Make slot_start_utc timezone-aware
+                              ).replace(tzinfo=utc_zone)
+            slot_start_utc_str = slot_start_utc.strftime(
+                "%Y-%m-%dT%H:%M:%S.%fZ")
+
             slot_dict = {
                 "slot": slot,
-                "datetime": slot_start_datetime.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+                "datetime": slot_start_utc_str,
+                # Compare two aware datetime objects
+                "available": slot_start_utc >= datetime.now(utc_zone)
             }
             output_slots.append(slot_dict)
-            slot_start_time = slot_end_datetime
+
+            # Check for expert's schedule
+            if slot_dict["available"]:
+                expert_schedule = schedules_collection.find_one({
+                    "expert": ObjectId(expert_id),
+                    "datetime": {
+                        "$gte": slot_start_ist,
+                        "$lt": slot_start_ist + timedelta(minutes=duration)
+                    }
+                })
+
+                if expert_schedule:
+                    scheduled_duration = expert_schedule["duration"] if "duration" in expert_schedule else 60
+                    if scheduled_duration in [30, 60]:
+                        slot_dict["available"] = False
+                        if scheduled_duration == 60:
+                            next_slot = slots[slots.index(slot) + 1]
+                            slots.remove(next_slot)
 
         return jsonify(output_slots)

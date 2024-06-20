@@ -35,9 +35,9 @@ fcm_tokens_collection = db["fcm_tokens"]
 categories_collection = db["categories"]
 schedules_collection = db["schedules"]
 callsmeta_collection = db["callsmeta"]
+errorlogs_collection = db["errorlogs"]
 timings_collection = db["timings"]
 experts_collection = db["experts"]
-logs_collection = db["errorlogs"]
 events_collection = db["events"]
 admins_collection = db["admins"]
 shorts_collection = db["shorts"]
@@ -53,6 +53,7 @@ experts_collection.create_index([("status", 1)])
 experts_cache = {}
 users_cache = {}
 subscribers = {}
+players = {}
 
 ALLOWED_MIME_TYPES = [
     "image/jpeg", "image/pipeg", "image/png", "application/octet-stream",
