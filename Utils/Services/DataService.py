@@ -104,7 +104,7 @@ class DataService:
                 admin_id = am.get_identity()
             except Exception as e:
                 admin_id = ObjectId("665b5b5310b36290eaa59d27")
-            duration = data["duration"]
+            duration = data["duration"] if "duration" in data else 30
 
             current_date = datetime.now(pytz.timezone("Asia/Kolkata"))
             today_start = datetime.combine(current_date, datetime.min.time())
