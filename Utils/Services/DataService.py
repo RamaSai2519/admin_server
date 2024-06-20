@@ -148,8 +148,9 @@ class DataService:
                 "lastModifiedBy": ObjectId(admin_id),
                 "datetime": ist_time,
                 "status": "pending",
-                "duration": duration,
+                "duration": int(duration),
             }
+            schedules_collection.insert_one(document)
             time = datetime.strptime(time, "%Y-%m-%dT%H:%M:%S.%fZ")
             hour = ist_time.hour
             minute = ist_time.minute
