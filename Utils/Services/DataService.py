@@ -261,3 +261,33 @@ class DataService:
                 timing["_id"] = str(timing["_id"])
                 timing["expert"] = str(timing["expert"])
             return jsonify(timings)
+        if request.method == "POST":
+            data = request.json
+            expertId = data["expertId"]
+            field = data["row"]["field"]
+            value = data["row"]["value"]
+
+            fields = [
+                "PrimaryStartTime",
+                "PrimaryEndTime",
+                "SecondaryStartTime",
+                "SecondaryEndTime",
+            ]
+            if field not in fields:
+                return jsonify({"error": "Invalid field"}), 400
+            try:
+                timing = timings_collection.find_one({
+                    "expert": ObjectId(expertId)
+                })
+
+                if timing:
+                    timings_collection.update_one({"expert": ObjectId(expertId)}, {
+                                                  "$set": {field: value}})
+                    return jsonify({"message": "Timing updated successfully"})
+                else:
+                    timings_collection.insert_one(
+                        {"expert": ObjectId(expertId), field: value})
+                    return jsonify({"message": "Timing added successfully"})
+            except Exception as e:
+                print(e)
+                return jsonify({"error": str(e)}), 400
