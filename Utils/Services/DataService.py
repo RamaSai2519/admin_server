@@ -123,7 +123,7 @@ class DataService:
             if len(prev_schedules) > 2:
                 return jsonify(
                     {"error": "User already has 2 pending scheduled calls for today"}
-                )
+                ), 400
 
             ist_offset = timedelta(hours=5, minutes=30)
             date_object = datetime.strptime(time, "%Y-%m-%dT%H:%M:%S.%fZ")
@@ -144,7 +144,7 @@ class DataService:
 
             if same_schedules:
                 return jsonify(
-                    {"error": "User already has a pending scheduled call(s) in the same hour"})
+                    {"error": "User already has a pending scheduled call(s) in the same hour"}), 400
 
             document = {
                 "expert": ObjectId(expert_id),
