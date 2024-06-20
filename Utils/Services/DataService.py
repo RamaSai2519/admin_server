@@ -219,9 +219,6 @@ class DataService:
             slot_start_utc_str = slot_start_utc.strftime(
                 "%Y-%m-%dT%H:%M:%S.%fZ")
 
-            # Calculate end time
-            slot_end_utc = slot_start_utc + timedelta(minutes=duration)
-
             slot_dict = {
                 "slot": slot,
                 "datetime": slot_start_utc_str,
