@@ -66,6 +66,7 @@ from Utils.Services.CallService import CallService
 from Utils.Services.UserService import UserService
 from Utils.Services.GameService import GameService
 from Utils.Services.AppService import AppService
+from routes.game_routes import game_routes
 from Utils.config import JWT_SECRET_KEY
 from datetime import timedelta
 from flask_cors import CORS
@@ -79,6 +80,8 @@ app.config["JWT_SECRET_KEY"] = JWT_SECRET_KEY
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(days=1)
 app.config["JWT_REFRESH_TOKEN_EXPIRES"] = timedelta(weeks=1)
 jwt = JWTManager(app)
+
+app.register_blueprint(game_routes)
 
 threading.Thread(target=ExpertService.watch_changes, daemon=True).start()
 threading.Thread(
@@ -276,35 +279,6 @@ def get_event_route():
 @jwt_required()
 def get_users_by_event_route():
     return EventService.get_users_by_event()
-
-
-# Below are the GameService routes, prefixed with /game
-@app.route("/games/profiles", methods=["GET"])
-def get_profiles_route():
-    print("Called")
-    return GameService.get_profiles()
-
-
-@app.route("/admin/games/addQuestion", methods=["POST"])
-@jwt_required()
-def add_question_route():
-    return GameService.add_question()
-
-
-@app.route("/admin/games/quizQuestions", methods=["GET"])
-@jwt_required()
-def get_questions_route():
-    return GameService.get_questions()
-
-
-@app.route("/admin/games/roomStatus", methods=["GET", "POST"])
-def room_status_route():
-    return GameService.room_status()
-
-
-@app.route("/admin/games/roomStream")
-def room_stream_route():
-    return GameService.room_stream()
 
 
 # Below are the ContentService routes, prefixed with /content

@@ -25,6 +25,9 @@ s3_client = boto3.client(
 
 client = MongoClient(os.getenv("PROD_DB_URL"))
 db = client["test"]
+gamesdb = client["games"]
+
+games_config_collection = gamesdb["games_config"]
 
 deleted_schedules_collection = db["deletedschedules"]
 deleted_experts_collection = db["deletedexperts"]
