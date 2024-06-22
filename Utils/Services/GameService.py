@@ -232,9 +232,11 @@ class GameService:
         devdb["gameRooms"].update_one({"roomId": roomId}, {
             "$inc": {"currentQuestion": 1}
         })
-        if roomId in players:
-            for player in players[roomId]:
-                player.put("Turn Complete")
+
+        print("Putting message in queue")
+        for player in players[roomId]:
+            player.put("Turn Complete")
+        print("Message put in queue")
 
         return jsonify({"message": "Game status received"}), 200
 
