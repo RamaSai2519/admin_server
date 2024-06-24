@@ -102,7 +102,7 @@ class DataService:
             time = data["datetime"]
             expert_id = data["expert"]
             try:
-                admin_id = am.get_identity()
+                admin_id = ObjectId(am.get_identity())
             except Exception:
                 admin_id = "User"
             duration = data["duration"] if "duration" in data else 30
@@ -150,7 +150,7 @@ class DataService:
             document = {
                 "expert": ObjectId(expert_id),
                 "user": ObjectId(user_id),
-                "lastModifiedBy": ObjectId(admin_id),
+                "lastModifiedBy": admin_id,
                 "datetime": ist_time,
                 "status": "pending",
                 "duration": int(duration),
