@@ -85,16 +85,13 @@ class DataService:
     @staticmethod
     def schedules():
         if request.method == "GET":
-            schedules = list(schedules_collection.find().sort("datetime", 1))
+            schedules = list(schedules_collection.find({}, {
+                "lastModifiedBy": 0
+            }).sort("datetime", 1))
             for schedule in schedules:
                 schedule["_id"] = str(schedule["_id"])
                 schedule["expert"] = hf.get_expert_name(schedule["expert"])
                 schedule["user"] = hf.get_user_name(schedule["user"])
-                try:
-                    schedule["lastModifiedBy"] = hf.get_admin_name(
-                        ObjectId(schedule["lastModifiedBy"]))
-                except Exception:
-                    schedule["lastModifiedBy"] = "User"
             return jsonify(schedules)
         elif request.method == "POST":
             data = request.json
@@ -104,7 +101,8 @@ class DataService:
             try:
                 admin_id = ObjectId(am.get_identity())
             except Exception:
-                admin_id = "User"
+                admin_id = ObjectId("665b5b5310b36290eaa59d27")
+            type = data["type"] if "type" in data else "User"
             duration = data["duration"] if "duration" in data else 30
 
             ist_offset = timedelta(hours=5, minutes=30)
@@ -151,6 +149,7 @@ class DataService:
                 "expert": ObjectId(expert_id),
                 "user": ObjectId(user_id),
                 "lastModifiedBy": admin_id,
+                "type": type,
                 "datetime": ist_time,
                 "status": "pending",
                 "duration": int(duration),
