@@ -5,6 +5,7 @@ from Utils.config import (
     schedules_collection,
     experts_collection,
     timings_collection,
+    admins_collection,
     users_collection,
 )
 from Utils.Helpers.UtilityFunctions import UtilityFunctions as uf
@@ -89,11 +90,13 @@ class DataService:
                 schedule["_id"] = str(schedule["_id"])
                 schedule["expert"] = hf.get_expert_name(schedule["expert"])
                 schedule["user"] = hf.get_user_name(schedule["user"])
-                schedule["lastModifiedBy"] = (
-                    str(schedule["lastModifiedBy"])
-                    if "lastModifiedBy" in schedule
-                    else ""
-                )
+                try:
+                    schedule["lastModifiedBy"] = str(admins_collection.find_one(
+                        {"_id": ObjectId(schedule["lastModifiedBy"])},
+                        {"name": 1, "_id": 0})["name"]
+                    ) if "lastModifiedBy" in schedule else ""
+                except Exception:
+                    schedule["lastModifiedBy"] = "user scheduled"
             return jsonify(schedules)
         elif request.method == "POST":
             data = request.json
@@ -102,8 +105,8 @@ class DataService:
             expert_id = data["expert"]
             try:
                 admin_id = am.get_identity()
-            except Exception as e:
-                admin_id = ObjectId("665b5b5310b36290eaa59d27")
+            except Exception:
+                admin_id = "user scheduled"
             duration = data["duration"] if "duration" in data else 30
 
             ist_offset = timedelta(hours=5, minutes=30)
