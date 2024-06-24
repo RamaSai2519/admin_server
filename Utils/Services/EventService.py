@@ -1,8 +1,8 @@
 from Utils.Helpers.EventManager import EventManager as evm
 from Utils.Helpers.AuthManager import AuthManager as am
 from Utils.config import eventconfigs_collection
+from datetime import datetime, timedelta
 from flask import jsonify, request
-from datetime import datetime
 from bson import ObjectId
 import requests
 import json
@@ -63,6 +63,9 @@ class EventService:
             slug = data["slug"]
             if eventconfigs_collection.find_one({"slug": slug}):
                 return jsonify({"message": "Event already exists"}), 400
+            data["date"] = datetime.strptime(
+                data["date"], "%Y-%m-%dT%H:%M:%S.%fZ")
+            data["validUpto"] = data["date"] + timedelta(hours=5, minutes=30)
             createdTime = datetime.now()
             data["createdAt"] = createdTime
             data["updatedAt"] = createdTime
