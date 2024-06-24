@@ -91,12 +91,10 @@ class DataService:
                 schedule["expert"] = hf.get_expert_name(schedule["expert"])
                 schedule["user"] = hf.get_user_name(schedule["user"])
                 try:
-                    schedule["lastModifiedBy"] = str(admins_collection.find_one(
-                        {"_id": ObjectId(schedule["lastModifiedBy"])},
-                        {"name": 1, "_id": 0})["name"]
-                    ) if "lastModifiedBy" in schedule else ""
+                    schedule["lastModifiedBy"] = hf.get_admin_name(
+                        ObjectId(schedule["lastModifiedBy"]))
                 except Exception:
-                    schedule["lastModifiedBy"] = "user scheduled"
+                    schedule["lastModifiedBy"] = "User"
             return jsonify(schedules)
         elif request.method == "POST":
             data = request.json
@@ -106,7 +104,7 @@ class DataService:
             try:
                 admin_id = am.get_identity()
             except Exception:
-                admin_id = "user scheduled"
+                admin_id = "User"
             duration = data["duration"] if "duration" in data else 30
 
             ist_offset = timedelta(hours=5, minutes=30)
