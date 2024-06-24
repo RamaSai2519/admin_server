@@ -200,7 +200,6 @@ class DataService:
         utc_datetime = datetime.strptime(utc_date, "%Y-%m-%dT%H:%M:%S.%fZ")
         ist_datetime = utc_datetime + timedelta(hours=5, minutes=30)
         day_name = ist_datetime.strftime("%A")
-        print(day_name)
 
         # Calculate available slots
         slots = sm.slots_calculater(expert_id, day_name, duration)

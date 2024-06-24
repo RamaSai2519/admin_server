@@ -199,12 +199,10 @@ class GameService:
     @staticmethod
     def game_status():
         data = request.json
-        pprint(data)
 
         event = data["event"]
 
         if event["isUserTurn"] == True:
-            print("User Turn")
             roomId = event["roomId"]
             correctAnswer = event["correctAnswer"]
             selectedOption = event["selectedOption"]
@@ -217,7 +215,6 @@ class GameService:
                 "$set": {"isUserTurn": False, "isExpertTurn": True}
             })
         elif event["isExpertTurn"] == True:
-            print("Expert Turn")
             roomId = event["roomId"]
             correctAnswer = event["correctAnswer"]
             selectedOption = event["selectedOption"]
@@ -233,10 +230,8 @@ class GameService:
             "$inc": {"currentQuestion": 1}
         })
 
-        print("Putting message in queue")
         for player in players[roomId]:
             player.put("Turn Complete")
-        print("Message put in queue")
 
         return jsonify({"message": "Game status received"}), 200
 

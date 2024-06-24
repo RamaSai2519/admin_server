@@ -193,14 +193,12 @@ class UserService:
             data = request.json
             userId = data["user"]["_id"]
             source = data["user"]["source"]
-            print(userId, source)
             if source == "Users Lead":
                 return jsonify({"error": "Invalid source"}), 400
             if source == "Events":
                 result = events_collection.update_one(
                     {"_id": ObjectId(userId)}, {"$set": {"hidden": True}}
                 )
-                print(result.modified_count)
                 if result.modified_count == 0:
                     return jsonify({"error": "Event not found"}), 400
             elif source == "Saarthi Application":
