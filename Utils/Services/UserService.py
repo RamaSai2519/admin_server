@@ -1,11 +1,12 @@
 from Utils.config import (
-    users_collection,
+    usernotifications_collection,
     deleted_users_collection,
+    applications_collection,
+    events_collection,
+    users_collection,
+    calls_collection,
     meta_collection,
     users_cache,
-    applications_collection,
-    calls_collection,
-    events_collection
 )
 from Utils.Helpers.UserManager import UserManager as um
 from Utils.Helpers.AuthManager import AuthManager as am
@@ -212,7 +213,8 @@ class UserService:
     @staticmethod
     def handle_user(id):
         if request.method == "GET":
-            user = users_collection.find_one({"_id": ObjectId(id)}, {"_id": 0})
+            user = users_collection.find_one(
+                {"_id": ObjectId(id)}, {"_id": 0, "userGameStats": 0})
             user["lastModifiedBy"] = (
                 str(user["lastModifiedBy"]) if "lastModifiedBy" in user else ""
             )
@@ -221,6 +223,13 @@ class UserService:
                 user["context"] = str(meta_doc["context"]).split(
                     "\n") if "context" in meta_doc else []
                 user["source"] = meta_doc["source"] if "source" in meta_doc else ""
+            usernotifations = list(usernotifications_collection.find(
+                {"userId": ObjectId(id),
+                    "templateName": {"$exists": "True"}
+                 }, {"_id": 0, "userId": 0}
+            ))
+            if usernotifations:
+                user["notifications"] = usernotifations
             return (
                 (jsonify(user), 200)
                 if user

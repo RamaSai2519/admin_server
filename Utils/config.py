@@ -29,6 +29,8 @@ gamesdb = client["games"]
 
 games_config_collection = gamesdb["games_config"]
 
+userwebhookmessages_collection = db["userwebhookmessages"]
+usernotifications_collection = db["usernotifications"]
 deleted_schedules_collection = db["deletedschedules"]
 deleted_experts_collection = db["deletedexperts"]
 applications_collection = db["becomesaarthis"]

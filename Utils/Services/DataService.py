@@ -1,11 +1,12 @@
 from Utils.config import (
+    userwebhookmessages_collection,
+    usernotifications_collection,
     applications_collection,
     categories_collection,
     errorlogs_collection,
     schedules_collection,
     experts_collection,
     timings_collection,
-    admins_collection,
     users_collection,
 )
 from Utils.Helpers.UtilityFunctions import UtilityFunctions as uf
@@ -290,3 +291,34 @@ class DataService:
             except Exception as e:
                 print(e)
                 return jsonify({"error": str(e)}), 400
+
+    def get_wa_history():
+        if request.method == "GET":
+            wa_history = []
+            usernotifications = list(usernotifications_collection.find(
+                {"templateName": {"$exists": True}},
+                {"_id": 0}
+            ).sort("createdAt", -1))
+            userwebhookmessages = list(userwebhookmessages_collection.find(
+                {"body": {"$ne": None}},
+                {"_id": 0}
+            ).sort("createdAt", -1))
+            wa_history.extend(usernotifications)
+            wa_history.extend(userwebhookmessages)
+            for history in wa_history:
+                if "templateName" in history:
+                    history["type"] = "Outgoing"
+                else:
+                    history["type"] = "Incoming"
+                history["userId"] = str(history["userId"])
+                user = users_collection.find_one(
+                    {"_id": ObjectId(history["userId"])})
+                if user:
+                    history["userName"] = user["name"] if "name" in user else ""
+                    history["userNumber"] = user["phoneNumber"] if "phoneNumber" in user else ""
+                else:
+                    history["userName"] = ""
+                    history["userNumber"] = ""
+            return jsonify(wa_history)
+        else:
+            return jsonify({"error": "Invalid request method"}), 404

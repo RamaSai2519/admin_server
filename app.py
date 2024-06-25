@@ -214,6 +214,12 @@ def timings_route():
     return DataService.get_timings()
 
 
+@app.route("/admin/data/wahistory", methods=["GET"])
+@jwt_required()
+def get_wa_history_route():
+    return DataService.get_wa_history()
+
+
 # Below are the ExpertService routes, prefixed with /expert
 @app.route("/admin/expert/experts/<string:id>", methods=["GET", "PUT", "DELETE"])
 @jwt_required()

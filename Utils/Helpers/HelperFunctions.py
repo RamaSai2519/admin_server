@@ -82,21 +82,20 @@ class HelperFunctions:
     @staticmethod
     def get_user_name(user_id):
         if user_id not in users_cache:
-            user = users_collection.find_one({"_id": user_id}, {"name": 1})
-            try:
-                users_cache[user_id] = user["name"]
-            except:
-                users_cache[user_id] = "Unknown"
+            user = users_collection.find_one(
+                {"_id": user_id}, {"name": 1})
+            users_cache[user_id] = (
+                user["name"] if user and user["name"] else "Unknown"
+            )
         return users_cache[user_id]
 
     @staticmethod
     def get_admin_name(admin_id):
         if admin_id not in admins_cache:
             admin = admins_collection.find_one({"_id": admin_id}, {"name": 1})
-            try:
-                admins_cache[admin_id] = admin["name"]
-            except:
-                admins_cache[admin_id] = "Unknown"
+            admins_cache[admin_id] = (
+                admin["name"] if admin and admin["name"] else "Unknown"
+            )
         return admins_cache[admin_id]
 
     @staticmethod
