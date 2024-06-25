@@ -1,4 +1,5 @@
 from Utils.config import (
+    userwebhookmessages_collection,
     usernotifications_collection,
     deleted_users_collection,
     applications_collection,
@@ -223,13 +224,28 @@ class UserService:
                 user["context"] = str(meta_doc["context"]).split(
                     "\n") if "context" in meta_doc else []
                 user["source"] = meta_doc["source"] if "source" in meta_doc else ""
-            usernotifations = list(usernotifications_collection.find(
-                {"userId": ObjectId(id),
-                    "templateName": {"$exists": "True"}
-                 }, {"_id": 0, "userId": 0}
-            ))
-            if usernotifations:
-                user["notifications"] = usernotifations
+
+            wa_history = []
+            usernotifications = list(usernotifications_collection.find(
+                {"userId": ObjectId(id), "templateName": {"$exists": True}},
+                {"_id": 0, "userId": 0}
+            ).sort("createdAt", -1))
+            userwebhookmessages = list(userwebhookmessages_collection.find(
+                {"userId": ObjectId(id), "body": {"$ne": None}},
+                {"_id": 0, "userId": 0}
+            ).sort("createdAt", -1))
+            wa_history.extend(usernotifications)
+            wa_history.extend(userwebhookmessages)
+            for history in wa_history:
+                if "templateName" in history:
+                    history["type"] = "Outgoing"
+                else:
+                    history["type"] = "Incoming"
+
+            wa_history = sorted(
+                wa_history, key=lambda x: x["createdAt"], reverse=True)
+
+            user["notifications"] = wa_history
             return (
                 (jsonify(user), 200)
                 if user

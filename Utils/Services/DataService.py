@@ -294,31 +294,34 @@ class DataService:
 
     def get_wa_history():
         if request.method == "GET":
-            wa_history = []
-            usernotifications = list(usernotifications_collection.find(
-                {"templateName": {"$exists": True}},
-                {"_id": 0}
-            ).sort("createdAt", -1))
+            page = int(request.args.get('page'))
+            size = int(request.args.get('size'))
+            offset = (page - 1) * size
+
             userwebhookmessages = list(userwebhookmessages_collection.find(
                 {"body": {"$ne": None}},
                 {"_id": 0}
-            ).sort("createdAt", -1))
-            wa_history.extend(usernotifications)
-            wa_history.extend(userwebhookmessages)
-            for history in wa_history:
-                if "templateName" in history:
-                    history["type"] = "Outgoing"
-                else:
-                    history["type"] = "Incoming"
-                history["userId"] = str(history["userId"])
+            ).sort("createdAt", -1).skip(offset).limit(size))
+
+            total_messages = userwebhookmessages_collection.count_documents(
+                {"body": {"$ne": None}}
+            )
+
+            for message in userwebhookmessages:
+                message["userId"] = str(message["userId"])
                 user = users_collection.find_one(
-                    {"_id": ObjectId(history["userId"])})
+                    {"_id": ObjectId(message["userId"])})
                 if user:
-                    history["userName"] = user["name"] if "name" in user else ""
-                    history["userNumber"] = user["phoneNumber"] if "phoneNumber" in user else ""
+                    message["userName"] = user["name"] if "name" in user else ""
+                    message["userNumber"] = user["phoneNumber"] if "phoneNumber" in user else ""
                 else:
-                    history["userName"] = ""
-                    history["userNumber"] = ""
-            return jsonify(wa_history)
+                    message["userName"] = ""
+                    message["userNumber"] = ""
+            return jsonify({
+                "data": userwebhookmessages,
+                "total": total_messages,
+                "page": page,
+                "pageSize": size
+            })
         else:
             return jsonify({"error": "Invalid request method"}), 404
