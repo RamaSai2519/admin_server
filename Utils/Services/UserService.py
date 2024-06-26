@@ -30,7 +30,7 @@ class UserService:
             user_data = list(
                 users_collection.find(
                     {"role": {"$ne": "admin"}},
-                    {"Customer Persona": 0, "lastModifiedBy": 0}
+                    {"Customer Persona": 0, "lastModifiedBy": 0, "userGameStats": 0}
                 ).sort("createdDate", -1).skip(offset).limit(size)
             )
 
