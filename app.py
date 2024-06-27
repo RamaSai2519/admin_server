@@ -156,7 +156,6 @@ def expert_call_user_route():
 
 
 @app.route("/admin/call/connect", methods=["POST"])
-@jwt_required()
 def connect_route():
     return CallService.connect()
 
