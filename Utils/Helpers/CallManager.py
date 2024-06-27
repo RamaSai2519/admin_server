@@ -5,6 +5,7 @@ from Utils.config import calls_collection
 from datetime import datetime, timedelta
 from pymongo import DESCENDING
 from bson import ObjectId
+from flask import jsonify
 import requests
 import pytz
 import json
@@ -87,7 +88,7 @@ class CallManager:
             "Content-Type": "application/json",
         }
         response = requests.request("POST", url, headers=headers, data=payload)
-        return response.json()
+        return jsonify(response.json())
 
     @staticmethod
     def checkValidity(call):

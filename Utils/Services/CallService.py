@@ -32,12 +32,14 @@ class CallService:
     def connect():
         try:
             data = request.json
-            pprint(data)
             expertId = data["expert"]
             userId = data["user"]
             user = users_collection.find_one({"_id": ObjectId(userId)})
             response = cm.callUser(expertId, user)
-            return response
+            if response.status_code == 200:
+                return jsonify({"message": "Call Initiated Successfully"}), 200
+            else:
+                return jsonify(response), 400
         except Exception as e:
             return jsonify({"error": str(e)}), 500
 
