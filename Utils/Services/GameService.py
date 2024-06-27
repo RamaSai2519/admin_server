@@ -5,7 +5,6 @@ from pymongo import MongoClient
 from dotenv import load_dotenv
 from datetime import datetime, timezone
 from bson import ObjectId
-from pprint import pprint
 import requests
 import queue
 import json

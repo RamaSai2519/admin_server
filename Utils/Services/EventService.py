@@ -77,7 +77,7 @@ class EventService:
             return jsonify({"message": "Event created successfully"}), 200
         elif request.method == "PUT":
             data = request.json
-            fields = ["name", "mainTitle", "subTitle"]
+            fields = ["name", "mainTitle", "subTitle", "imageUrl"]
             if not any(data[field] for field in fields):
                 return (
                     jsonify(
