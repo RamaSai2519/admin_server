@@ -4,6 +4,7 @@ from Utils.Helpers.AuthManager import AuthManager as am
 from Utils.Helpers.CallManager import CallManager as cm
 from flask import request, jsonify
 from bson import ObjectId
+from pprint import pprint
 
 
 class CallService:
@@ -31,6 +32,7 @@ class CallService:
     def connect():
         try:
             data = request.json
+            pprint(data)
             expertId = data["expert"]
             userId = data["user"]
             user = users_collection.find_one({"_id": ObjectId(userId)})
@@ -46,7 +48,8 @@ class CallService:
             if not call:
                 return jsonify({"error": "Call not found"}), 404
             formatted_call = fm.format_call(call)
-            callmeta = callsmeta_collection.find_one({"callId": id}, {"_id": 0})
+            callmeta = callsmeta_collection.find_one(
+                {"callId": id}, {"_id": 0})
             if callmeta:
                 formatted_call["Topics"] = callmeta["Topics"]
                 formatted_call["Summary"] = callmeta["Summary"]
