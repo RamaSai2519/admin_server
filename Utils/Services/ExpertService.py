@@ -54,20 +54,19 @@ class ExpertService:
                 str(expert["lastModifiedBy"]
                     ) if "lastModifiedBy" in expert else ""
             )
-            category_names = (
-                [
-                    categories_collection.find_one({"_id": ObjectId(category_id)}).get(
-                        "name", ""
-                    )
-                    for category_id in expert["categories"]
-                ]
-                if expert.get("categories")
-                else []
-            )
+            category_names = []
+            if expert["categories"]:
+                for category_id in expert["categories"]:
+                    category = categories_collection.find_one(
+                        {"_id": ObjectId(category_id)})
+                    category_name = category["name"] if category else ""
+                    category_names.append(category_name)
             expert["categories"] = category_names
             return jsonify(expert)
         elif request.method == "PUT":
             expert_data = request.json
+            if not expert_data:
+                return jsonify({"error": "Missing data"}), 400
             required_fields = [
                 "name",
                 "phoneNumber",
@@ -91,7 +90,7 @@ class ExpertService:
                 "probability",
                 "closingGreeting",
             ]
-            if not any(expert_data.get(field) for field in required_fields):
+            if not any(expert_data[field] for field in required_fields):
                 return (
                     jsonify(
                         {"error": "At least one field is required for update"}),
@@ -100,11 +99,12 @@ class ExpertService:
             update_query = {}
             for field in required_fields:
                 if field == "categories":
-                    new_categories_object_ids = [
-                        categories_collection.find_one(
-                            {"name": category_name})["_id"]
-                        for category_name in expert_data.get(field, [])
-                    ]
+                    new_categories_object_ids = []
+                    for category_name in expert_data[field]:
+                        category = categories_collection.find_one(
+                            {"name": category_name})
+                        category_id = category["_id"] if category else None
+                        new_categories_object_ids.append(category_id)
                     update_query[field] = new_categories_object_ids
                 elif field in expert_data:
                     update_query[field] = (
@@ -124,15 +124,17 @@ class ExpertService:
             if result.modified_count == 0:
                 return jsonify({"error": "Expert not found"}), 404
             updated_expert = experts_collection.find_one({"_id": ObjectId(id)})
+            if not updated_expert:
+                return jsonify({"error": "Expert not found"}), 404
             updated_expert["_id"] = str(updated_expert["_id"])
             updated_expert["lastModifiedBy"] = str(
                 updated_expert["lastModifiedBy"])
-            updated_expert["categories"] = [
-                categories_collection.find_one({"_id": ObjectId(category_id)}).get(
-                    "name", ""
-                )
-                for category_id in updated_expert["categories"]
-            ]
+            updated_expert["categories"] = []
+            for category_id in updated_expert["categories"]:
+                category = categories_collection.find_one(
+                    {"_id": ObjectId(category_id)})
+                category_name = category["name"] if category else ""
+                updated_expert["categories"].append(category_name)
             experts_cache[ObjectId(id)] = updated_expert["name"]
             return jsonify(updated_expert)
         elif request.method == "DELETE":
@@ -192,6 +194,8 @@ class ExpertService:
                 elif change['operationType'] == 'update':
                     doc_id = change['documentKey']['_id']
                     doc = calls_collection.find_one({'_id': doc_id})
+                    if not doc:
+                        continue
                     expert_id = str(doc["expert"])
                     if expert_id in subscribers:
                         for subscriber in subscribers[expert_id]:

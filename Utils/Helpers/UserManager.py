@@ -28,6 +28,8 @@ class UserManager:
             user = users_collection.find_one(
                 {"_id": user_id}, {"_id": 0, "phoneNumber": 0}
             )
+            if not user:
+                return "No user found."
             user_city = user["city"]
             user_dob = user["birthDate"]
             user_name = user["name"]
@@ -43,6 +45,8 @@ class UserManager:
                 else "Unknown"
             )
             document = meta_collection.find_one({"user": user_id})
+            if not document:
+                return "No user found."
             if "context" in document:
                 context = str(document["context"])
                 context = context.split(

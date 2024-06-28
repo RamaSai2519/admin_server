@@ -62,7 +62,7 @@ class HelperFunctions:
             "notification": {"title": "Notification", "body": message},
         }
         headers = {
-            "Authorization": "key=" + server_key,
+            "Authorization": f"key={server_key}",
             "Content-Type": "application/json",
         }
         response = requests.post(fcm_url, json=payload, headers=headers)

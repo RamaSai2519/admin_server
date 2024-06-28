@@ -46,6 +46,8 @@ class EventService:
             slug = params["slug"]
             event = eventconfigs_collection.find_one(
                 {"slug": slug}, {"_id": 0})
+            if not event:
+                return jsonify({"error": "Event not found"}), 404
             event["lastModifiedBy"] = (
                 str(event["lastModifiedBy"]
                     ) if "lastModifiedBy" in event else ""
@@ -53,6 +55,8 @@ class EventService:
             return jsonify(event)
         elif request.method == "POST":
             data = request.json
+            if not data:
+                return jsonify({"error": "Missing data"}), 400
             fields = ["date", "duration", "expert", "mainTitle",
                       "name", "slug", "subTitle", "zoomLink", "imageUrl"]
             if not all(data[field] for field in fields):
@@ -77,6 +81,8 @@ class EventService:
             return jsonify({"message": "Event created successfully"}), 200
         elif request.method == "PUT":
             data = request.json
+            if not data:
+                return jsonify({"error": "Missing data"}), 400
             fields = ["name", "mainTitle", "subTitle", "imageUrl"]
             if not any(data[field] for field in fields):
                 return (

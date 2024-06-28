@@ -22,8 +22,8 @@ class UserService:
     def get_engagement_data():
         meta_fields = ["remarks", "poc", "expert", "status", "userStatus"]
         if request.method == "GET":
-            page = int(request.args.get('page'))
-            size = int(request.args.get('size'))
+            page = int(request.args.get('page', 1))
+            size = int(request.args.get('size', 10))
             offset = (page - 1) * size
             time = datetime.now()
 
@@ -81,12 +81,15 @@ class UserService:
                 "pageSize": size
             })
         if request.method == "POST":
+            data = request.json
+            if not data:
+                return jsonify({"error": "Missing data"}), 400
             try:
-                user_id = request.json["key"]
+                user_id = data["key"]
                 if not users_collection.find_one({"_id": ObjectId(user_id)}):
                     return jsonify({"error": "User not found"}), 404
-                user_field = request.json["field"]
-                user_value = request.json["value"]
+                user_field = data["field"]
+                user_value = data["value"]
                 if user_field in meta_fields:
                     prev_meta = meta_collection.find_one(
                         {"user": ObjectId(user_id)})
@@ -119,8 +122,11 @@ class UserService:
     @staticmethod
     def add_lead_remarks():
         if request.method == "POST":
-            user_id = request.json["key"]
-            value = request.json["value"]
+            data = request.json
+            if not data:
+                return jsonify({"error": "Missing data"}), 400
+            user_id = data["key"]
+            value = data["value"]
             if users_collection.find_one({"_id": ObjectId(user_id)}):
                 users_collection.update_one(
                     {"_id": ObjectId(user_id)}, {
@@ -193,6 +199,8 @@ class UserService:
             return jsonify(final_leads)
         elif request.method == "POST":
             data = request.json
+            if not data:
+                return jsonify({"error": "Missing data"}), 400
             userId = data["user"]["_id"]
             source = data["user"]["source"]
             if source == "Users Lead":
@@ -216,6 +224,8 @@ class UserService:
         if request.method == "GET":
             user = users_collection.find_one(
                 {"_id": ObjectId(id)}, {"_id": 0, "userGameStats": 0})
+            if not user:
+                return jsonify({"error": "User not found"}), 404
             user["lastModifiedBy"] = (
                 str(user["lastModifiedBy"]) if "lastModifiedBy" in user else ""
             )
@@ -253,6 +263,8 @@ class UserService:
             )
         elif request.method == "PUT":
             user_data = request.json
+            if not user_data:
+                return jsonify({"error": "Missing data"}), 400
             fields = [
                 "name",
                 "phoneNumber",
@@ -262,7 +274,7 @@ class UserService:
                 "context",
                 "source",
             ]
-            if not any(user_data.get(field) for field in fields):
+            if not any(user_data[field] for field in fields):
                 return (
                     jsonify(
                         {"error": "At least one field is required for update"}),
@@ -270,7 +282,7 @@ class UserService:
                 )
             update_query = {}
             for field in fields:
-                value = user_data.get(field)
+                value = user_data[field]
                 if value:
                     if field == "birthDate":
                         value = datetime.strptime(value, "%Y-%m-%d")
@@ -292,6 +304,8 @@ class UserService:
                 return jsonify({"error": "User not found"}), 404
             updated_user = users_collection.find_one(
                 {"_id": ObjectId(id)}, {"_id": 0})
+            if not updated_user:
+                return jsonify({"error": "User not found"}), 404
             updated_user["lastModifiedBy"] = str(
                 updated_user["lastModifiedBy"])
             users_cache[ObjectId(id)] = updated_user["name"]

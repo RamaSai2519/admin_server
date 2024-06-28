@@ -113,6 +113,8 @@ class AppService:
     @staticmethod
     def save_fcm_token():
         data = request.json
+        if not data:
+            return jsonify({"error": "FCM token missing"}), 400
         token = data["token"]
         tokens = list(fcm_tokens_collection.find())
         if token in [t["token"] for t in tokens]:
@@ -128,12 +130,18 @@ class AppService:
         if request.method == "PUT":
             try:
                 data = request.json
+                if not data:
+                    return jsonify({"error": "Data missing"}), 400
                 expert = data["expert"]
                 expert = experts_collection.find_one({"name": expert})
+                if not expert:
+                    return jsonify({"error": "Expert not found"}), 404
+                expert_number = expert["phoneNumber"] if "phoneNumber" in expert else ""
                 expert = str(expert["_id"])
-                expert_number = expert["phoneNumber"]
                 user = data["user"]
                 user = users_collection.find_one({"name": user})
+                if not user:
+                    return jsonify({"error": "User not found"}), 404
                 user_number = user["phoneNumber"]
                 user = str(user["_id"])
                 time = data["datetime"]
@@ -162,9 +170,17 @@ class AppService:
                 day = ist_time.day
 
                 sm.final_call_job(
-                    id, expert_number, user_number, year, month, day, hour, minute
+                    result,
+                    expert,
+                    user,
+                    expert_number,
+                    user_number,
+                    year,
+                    month,
+                    day,
+                    hour,
+                    minute,
                 )
-
                 if result.modified_count == 0:
                     return jsonify({"error": "Failed to update schedule"}), 400
 
@@ -205,30 +221,40 @@ class AppService:
     @staticmethod
     def approve_application(id, level):
         data = request.json
+        if not data:
+            return jsonify({"error": "Data missing"}), 400
         status = data["status"]
-        sm.cancel_final_call(id, level)
+        sm.cancel_final_call(id, level)  # type: ignore
         result = schedules_collection.update_one(
             {"_id": ObjectId(id)}, {"$set": {"status": status}}
         )
         schedule_record = schedules_collection.find_one({"_id": ObjectId(id)})
+        if not schedule_record:
+            return jsonify({"error": "Application not found"}), 404
         expert_id = schedule_record["expert"]
         expert = experts_collection.find_one({"_id": expert_id})
+        if not expert:
+            return jsonify({"error": "Expert not found"}), 404
         expert_number = expert["phoneNumber"]
         user_id = schedule_record["user"]
         user = users_collection.find_one({"_id": user_id})
+        if not user:
+            return jsonify({"error": "User not found"}), 404
         user_number = user["phoneNumber"]
         scheduled_Call_time = schedule_record["datetime"]
         scheduled_Call_time = datetime.strptime(
             scheduled_Call_time, "%Y-%m-%dT%H:%M:%S.%fZ"
         )
         sm.final_call_job(
-            id,
+            result,
+            expert_id,
+            user_id,
             expert_number,
             user_number,
             scheduled_Call_time.year,
-            scheduled_Call_time.month,
+            scheduled_Call_time.month - 1,
             scheduled_Call_time.day,
-            scheduled_Call_time.hour,
+            scheduled_Call_time.hour - 1,
             scheduled_Call_time.minute,
         )
         if result.modified_count == 0:
@@ -254,11 +280,12 @@ class AppService:
 
         try:
             story_id = str(uuid.uuid4())
-            filename = secure_filename(file.filename).replace(" ", "+")
+            filename = secure_filename(file.filename).replace(   # type: ignore
+                " ", "+")
             unique_filename = f"{int(os.times()[-1])}_{story_id}_{filename}"
 
             metadata = {
-                "fieldName": file.name.lower().replace(" ", "+")
+                "fieldName": file.name.lower().replace(" ", "+")  # type: ignore
             }
 
             s3_client.upload_fileobj(

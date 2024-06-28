@@ -76,6 +76,8 @@ class DataService:
             return jsonify(category_names)
         elif request.method == "POST":
             data = request.json
+            if not data:
+                return jsonify({"error": "Invalid request data"}), 400
             category = data["name"]
             createdDate = datetime.now()
             categories_collection.insert_one(
@@ -86,8 +88,8 @@ class DataService:
     @staticmethod
     def schedules():
         if request.method == "GET":
-            page = int(request.args.get('page'))
-            size = int(request.args.get('size'))
+            page = int(request.args.get('page', 1))
+            size = int(request.args.get('size', 10))
             offset = (page - 1) * size
 
             schedules = list(schedules_collection.find({}, {
@@ -106,6 +108,8 @@ class DataService:
             })
         elif request.method == "POST":
             data = request.json
+            if not data:
+                return jsonify({"error": "Invalid request data"}), 400
             user_id = data["user"]
             time = data["datetime"]
             expert_id = data["expert"]
@@ -139,13 +143,14 @@ class DataService:
 
             expert_docment = experts_collection.find_one(
                 {"_id": ObjectId(expert_id)})
-            expert_number = expert_docment["phoneNumber"]
+            expert_number = expert_docment["phoneNumber"] if expert_docment else ""
 
             user = users_collection.find_one({"_id": ObjectId(user_id)})
-            user_number = user["phoneNumber"]
+            user_number = user["phoneNumber"] if user and "phoneNumber" in user else ""
 
             record = schedules_collection.find_one(document, {"_id": 1})
-            record = str(record["_id"])
+
+            record = str(record["_id"]) if record else ""
 
             sm.final_call_job(
                 record,
@@ -167,6 +172,8 @@ class DataService:
     def get_slots():
         # Parse input data
         data = request.json
+        if not data:
+            return jsonify({"error": "Invalid request data"}), 400
         expert_id = data["expert"]
         utc_date = data["datetime"]
         duration = int(data["duration"])
@@ -237,6 +244,8 @@ class DataService:
             return jsonify(timings)
         if request.method == "POST":
             data = request.json
+            if not data:
+                return jsonify({"error": "Invalid request data"}), 400
             expertId = data["expertId"]
             field = data["row"]["field"]
             value = data["row"]["value"]
@@ -266,10 +275,11 @@ class DataService:
                 print(e)
                 return jsonify({"error": str(e)}), 400
 
+    @staticmethod
     def get_wa_history():
         if request.method == "GET":
-            page = int(request.args.get('page'))
-            size = int(request.args.get('size'))
+            page = int(request.args.get('page', 1))
+            size = int(request.args.get('size', 10))
             offset = (page - 1) * size
 
             userwebhookmessages = list(userwebhookmessages_collection.find(

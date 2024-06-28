@@ -43,6 +43,8 @@ class GameService:
     @staticmethod
     def add_question():
         data = request.json
+        if not data:
+            return jsonify({"message": "Missing data"}), 400
         payload = json.dumps({
             "question": data["question"],
             "options": [
@@ -120,6 +122,8 @@ class GameService:
             for change in stream:
                 doc_id = change["documentKey"]["_id"]
                 doc = devdb["gameRooms"].find_one({"_id": doc_id})
+                if not doc:
+                    continue
                 roomId = doc["roomId"]
                 status = doc["status"]
                 if status is True:
@@ -132,7 +136,7 @@ class GameService:
         for roomId in list(players.keys()):
             for q in players[roomId]:
                 q.put("Game Ended")
-        players.pop(roomId)
+                players.pop(roomId)
 
     @staticmethod
     def room_status():
@@ -146,6 +150,8 @@ class GameService:
             return jsonify({"message": "Room not found"}), 400
         else:
             data = request.json
+            if not data:
+                return jsonify({"message": "Missing data"}), 400
             roomId = data["roomId"]
             userId = data["userId"]
             saarthiId = data["saarthiId"]
@@ -198,11 +204,12 @@ class GameService:
     @staticmethod
     def game_status():
         data = request.json
-
+        if not data:
+            return jsonify({"message": "Missing data"}), 400
         event = data["event"]
+        roomId = event["roomId"]
 
         if event["isUserTurn"] == True:
-            roomId = event["roomId"]
             correctAnswer = event["correctAnswer"]
             selectedOption = event["selectedOption"]
 
@@ -214,7 +221,6 @@ class GameService:
                 "$set": {"isUserTurn": False, "isExpertTurn": True}
             })
         elif event["isExpertTurn"] == True:
-            roomId = event["roomId"]
             correctAnswer = event["correctAnswer"]
             selectedOption = event["selectedOption"]
 
@@ -225,6 +231,7 @@ class GameService:
             devdb["gameRooms"].update_one({"roomId": roomId}, {
                 "$set": {"isUserTurn": True, "isExpertTurn": False}
             })
+
         devdb["gameRooms"].update_one({"roomId": roomId}, {
             "$inc": {"currentQuestion": 1}
         })
@@ -237,7 +244,7 @@ class GameService:
     @staticmethod
     def game_config():
         gameType = request.args.get("gameType")
-        level = request.args.get("level")
+        level = request.args.get("level", 0)
 
         gameConfig = devgamesdb["games_config"].find_one(
             {"gameType": gameType, "level": int(level)}, {"_id": 0})
@@ -247,6 +254,9 @@ class GameService:
     @staticmethod
     def question_decider():
         data = request.json
+        if not data:
+            return jsonify({"message": "Missing data"}), 400
+
         currentQuestion = data["currentQuestionIndex"]
         currentLevel = data["currentLevel"]
 

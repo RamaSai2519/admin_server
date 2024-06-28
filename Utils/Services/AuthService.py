@@ -13,10 +13,13 @@ import bcrypt
 class AuthService:
     @staticmethod
     def register():
-        id = request.json.get("id", None)
-        name = request.json.get("name", None)
-        password = request.json.get("password", None)
-        role = request.json.get("role", None)
+        data = request.json
+        if not data:
+            return jsonify({"msg": "Missing data"}), 400
+        id = data["id"]
+        name = data["name"]
+        password = data["password"]
+        role = data["role"]
 
         if not id or not password or not role:
             return jsonify({"msg": "Missing email or password or role"}), 400
@@ -41,8 +44,11 @@ class AuthService:
 
     @staticmethod
     def login():
-        id = request.json.get("id", None)
-        password = request.json.get("password", None)
+        data = request.json
+        if not data:
+            return jsonify({"msg": "Missing data"}), 400
+        id = data["id"]
+        password = data["password"]
         if not id or not password:
             return jsonify({"msg": "Missing email or password"}), 400
 
