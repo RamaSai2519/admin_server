@@ -1,13 +1,13 @@
 from Utils.config import (
     userwebhookmessages_collection,
-    usernotifications_collection,
     applications_collection,
+    wafeedback_collection,
     categories_collection,
     errorlogs_collection,
     schedules_collection,
     experts_collection,
     timings_collection,
-    users_collection,
+    users_collection
 )
 from Utils.Helpers.UtilityFunctions import UtilityFunctions as uf
 from Utils.Helpers.HelperFunctions import HelperFunctions as hf
@@ -278,20 +278,32 @@ class DataService:
     @staticmethod
     def get_wa_history():
         if request.method == "GET":
-            page = int(request.args.get('page', 1))
-            size = int(request.args.get('size', 10))
-            offset = (page - 1) * size
+            size = request.args.get('size', '10')
+            page = request.args.get('page', '1')
 
-            userwebhookmessages = list(userwebhookmessages_collection.find(
-                {"body": {"$ne": None}},
-                {"_id": 0}
-            ).sort("createdAt", -1).skip(offset).limit(size))
+            try:
+                size = int(size)
+                page = int(page)
+                offset = (page - 1) * size
+            except ValueError:
+                offset = 0
+                size = "all"
+
+            if size != "all":
+                userwebhookmessages = list(userwebhookmessages_collection.find(
+                    {"body": {"$ne": None}}
+                ).sort("createdAt", -1).skip(int(offset)).limit(int(size)))
+            else:
+                userwebhookmessages = list(userwebhookmessages_collection.find(
+                    {"body": {"$ne": None}}
+                ).sort("createdAt", -1))
 
             total_messages = userwebhookmessages_collection.count_documents(
                 {"body": {"$ne": None}}
             )
 
             for message in userwebhookmessages:
+                message["_id"] = str(message["_id"])
                 message["userId"] = str(message["userId"])
                 user = users_collection.find_one(
                     {"_id": ObjectId(message["userId"])})
@@ -310,38 +322,40 @@ class DataService:
         else:
             return jsonify({"error": "Invalid request method"}), 404
 
-            # current_date = datetime.now(pytz.timezone("Asia/Kolkata"))
-            # today_start = datetime.combine(current_date, datetime.min.time())
-            # today_end = datetime.combine(current_date, datetime.max.time())
+    @ staticmethod
+    def get_feedbacks():
+        size = request.args.get('size', '10')
+        page = request.args.get('page', '1')
 
-            # prev_schedules = list(
-            #     schedules_collection.find(
-            #         {
-            #             "user": ObjectId(user_id),
-            #             "status": "pending",
-            #             "datetime": {"$gte": today_start, "$lt": today_end},
-            #         }
-            #     )
-            # )
+        try:
+            size = int(size)
+            page = int(page)
+            offset = (page - 1) * size
+        except ValueError:
+            offset = 0
+            size = "all"
 
-            # if len(prev_schedules) > 2:
-            #     return jsonify(
-            #         {"error": "User already has 2 pending scheduled calls for today"}
-            #     ), 400
+        if size != "all":
+            feedbacks = list(wafeedback_collection.find({}).sort(
+                "createdAt", -1).skip(offset).limit(size))
+        else:
+            feedbacks = list(wafeedback_collection.find(
+                {}).sort("createdAt", -1))
 
-            # same_schedules = list(
-            #     schedules_collection.find(
-            #         {
-            #             "user": ObjectId(user_id),
-            #             "status": "pending",
-            #             "datetime": {
-            #                 "$gte": ist_time - timedelta(hours=1),
-            #                 "$lt": ist_time + timedelta(hours=1),
-            #             },
-            #         }
-            #     )
-            # )
+        total_feedbacks = wafeedback_collection.count_documents({})
 
-            # if same_schedules:
-            #     return jsonify(
-            #         {"error": "User already has a pending scheduled call(s) in the same hour"}), 400
+        for feedback in feedbacks:
+            feedback["_id"] = str(feedback["_id"])
+            feedback["userName"] = hf.get_user_name(
+                ObjectId(feedback["userId"]))
+            feedback["expertName"] = hf.get_expert_name(
+                ObjectId(feedback["sarathiId"]))
+            feedback["body"] = feedback["body"][2:]
+            feedback["body"] = str(feedback["body"]).replace("_", " ")
+
+        return jsonify({
+            "data": feedbacks,
+            "total": total_feedbacks,
+            "page": page,
+            "pageSize": size
+        })

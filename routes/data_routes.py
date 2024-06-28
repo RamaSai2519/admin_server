@@ -61,3 +61,9 @@ def timings_route():
 @jwt_required()
 def get_wa_history_route():
     return DataService.get_wa_history()
+
+
+@data_routes.route("/admin/data/feedbacks", methods=["GET"])
+@jwt_required()
+def get_feedbacks_route():
+    return DataService.get_feedbacks()
