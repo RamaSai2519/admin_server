@@ -85,7 +85,7 @@ class HelperFunctions:
             user = users_collection.find_one(
                 {"_id": user_id}, {"name": 1})
             users_cache[user_id] = (
-                user["name"] if user and user["name"] else "Unknown"
+                user["name"] if user and "name" in user else "Unknown"
             )
         return users_cache[user_id]
 
