@@ -305,6 +305,8 @@ class DataService:
             for message in userwebhookmessages:
                 message["_id"] = str(message["_id"])
                 message["userId"] = str(message["userId"])
+                message["createdAt"] = (message["createdAt"] + timedelta(
+                    hours=5, minutes=30)).strftime("%Y-%m-%d %H:%M:%S")
                 user = users_collection.find_one(
                     {"_id": ObjectId(message["userId"])})
                 if user:
@@ -346,6 +348,8 @@ class DataService:
 
         for feedback in feedbacks:
             feedback["_id"] = str(feedback["_id"])
+            feedback["createdAt"] = (feedback["createdAt"] + timedelta(
+                hours=5, minutes=30)).strftime("%Y-%m-%d %H:%M:%S")
             feedback["userName"] = hf.get_user_name(
                 ObjectId(feedback["userId"]))
             feedback["expertName"] = hf.get_expert_name(
