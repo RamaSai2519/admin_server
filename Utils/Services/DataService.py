@@ -120,42 +120,6 @@ class DataService:
             date_object = datetime.strptime(time, "%Y-%m-%dT%H:%M:%S.%fZ")
             ist_time = date_object + ist_offset
 
-            # current_date = datetime.now(pytz.timezone("Asia/Kolkata"))
-            # today_start = datetime.combine(current_date, datetime.min.time())
-            # today_end = datetime.combine(current_date, datetime.max.time())
-
-            # prev_schedules = list(
-            #     schedules_collection.find(
-            #         {
-            #             "user": ObjectId(user_id),
-            #             "status": "pending",
-            #             "datetime": {"$gte": today_start, "$lt": today_end},
-            #         }
-            #     )
-            # )
-
-            # if len(prev_schedules) > 2:
-            #     return jsonify(
-            #         {"error": "User already has 2 pending scheduled calls for today"}
-            #     ), 400
-
-            # same_schedules = list(
-            #     schedules_collection.find(
-            #         {
-            #             "user": ObjectId(user_id),
-            #             "status": "pending",
-            #             "datetime": {
-            #                 "$gte": ist_time - timedelta(hours=1),
-            #                 "$lt": ist_time + timedelta(hours=1),
-            #             },
-            #         }
-            #     )
-            # )
-
-            # if same_schedules:
-            #     return jsonify(
-            #         {"error": "User already has a pending scheduled call(s) in the same hour"}), 400
-
             document = {
                 "expert": ObjectId(expert_id),
                 "user": ObjectId(user_id),
@@ -335,3 +299,39 @@ class DataService:
             })
         else:
             return jsonify({"error": "Invalid request method"}), 404
+
+            # current_date = datetime.now(pytz.timezone("Asia/Kolkata"))
+            # today_start = datetime.combine(current_date, datetime.min.time())
+            # today_end = datetime.combine(current_date, datetime.max.time())
+
+            # prev_schedules = list(
+            #     schedules_collection.find(
+            #         {
+            #             "user": ObjectId(user_id),
+            #             "status": "pending",
+            #             "datetime": {"$gte": today_start, "$lt": today_end},
+            #         }
+            #     )
+            # )
+
+            # if len(prev_schedules) > 2:
+            #     return jsonify(
+            #         {"error": "User already has 2 pending scheduled calls for today"}
+            #     ), 400
+
+            # same_schedules = list(
+            #     schedules_collection.find(
+            #         {
+            #             "user": ObjectId(user_id),
+            #             "status": "pending",
+            #             "datetime": {
+            #                 "$gte": ist_time - timedelta(hours=1),
+            #                 "$lt": ist_time + timedelta(hours=1),
+            #             },
+            #         }
+            #     )
+            # )
+
+            # if same_schedules:
+            #     return jsonify(
+            #         {"error": "User already has a pending scheduled call(s) in the same hour"}), 400

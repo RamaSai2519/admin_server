@@ -7,7 +7,7 @@ class ExpertManager:
     def get_online_saarthis():
         online_saarthis = experts_collection.find(
             {"status": {"$regex": "online"}}, {"categories": 0}
-        )
+        ).sort("name", 1)
         return [fm.get_formatted_expert(expert) for expert in online_saarthis]
 
     @staticmethod
