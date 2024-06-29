@@ -69,6 +69,9 @@ class ScheduleManager:
 
     @staticmethod
     def slots_calculater(expert_id, day, duration=30):
+        if expert_id is None or expert_id == "":
+            print("Expert ID is required")
+            return None
         timings = list(timings_collection.find(
             {"expert": ObjectId(expert_id)}))
 
