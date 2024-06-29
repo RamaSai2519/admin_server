@@ -131,7 +131,9 @@ class CallManager:
             print(f"{time} - 123@CallManager.py: {e}")
             expertId = "Unknown"
         call = calls_collection.find_one(
-            {"$or": [{"_id": expertId}, {"expert": expertId}, {"user": expertId}]},
+            {"expert": expertId, "status": "initiated"},
             sort=[("initiatedTime", DESCENDING)],
         )
+        if not call:
+            return None
         return call
