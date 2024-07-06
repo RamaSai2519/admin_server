@@ -177,6 +177,9 @@ class DataService:
         expert_id = data["expert"]
         utc_date = data["datetime"]
         duration = int(data["duration"])
+        expert_doc = experts_collection.find_one(
+            {"_id": ObjectId(expert_id)}, {"type": 1})
+        expert_type = expert_doc["type"] if expert_doc else None
 
         # Convert UTC datetime to IST and extract the day
         utc_datetime = datetime.strptime(utc_date, "%Y-%m-%dT%H:%M:%S.%fZ")
@@ -190,6 +193,7 @@ class DataService:
 
         output_slots = []
         utc_zone = pytz.utc
+        ist_timezone = pytz.timezone('Asia/Kolkata')
 
         # Iterate through the slots
         for slot in slots:
@@ -228,6 +232,18 @@ class DataService:
                         if scheduled_duration == 60:
                             next_slot = slots[slots.index(slot) + 1]
                             slots.remove(next_slot)
+
+                utc_datetime = datetime.strptime(
+                    slot_dict["datetime"], '%Y-%m-%dT%H:%M:%S.%fZ')
+                ist_datetime = utc_datetime.astimezone(ist_timezone)
+                ist_hour = ist_datetime.hour
+
+                if expert_type and expert_type == "saarthi" or "sarathi":
+                    if not (9 <= ist_hour < 22):
+                        slot_dict["available"] = False
+                else:
+                    if not (10 <= ist_hour < 14) or not (16 <= ist_hour < 20):
+                        slot_dict["available"] = False
 
         return jsonify(output_slots)
 
