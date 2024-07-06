@@ -1,4 +1,4 @@
-from Utils.config import timings_collection
+from Utils.config import timings_collection, times
 from datetime import timedelta, datetime
 from bson.objectid import ObjectId
 import requests
@@ -82,6 +82,11 @@ class ScheduleManager:
         if not timing:
             print(f"No schedule found for {day}")
             return
+
+        for time in times:
+            if timing[time] == "":
+                print(f"Timing for {time} is empty")
+                return
 
         # Function to generate time slots
         def generate_slots(start_time_str, end_time_str):

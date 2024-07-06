@@ -67,3 +67,6 @@ ALLOWED_MIME_TYPES = [
     "image/svg+xml", "video/mp4", "video/webm", "video/quicktime",
     "video/x-matroska"
 ]
+
+times = ["PrimaryStartTime", "PrimaryEndTime",
+         "SecondaryStartTime", "SecondaryEndTime"]
