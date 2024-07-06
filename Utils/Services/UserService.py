@@ -18,6 +18,20 @@ from bson import ObjectId
 
 
 class UserService:
+    """
+    A class to handle user service operations including retrieving engagement data and updating user data based on HTTP requests.
+    - Define a static method `get_engagement_data` to retrieve engagement data.
+    - Handles GET requests to fetch data based on pagination parameters like page and size.
+    - Updates user data if provided and returns appropriate responses.
+    @return None
+    """
+    
+    """
+    Define a static method to retrieve engagement data. 
+    This method handles GET requests to fetch data based on pagination parameters like page and size. 
+    It also updates user data if provided, and returns appropriate responses.
+    @return None
+    """
     @staticmethod
     def get_engagement_data():
         meta_fields = ["remarks", "poc", "expert", "status", "userStatus"]

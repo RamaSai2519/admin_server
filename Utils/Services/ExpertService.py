@@ -17,16 +17,30 @@ import time
 
 
 class ExpertService:
+    """
+    A class for managing expert profiles and SSE connections.
+    """
+
+    """
+        Create a new expert profile in the database with a default name and profile completion status.
+        @return The ID of the newly created expert profile.
+    """
     @staticmethod
     def create_expert():
         expert = experts_collection.insert_one(
             {
                 "name": "Enter Name",
+                "categories": [],
                 "proflieCompleted": True,
             }
         )
         return jsonify(str(expert.inserted_id))
 
+    """
+    A static method to retrieve popup data for a specific expert ID.
+    @param expertId - The ID of the expert for whom the popup data is being retrieved.
+    @return JSON response containing user context, remarks, and repetition information.
+    """
     @staticmethod
     def get_popup_data(expertId):
         latest_call = cm.get_latest_call(expertId)
@@ -43,6 +57,11 @@ class ExpertService:
             {"userContext": userContext, "remarks": remarks, "repeation": repeation}
         )
 
+    """
+    Handle the fetch,edit and deletion of an expert from the database based on the provided ID.
+    @param id - The ID of the expert to be deleted
+    @return A JSON response indicating the success or failure of the opearation
+    """
     @staticmethod
     def handle_expert(id):
         if request.method == "GET":
@@ -150,6 +169,10 @@ class ExpertService:
         else:
             return jsonify({"error": "Invalid request method"}), 404
 
+    """
+    Define a static method to handle streaming data for a specific expert ID.
+    @return A stream of events for the specified expert ID.
+    """
     @staticmethod
     def call_stream():
         expert_id = request.args.get('expertId')
@@ -181,6 +204,10 @@ class ExpertService:
 
         return Response(event_stream(), content_type='text/event-stream')
 
+    """
+    Define a static method to watch changes in a MongoDB collection and notify subscribers based on the operation type.
+    @return None
+    """
     @staticmethod
     def watch_changes():
         with calls_collection.watch([{'$match': {'operationType': {'$in': ['insert', 'update']}}}]) as stream:
@@ -201,6 +228,11 @@ class ExpertService:
                         for subscriber in subscribers[expert_id]:
                             subscriber.put("call ended")
 
+    """
+    Close all connections to the server-sent events (SSE) for all subscribers.
+    This is a static method that does not require an instance of the class.
+    It clears all queues for each expert ID and then clears the subscribers dictionary.
+    """
     @staticmethod
     def close_sse_connections():
         for expert_id in list(subscribers.keys()):
@@ -209,6 +241,13 @@ class ExpertService:
             subscribers[expert_id].clear()
         subscribers.clear()
 
+    """
+    Periodically reset the connections for the SSE (Server-Sent Events) in the ExpertService class.
+    This method is a static method.
+    It runs an infinite loop where it sleeps for 600 seconds and then closes the SSE connections.
+    No parameters are needed.
+    This method does not return anything.
+    """
     @staticmethod
     def periodic_reset_sse_connections():
         while True:

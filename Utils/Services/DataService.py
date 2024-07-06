@@ -21,6 +21,20 @@ import pytz
 
 
 class DataService:
+    """
+    A class that provides static methods to retrieve data.
+    - get_error_logs(): Retrieves error logs from a collection, converts the '_id' field to a string, and returns the logs as JSON.
+    - get_applications(): Processes feedback data by getting the expert name, modifying the body text, and returns the feedbacks data along with total count, page, and page size as JSON.
+    - get_all_calls(): Retrieves all calls data from a collection and returns the calls data as JSON.
+    - get_experts(): Retrieves experts data from a collection, formats the data, and returns the experts data as JSON.
+    - get_users(): Retrieves users data from a collection, modifies the '_id', 'lastModifiedBy', 'createdDate', and 'userGameStats' fields, and returns the users data as JSON.
+    - get_categories(): Retrieves categories data from a collection, extracts the 'name' field, and returns the category names as JSON.
+    - schedules(): Retrieves schedules data from a collection, modifies the '_id', 'expert', and 'user' fields, and returns the schedules data as JSON.
+    - get_slots(): Retrieves slots data from a collection, processes the data, and returns the slots data as JSON.
+    - get_timings(): Retrieves timings data from a collection, processes the data, and returns the timings data as JSON.
+    - get_wa_history(): Retrieves WhatsApp history data from a collection, processes the data, and returns the WhatsApp history data as JSON.
+    - get_feedbacks(): Retrieves feedbacks data from a collection, processes the data, and returns the feedbacks data as JSON.
+    """
     @staticmethod
     def get_error_logs():
         error_logs = list(errorlogs_collection.find())
