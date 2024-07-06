@@ -83,11 +83,6 @@ class ScheduleManager:
             print(f"No schedule found for {day}")
             return
 
-        for time in times:
-            if timing[time] == "":
-                print(f"Timing for {time} is empty")
-                return
-
         # Function to generate time slots
         def generate_slots(start_time_str, end_time_str):
             start_time = datetime.strptime(start_time_str, '%H:%M')
@@ -105,13 +100,11 @@ class ScheduleManager:
 
         # Generate slots for primary time
         primary_slots = generate_slots(
-            timing['PrimaryStartTime'], timing['PrimaryEndTime'])
+            timing[times[0]], timing[times[1]]) if times[0] in timing and timing[times[0]] != "" else []
 
         # Generate slots for secondary time, if available
-        secondary_slots = []
-        if 'SecondaryStartTime' in timing and 'SecondaryEndTime' in timing:
-            secondary_slots = generate_slots(
-                timing['SecondaryStartTime'], timing['SecondaryEndTime'])
+        secondary_slots = generate_slots(
+            timing[times[2]], timing[times[3]]) if times[2] in timing and timing[times[2]] != "" else []
 
         # Combine primary and secondary slots
         all_slots = primary_slots + secondary_slots
