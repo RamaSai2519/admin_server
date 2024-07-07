@@ -1,3 +1,4 @@
+from Utils.Helpers.HelperFunctions import HelperFunctions as hf
 from Utils.Helpers.EventManager import EventManager as evm
 from Utils.Helpers.AuthManager import AuthManager as am
 from Utils.config import eventconfigs_collection
@@ -11,12 +12,15 @@ import json
 class EventService:
     @staticmethod
     def get_events():
-        allEvents = list(eventconfigs_collection.find({}, {"_id": 0}))
+        allEvents = list(eventconfigs_collection.find(
+            {}, {"_id": 0}).sort("createdAt", -1))
         for event in allEvents:
             event["lastModifiedBy"] = (
                 str(event["lastModifiedBy"]
                     ) if "lastModifiedBy" in event else ""
             )
+            event["expert"] = hf.get_expert_name(
+                ObjectId(event["expert"])) if 'expert' in event else ''
         return jsonify(allEvents)
 
     @staticmethod
