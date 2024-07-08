@@ -1,4 +1,4 @@
-from Utils.config import calls_collection, users_collection, users_cache
+from Utils.config import calls_collection, users_collection, experts_collection
 from Utils.Helpers.FormatManager import FormatManager as fm
 
 
@@ -8,7 +8,10 @@ class UtilityFunctions:
         admin_ids = [
             user["_id"] for user in users_collection.find({"role": "admin"}, {"_id": 1})
         ]
-
+        test_expert = experts_collection.find_one(
+            {"name": "Test"}, {"_id": 1}
+        )
+        test_expert_id = test_expert["_id"] if test_expert else None
         exclusion_projection = {
             "callId": 1,
             "user": 1,
@@ -24,7 +27,8 @@ class UtilityFunctions:
             projection = {**exclusion_projection, **projection}
         calls = list(
             calls_collection.find(
-                {"user": {"$nin": admin_ids}, **query}, projection
+                {"user": {"$nin": admin_ids}, "expert": {
+                    "$ne": test_expert_id}, **query}, projection
             ).sort("initiatedTime", 1)
         )
         if format:

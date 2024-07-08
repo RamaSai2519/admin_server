@@ -5,6 +5,7 @@ from Utils.config import calls_collection
 from datetime import datetime, timedelta
 from pymongo import DESCENDING
 from bson import ObjectId
+from flask import jsonify
 import requests
 import pytz
 import json
@@ -26,7 +27,9 @@ class CallManager:
     @staticmethod
     def get_total_duration():
         total_duration = 0
-        calls = uf.get_calls({}, {"duration": 1, "_id": 0}, False, False)
+        calls = uf.get_calls({"failedReason": "",
+                              "status": "successfull"},
+                             {"duration": 1, "_id": 0}, False, False)
         for call in calls:
             if "duration" in call and call["duration"] != "":
                 total_duration += hf.get_total_duration_in_seconds(
@@ -85,7 +88,7 @@ class CallManager:
             "Content-Type": "application/json",
         }
         response = requests.request("POST", url, headers=headers, data=payload)
-        return response.json()
+        return jsonify(response.json())
 
     @staticmethod
     def checkValidity(call):
@@ -128,7 +131,9 @@ class CallManager:
             print(f"{time} - 123@CallManager.py: {e}")
             expertId = "Unknown"
         call = calls_collection.find_one(
-            {"$or": [{"_id": expertId}, {"expert": expertId}, {"user": expertId}]},
+            {"expert": expertId, "status": "initiated"},
             sort=[("initiatedTime", DESCENDING)],
         )
+        if not call:
+            return None
         return call

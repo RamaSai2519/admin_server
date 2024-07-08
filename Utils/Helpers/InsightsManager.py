@@ -15,7 +15,8 @@ class InsightsManager:
         current_date = datetime.now(pytz.timezone("Asia/Kolkata"))
         today_start = datetime.combine(current_date, datetime.min.time())
         today_end = datetime.combine(current_date, datetime.max.time())
-        today_calls_query = {"initiatedTime": {"$gte": today_start, "$lt": today_end}}
+        today_calls_query = {"initiatedTime": {
+            "$gte": today_start, "$lt": today_end}}
 
         total_successful_calls, total_duration_seconds = (
             cm.get_total_successful_calls_and_duration()
@@ -40,7 +41,8 @@ class InsightsManager:
             return uf.get_calls_count({"status": "failed"})
 
         def todayFailedCalls():
-            today_failed_calls_query = {"status": "failed", **today_calls_query}
+            today_failed_calls_query = {
+                "status": "failed", **today_calls_query}
             return uf.get_calls_count(today_failed_calls_query)
 
         def missedCalls():
@@ -59,14 +61,16 @@ class InsightsManager:
 
         def averageCallDuration():
             average_call_duration = (
-                hf.format_duration(total_duration_seconds / total_successful_calls)
+                hf.format_duration(total_duration_seconds /
+                                   total_successful_calls)
                 if total_successful_calls
                 else "0 minutes"
             )
             return average_call_duration
 
         def scheduledCallsPercentage():
-            successful_scheduled_calls = len(cm.get_successful_scheduled_calls())
+            successful_scheduled_calls = len(
+                cm.get_successful_scheduled_calls())
             scheduled_calls_percentage = round(
                 (
                     successful_scheduled_calls / total_successful_calls * 100
@@ -123,7 +127,8 @@ class InsightsManager:
 
         def classify_durations():
             def duration_category(call):
-                duration_sec = hf.get_total_duration_in_seconds(call["duration"])
+                duration_sec = hf.get_total_duration_in_seconds(
+                    call["duration"])
                 if duration_sec < 900:
                     return "_15min"
                 elif 900 <= duration_sec < 1800:
@@ -149,7 +154,7 @@ class InsightsManager:
 
             total_calls = len(successful_calls)
             for key in duration_counts:
-                duration_counts[key] = (
+                duration_counts[key] = (  # type: ignore
                     f"{round((duration_counts[key] / total_calls) * 100, 2)}%"
                 )
 

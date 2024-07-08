@@ -1,9 +1,8 @@
-from Utils.Helpers.EventManager import EventManager as evm
-from Utils.Helpers.AuthManager import AuthManager as am
-from Utils.config import eventconfigs_collection
+from Utils.Helpers.HelperFunctions import HelperFunctions as hf
+from Utils.config import eventconfigs_collection, MAIN_BE_URL
 from flask import jsonify, request
-from datetime import datetime
 from bson import ObjectId
+from pprint import pprint
 import requests
 import json
 
@@ -11,28 +10,28 @@ import json
 class EventService:
     @staticmethod
     def get_events():
-        allEvents = list(eventconfigs_collection.find({}, {"_id": 0}))
+        allEvents = list(eventconfigs_collection.find(
+            {}, {"_id": 0}).sort("createdAt", -1))
         for event in allEvents:
             event["lastModifiedBy"] = (
                 str(event["lastModifiedBy"]
                     ) if "lastModifiedBy" in event else ""
             )
+            event["expert"] = hf.get_expert_name(
+                ObjectId(event["expert"])) if 'expert' in event else ''
         return jsonify(allEvents)
 
     @staticmethod
     def get_users_by_event():
         try:
-            url = (
-                "https://orca-app-du4na.ondigitalocean.app/api/events/listUsersOfEvent"
-            )
-            headers = {"Content-Type": "application/json"}
+            url = f"{MAIN_BE_URL}/events/listUsersOfEvent"
             if request.args:
                 params = request.args
                 slug = params["slug"]
                 payload = json.dumps({"slug": slug})
-                response = requests.get(url, headers=headers, data=payload)
+                response = requests.get(url, data=payload)
             else:
-                response = requests.get(url, headers=headers)
+                response = requests.get(url)
             data = response.json()["data"]
             return data
         except Exception as e:
@@ -40,46 +39,57 @@ class EventService:
             return jsonify({"error": str(e)})
 
     @staticmethod
-    def get_event():
+    def handle_event_config():
         if request.method == "GET":
             params = request.args
             slug = params["slug"]
             event = eventconfigs_collection.find_one(
                 {"slug": slug}, {"_id": 0})
+            if not event:
+                return jsonify({"error": "Event not found"}), 404
             event["lastModifiedBy"] = (
                 str(event["lastModifiedBy"]
                     ) if "lastModifiedBy" in event else ""
             )
             return jsonify(event)
         elif request.method == "POST":
-            data = request.json
-            fields = ["date", "duration", "expert", "mainTitle",
-                      "name", "slug", "subTitle", "zoomLink", "imageUrl"]
-            if not all(data[field] for field in fields):
-                return (
-                    jsonify({"error": "All fields are required for create"}),
-                    400,
-                )
-            slug = data["slug"]
-            if eventconfigs_collection.find_one({"slug": slug}):
-                return jsonify({"message": "Event already exists"}), 400
-            createdTime = datetime.now()
-            data["createdAt"] = createdTime
-            data["updatedAt"] = createdTime
-            admin_id = am.get_identity()
-            data["lastModifiedBy"] = ObjectId(admin_id)
-            result = eventconfigs_collection.insert_one(data)
-            if result.inserted_id is None:
-                return jsonify({"error": "Failed to create event"}), 400
-            return jsonify({"message": "Event created successfully"}), 200
-        elif request.method == "PUT":
-            data = request.json
-            fields = ["name", "mainTitle", "subTitle"]
-            if not any(data[field] for field in fields):
-                return (
-                    jsonify(
-                        {"error": "At least one field is required for update"}),
-                    400,
-                )
-            event = evm.update_event(data, fields)
-            return jsonify(event)
+            try:
+                data = request.json
+                if not data:
+                    return jsonify({"error": "Invalid request"}), 400
+                url = f"{MAIN_BE_URL}/events/validateSlug"
+                params = {"slug": data["slug"]}
+                payload = json.dumps(params)
+                response = requests.post(url, data=payload)
+                validSlug = response.json()
+                validSlug = validSlug["data"]["isSlugAvailable"]
+                if not validSlug:
+                    return jsonify({"error": "Slug already exists"}), 400
+                else:
+                    url = f"{MAIN_BE_URL}/events/createEvent"
+                    payload = json.dumps(data)
+                    response = requests.post(url, data=payload)
+                    return response.json()
+            except Exception as e:
+                print(e)
+                return jsonify({"error": str(e)})
+        else:
+            return jsonify({"error": "Invalid request method"}), 405
+
+# {'category': 'test',
+#  'description': 'Test',
+#  'eventType': 'challenge',
+#  'guestSpeaker': 'Test',
+#  'hostedBy': 'Test',
+#  'imageUrl': 'https://s3.ap-south-1.amazonaws.com/sukoon-media/5259873_394e80ee-33b7-45b4-92cf-1d3f460c3ad7_code.png',
+#  'mainTitle': 'Test',
+#  'maxVisitorsAllowed': 10,
+#  'meetingLink': 'test',
+#  'name': 'Test',
+#  'prizeMoney': 10,
+#  'registrationAllowedTill': '2024-07-08T12:03:16.400Z',
+#  'repeat': 'once',
+#  'slug': 'Test',
+#  'startEventDate': '2024-07-08T12:02:35.500Z',
+#  'subTitle': 'Test',
+#  'validUpto': '2024-07-08T12:02:39.800Z'}

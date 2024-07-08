@@ -1,11 +1,12 @@
 from Utils.Helpers.HelperFunctions import HelperFunctions as hf
-from Utils.config import users_collection, experts_collection
-from flask import request, jsonify
+from Utils.config import users_collection, experts_collection, players, games_config_collection
+from flask import request, jsonify, Response
 from pymongo import MongoClient
 from dotenv import load_dotenv
+from datetime import datetime, timezone
 from bson import ObjectId
-from pprint import pprint
 import requests
+import queue
 import json
 import os
 
@@ -13,6 +14,7 @@ load_dotenv()
 
 devclient = MongoClient(os.getenv("DEV_DB_URL"))
 devdb = devclient["test"]
+devgamesdb = devclient["games"]
 
 
 class GameService:
@@ -41,6 +43,8 @@ class GameService:
     @staticmethod
     def add_question():
         data = request.json
+        if not data:
+            return jsonify({"message": "Missing data"}), 400
         payload = json.dumps({
             "question": data["question"],
             "options": [
@@ -79,3 +83,206 @@ class GameService:
             {}, {"_id": 0, "options._id": 0}))
 
         return jsonify(questions), 200
+
+    @staticmethod
+    def room_stream():
+        roomId = request.args.get("roomId")
+        if not roomId:
+            return jsonify({"message": "roomId query parameter is required"}), 400
+
+        def event_stream():
+            q = queue.Queue()
+            if roomId not in players:
+                players[roomId] = []
+            players[roomId].append(q)
+            try:
+                while True:
+                    try:
+                        result = q.get()
+                        yield f"data: {result}\n\n"
+                    except queue.Empty:
+                        yield "data: lalala \n\n"
+            except GeneratorExit:
+                if roomId in players and q in players[roomId]:
+                    players[roomId].remove(q)
+                raise
+            except BrokenPipeError:
+                if roomId in players and q in players[roomId]:
+                    players[roomId].remove(q)
+                raise
+
+        return Response(event_stream(), content_type="text/event-stream")
+
+    @staticmethod
+    def watch_room_changes():
+        with devdb["gameRooms"].watch([{
+            '$match': {'operationType': 'update'},
+            '$match': {'updateDescription.updatedFields.status': True}
+        }]) as stream:
+            for change in stream:
+                doc_id = change["documentKey"]["_id"]
+                doc = devdb["gameRooms"].find_one({"_id": doc_id})
+                if not doc:
+                    continue
+                roomId = doc["roomId"]
+                status = doc["status"]
+                if status is True:
+                    if roomId in players:
+                        for player in players[roomId]:
+                            player.put("Game Started")
+
+    @staticmethod
+    def close_room_connections():
+        for roomId in list(players.keys()):
+            for q in players[roomId]:
+                q.put("Game Ended")
+                players.pop(roomId)
+
+    @staticmethod
+    def room_status():
+        if request.method == "GET":
+            roomId = request.args.get("roomId")
+            room = devdb["gameRooms"].find_one(
+                {"roomId": roomId}, {"_id": 0})
+
+            if room:
+                return jsonify(room), 200
+            return jsonify({"message": "Room not found"}), 400
+        else:
+            data = request.json
+            if not data:
+                return jsonify({"message": "Missing data"}), 400
+            roomId = data["roomId"]
+            userId = data["userId"]
+            saarthiId = data["saarthiId"]
+            role = data["role"]
+
+            if role == "user":
+                current_time = datetime.now(timezone.utc)
+                result = devdb["gameRooms"].find_one_and_update(
+                    {"roomId": roomId},
+                    {"$setOnInsert": {
+                        "roomId": roomId,
+                        "user": userId,
+                        "saarthi": saarthiId,
+                        "status": False,
+                        "createdTime": current_time,
+                        "userScore": 0,
+                        "expertScore": 0,
+                        "isUserTurn": True,
+                        "isExpertTurn": False,
+                        "currentQuestion": 1
+                    }},
+                    upsert=True,
+                    return_document=True
+                )
+
+                if result and result["status"] is False:
+                    return jsonify({"message": "Please wait..."}), 200
+                elif result:
+                    devdb["gameRooms"].update_one({"roomId": roomId}, {
+                        "$set": {"status": False, "userScore": 0, "expertScore": 0, "isUserTurn": True, "isExpertTurn": False, "currentQuestion": 1}
+                    })
+                    return jsonify({"message": "Room recreated"}), 200
+                else:
+                    return jsonify({"message": "Room created"}), 200
+
+            elif role == "saarthi":
+                room = devdb["gameRooms"].find_one({"roomId": roomId})
+                if room:
+                    if room["status"] is True:
+                        return jsonify({"message": "Game already started"}), 200
+                    devdb["gameRooms"].update_one({"roomId": roomId}, {
+                        "$set": {"status": True}
+                    })
+                    return jsonify({"message": "Room status updated"}), 200
+                else:
+                    return jsonify({"message": "Room not found"}), 400
+            else:
+                return jsonify({"message": "Invalid role"}), 400
+
+    @staticmethod
+    def game_status():
+        data = request.json
+        if not data:
+            return jsonify({"message": "Missing data"}), 400
+        event = data["event"]
+        roomId = event["roomId"]
+
+        if event["isUserTurn"] == True:
+            correctAnswer = event["correctAnswer"]
+            selectedOption = event["selectedOption"]
+
+            if correctAnswer == selectedOption:
+                devdb["gameRooms"].update_one({"roomId": roomId}, {
+                    "$inc": {"userScore": 1}
+                })
+            devdb["gameRooms"].update_one({"roomId": roomId}, {
+                "$set": {"isUserTurn": False, "isExpertTurn": True}
+            })
+        elif event["isExpertTurn"] == True:
+            correctAnswer = event["correctAnswer"]
+            selectedOption = event["selectedOption"]
+
+            if correctAnswer == selectedOption:
+                devdb["gameRooms"].update_one({"roomId": roomId}, {
+                    "$inc": {"expertScore": 1}
+                })
+            devdb["gameRooms"].update_one({"roomId": roomId}, {
+                "$set": {"isUserTurn": True, "isExpertTurn": False}
+            })
+
+        devdb["gameRooms"].update_one({"roomId": roomId}, {
+            "$inc": {"currentQuestion": 1}
+        })
+
+        for player in players[roomId]:
+            player.put("Turn Complete")
+
+        return jsonify({"message": "Game status received"}), 200
+
+    @staticmethod
+    def game_config():
+        gameType = request.args.get("gameType")
+        level = request.args.get("level", 0)
+
+        gameConfig = devgamesdb["games_config"].find_one(
+            {"gameType": gameType, "level": int(level)}, {"_id": 0})
+
+        return jsonify(gameConfig), 200
+
+    @staticmethod
+    def question_decider():
+        data = request.json
+        if not data:
+            return jsonify({"message": "Missing data"}), 400
+
+        currentQuestion = data["currentQuestionIndex"]
+        currentLevel = data["currentLevel"]
+
+        response = devdb["quizquestions"].find_one(
+            {"level": currentLevel, "questionNumber": currentQuestion}, {"_id": 0, "options._id": 0})
+
+        if response:
+            return jsonify(response), 200
+        else:
+            return jsonify({"message": "Not your turn"}), 400
+
+    @staticmethod
+    def game_details():
+        roomId = request.args.get("roomId")
+        room = devdb["gameRooms"].find_one({"roomId": roomId}, {"_id": 0})
+
+        response = {}
+
+        if room:
+            response["gameName"] = "Quiz Game"
+            response["level"] = 1
+            response["expertName"] = hf.get_expert_name(
+                ObjectId(room["saarthi"]))
+            response["userName"] = hf.get_user_name(ObjectId(room["user"]))
+            response["timePerGame"] = 10
+            response["question_to_show"] = 2
+            return jsonify(response), 200
+        else:
+            return jsonify({"message": "Room not found"}), 400

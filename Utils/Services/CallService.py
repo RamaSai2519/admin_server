@@ -4,6 +4,7 @@ from Utils.Helpers.AuthManager import AuthManager as am
 from Utils.Helpers.CallManager import CallManager as cm
 from flask import request, jsonify
 from bson import ObjectId
+from pprint import pprint
 
 
 class CallService:
@@ -11,6 +12,8 @@ class CallService:
     def expert_call_user():
         try:
             data = request.json
+            if not data:
+                return jsonify({"error": "Missing data"}), 400
             expertId = data["expertId"]
             calls = list(calls_collection.find({"expert": ObjectId(expertId)}))
             isValid = cm.checkValidity(calls[-1])
@@ -18,10 +21,9 @@ class CallService:
                 userId = calls[-1]["user"]
                 user = users_collection.find_one({"_id": ObjectId(userId)})
                 response = cm.callUser(expertId, user)
-                if response["data"] == {}:
-                    return response["error"]
-                else:
-                    return "Call Initiated Successfully"
+                if not response:
+                    return jsonify({"error": "Failed to initiate call"}), 400
+                return response
             else:
                 return isValid
         except Exception as e:
@@ -31,10 +33,14 @@ class CallService:
     def connect():
         try:
             data = request.json
+            if not data:
+                return jsonify({"error": "Missing data"}), 400
             expertId = data["expert"]
             userId = data["user"]
             user = users_collection.find_one({"_id": ObjectId(userId)})
             response = cm.callUser(expertId, user)
+            if not response:
+                return jsonify({"message": "Failed to initiate call"}), 400
             return response
         except Exception as e:
             return jsonify({"error": str(e)}), 500
@@ -46,7 +52,8 @@ class CallService:
             if not call:
                 return jsonify({"error": "Call not found"}), 404
             formatted_call = fm.format_call(call)
-            callmeta = callsmeta_collection.find_one({"callId": id}, {"_id": 0})
+            callmeta = callsmeta_collection.find_one(
+                {"callId": id}, {"_id": 0})
             if callmeta:
                 formatted_call["Topics"] = callmeta["Topics"]
                 formatted_call["Summary"] = callmeta["Summary"]

@@ -1,5 +1,6 @@
-from Utils.config import schedules_collection, calls_collection
+from Utils.config import timings_collection, times
 from datetime import timedelta, datetime
+from bson.objectid import ObjectId
 import requests
 
 
@@ -67,51 +68,45 @@ class ScheduleManager:
         requests.post(url, json=payload)
 
     @staticmethod
-    def update_schedule_status():
-        schedules = list(schedules_collection.find())
+    def slots_calculater(expert_id, day, duration=30):
+        if expert_id is None or expert_id == "":
+            print("Expert ID is required")
+            return None
+        timings = list(timings_collection.find(
+            {"expert": ObjectId(expert_id)}))
 
-        for schedule in schedules:
-            schedule_user = schedule["user"]
-            schedule_expert = schedule["expert"]
+        # Find the schedule for the specified day
+        timing = next(
+            (s for s in timings if s['day'].lower() == day.lower()), None)
 
-            # Adjust schedule time to match call time
-            schedule_time = schedule["datetime"] - timedelta(hours=5, minutes=30)
+        if not timing:
+            print(f"No schedule found for {day}")
+            return
 
-            # Find calls for the same user and expert within a small time window around the schedule time
-            calls = list(
-                calls_collection.find(
-                    {
-                        "user": schedule_user,
-                        "expert": schedule_expert,
-                        "initiatedTime": {
-                            "$gte": schedule_time - timedelta(minutes=1),
-                            "$lte": schedule_time + timedelta(minutes=1),
-                        },
-                    }
-                )
-            )
+        # Function to generate time slots
+        def generate_slots(start_time_str, end_time_str):
+            start_time = datetime.strptime(start_time_str, '%H:%M')
+            end_time = datetime.strptime(end_time_str, '%H:%M')
+            slots = []
 
-            if calls:
-                schedules_collection.update_one(
-                    {"_id": schedule["_id"]}, {"$set": {"status": "completed"}}
-                )
-                for call in calls:
-                    # Update the call type in the database
-                    call_type = "scheduled"
-                    calls_collection.update_one(
-                        {"_id": call["_id"]}, {"$set": {"type": call_type}}
-                    )
-                    print(
-                        f"Updated call type for call initiated at {call['initiatedTime']}"
-                    )
-            else:
-                if schedule_time < datetime.now():
-                    schedules_collection.update_one(
-                        {"_id": schedule["_id"]}, {"$set": {"status": "missed"}}
-                    )
-                    print(f"Updated status for missed schedule at {schedule_time}")
-                else:
-                    schedules_collection.update_one(
-                        {"_id": schedule["_id"]}, {"$set": {"status": "pending"}}
-                    )
-                    print(f"Updated status for pending schedule at {schedule_time}")
+            current_time = start_time
+            while current_time + timedelta(minutes=duration) <= end_time:
+                end_slot_time = current_time + timedelta(minutes=duration)
+                slots.append(f"{current_time.strftime(
+                    '%H:%M')} - {end_slot_time.strftime('%H:%M')}")
+                current_time = end_slot_time
+
+            return slots
+
+        # Generate slots for primary time
+        primary_slots = generate_slots(
+            timing[times[0]], timing[times[1]]) if times[0] in timing and timing[times[0]] != "" else []
+
+        # Generate slots for secondary time, if available
+        secondary_slots = generate_slots(
+            timing[times[2]], timing[times[3]]) if times[2] in timing and timing[times[2]] != "" else []
+
+        # Combine primary and secondary slots
+        all_slots = primary_slots + secondary_slots
+
+        return all_slots

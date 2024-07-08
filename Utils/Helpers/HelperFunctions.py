@@ -1,7 +1,9 @@
 from Utils.config import (
     experts_collection,
+    admins_collection,
     users_collection,
     experts_cache,
+    admins_cache,
     users_cache,
     FB_SERVER_KEY,
 )
@@ -60,7 +62,7 @@ class HelperFunctions:
             "notification": {"title": "Notification", "body": message},
         }
         headers = {
-            "Authorization": "key=" + server_key,
+            "Authorization": f"key={server_key}",
             "Content-Type": "application/json",
         }
         response = requests.post(fcm_url, json=payload, headers=headers)
@@ -80,12 +82,21 @@ class HelperFunctions:
     @staticmethod
     def get_user_name(user_id):
         if user_id not in users_cache:
-            user = users_collection.find_one({"_id": user_id}, {"name": 1})
-            try:
-                users_cache[user_id] = user["name"]
-            except:
-                users_cache[user_id] = "Unknown"
+            user = users_collection.find_one(
+                {"_id": user_id}, {"name": 1})
+            users_cache[user_id] = (
+                user["name"] if user and "name" in user else "Unknown"
+            )
         return users_cache[user_id]
+
+    @staticmethod
+    def get_admin_name(admin_id):
+        if admin_id not in admins_cache:
+            admin = admins_collection.find_one({"_id": admin_id}, {"name": 1})
+            admins_cache[admin_id] = (
+                admin["name"] if admin and admin["name"] else "Unknown"
+            )
+        return admins_cache[admin_id]
 
     @staticmethod
     def calculate_logged_in_hours(login_logs):

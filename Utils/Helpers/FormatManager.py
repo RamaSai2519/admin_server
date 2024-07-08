@@ -37,7 +37,8 @@ class FormatManager:
             "totalScore": expert["total_score"] if "total_score" in expert else 0,
             "isBusy": expert["isBusy"] if "isBusy" in expert else False,
             "lastModifiedBy": (
-                str(expert["lastModifiedBy"]) if "lastModifiedBy" in expert else None
+                str(expert["lastModifiedBy"]
+                    ) if "lastModifiedBy" in expert else None
             ),
         }
         return formatted_expert

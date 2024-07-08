@@ -13,13 +13,16 @@ import bcrypt
 class AuthService:
     @staticmethod
     def register():
+        data = request.json
+        if not data:
+            return jsonify({"msg": "Missing email or password"}), 400
         try:
-            if not request.json["phoneNumber"] or not request.json["password"] or not request.json["name"]:
+            if not data["phoneNumber"] or not data["password"] or not data["name"]:
                 return jsonify({"msg": "Missing email or password or role"}), 400
-            phoneNumber = request.json["phoneNumber"]
-            name = request.json["name"]
-            password = request.json["password"]
-            
+            phoneNumber = data["phoneNumber"]
+            password = data["password"]
+            name = data["name"]
+
             if admins_collection.find_one({"phoneNumber": phoneNumber}):
                 return jsonify({"msg": "User already exists"}), 400
 
@@ -42,9 +45,12 @@ class AuthService:
 
     @staticmethod
     def login():
+        data = request.json
+        if not data:
+            return jsonify({"msg": "Missing email or password"}), 400
         try:
-            id = request.json["id"]
-            password = request.json["password"]
+            id = data["id"]
+            password = data["password"]
             if id == "admin@sukoon.love" and password == "Care@sukoon123":
                 return jsonify({"message": "Authorized Admin"}), 200
             if not id or not password:

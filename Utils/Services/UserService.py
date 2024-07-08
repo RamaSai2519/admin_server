@@ -1,11 +1,13 @@
 from Utils.config import (
-    users_collection,
+    userwebhookmessages_collection,
+    usernotifications_collection,
     deleted_users_collection,
+    applications_collection,
+    events_collection,
+    users_collection,
+    calls_collection,
     meta_collection,
     users_cache,
-    applications_collection,
-    calls_collection,
-    events_collection
 )
 from Utils.Helpers.UserManager import UserManager as um
 from Utils.Helpers.AuthManager import AuthManager as am
@@ -16,19 +18,33 @@ from bson import ObjectId
 
 
 class UserService:
+    """
+    A class to handle user service operations including retrieving engagement data and updating user data based on HTTP requests.
+    - Define a static method `get_engagement_data` to retrieve engagement data.
+    - Handles GET requests to fetch data based on pagination parameters like page and size.
+    - Updates user data if provided and returns appropriate responses.
+    @return None
+    """
+    
+    """
+    Define a static method to retrieve engagement data. 
+    This method handles GET requests to fetch data based on pagination parameters like page and size. 
+    It also updates user data if provided, and returns appropriate responses.
+    @return None
+    """
     @staticmethod
     def get_engagement_data():
         meta_fields = ["remarks", "poc", "expert", "status", "userStatus"]
         if request.method == "GET":
-            page = int(request.args.get('page'))
-            size = int(request.args.get('size'))
+            page = int(request.args.get('page', 1))
+            size = int(request.args.get('size', 10))
             offset = (page - 1) * size
             time = datetime.now()
 
             user_data = list(
                 users_collection.find(
                     {"role": {"$ne": "admin"}},
-                    {"Customer Persona": 0, "lastModifiedBy": 0}
+                    {"Customer Persona": 0, "lastModifiedBy": 0, "userGameStats": 0}
                 ).sort("createdDate", -1).skip(offset).limit(size)
             )
 
@@ -79,12 +95,15 @@ class UserService:
                 "pageSize": size
             })
         if request.method == "POST":
+            data = request.json
+            if not data:
+                return jsonify({"error": "Missing data"}), 400
             try:
-                user_id = request.json["key"]
+                user_id = data["key"]
                 if not users_collection.find_one({"_id": ObjectId(user_id)}):
                     return jsonify({"error": "User not found"}), 404
-                user_field = request.json["field"]
-                user_value = request.json["value"]
+                user_field = data["field"]
+                user_value = data["value"]
                 if user_field in meta_fields:
                     prev_meta = meta_collection.find_one(
                         {"user": ObjectId(user_id)})
@@ -117,8 +136,11 @@ class UserService:
     @staticmethod
     def add_lead_remarks():
         if request.method == "POST":
-            user_id = request.json["key"]
-            value = request.json["value"]
+            data = request.json
+            if not data:
+                return jsonify({"error": "Missing data"}), 400
+            user_id = data["key"]
+            value = data["value"]
             if users_collection.find_one({"_id": ObjectId(user_id)}):
                 users_collection.update_one(
                     {"_id": ObjectId(user_id)}, {
@@ -191,16 +213,16 @@ class UserService:
             return jsonify(final_leads)
         elif request.method == "POST":
             data = request.json
+            if not data:
+                return jsonify({"error": "Missing data"}), 400
             userId = data["user"]["_id"]
             source = data["user"]["source"]
-            print(userId, source)
             if source == "Users Lead":
                 return jsonify({"error": "Invalid source"}), 400
             if source == "Events":
                 result = events_collection.update_one(
                     {"_id": ObjectId(userId)}, {"$set": {"hidden": True}}
                 )
-                print(result.modified_count)
                 if result.modified_count == 0:
                     return jsonify({"error": "Event not found"}), 400
             elif source == "Saarthi Application":
@@ -214,7 +236,10 @@ class UserService:
     @staticmethod
     def handle_user(id):
         if request.method == "GET":
-            user = users_collection.find_one({"_id": ObjectId(id)}, {"_id": 0})
+            user = users_collection.find_one(
+                {"_id": ObjectId(id)}, {"_id": 0, "userGameStats": 0})
+            if not user:
+                return jsonify({"error": "User not found"}), 404
             user["lastModifiedBy"] = (
                 str(user["lastModifiedBy"]) if "lastModifiedBy" in user else ""
             )
@@ -223,6 +248,28 @@ class UserService:
                 user["context"] = str(meta_doc["context"]).split(
                     "\n") if "context" in meta_doc else []
                 user["source"] = meta_doc["source"] if "source" in meta_doc else ""
+
+            wa_history = []
+            usernotifications = list(usernotifications_collection.find(
+                {"userId": ObjectId(id), "templateName": {"$exists": True}},
+                {"_id": 0, "userId": 0}
+            ).sort("createdAt", -1))
+            userwebhookmessages = list(userwebhookmessages_collection.find(
+                {"userId": ObjectId(id), "body": {"$ne": None}},
+                {"_id": 0, "userId": 0}
+            ).sort("createdAt", -1))
+            wa_history.extend(usernotifications)
+            wa_history.extend(userwebhookmessages)
+            for history in wa_history:
+                if "templateName" in history:
+                    history["type"] = "Outgoing"
+                else:
+                    history["type"] = "Incoming"
+
+            wa_history = sorted(
+                wa_history, key=lambda x: x["createdAt"], reverse=True)
+
+            user["notifications"] = wa_history
             return (
                 (jsonify(user), 200)
                 if user
@@ -230,6 +277,8 @@ class UserService:
             )
         elif request.method == "PUT":
             user_data = request.json
+            if not user_data:
+                return jsonify({"error": "Missing data"}), 400
             fields = [
                 "name",
                 "phoneNumber",
@@ -239,7 +288,7 @@ class UserService:
                 "context",
                 "source",
             ]
-            if not any(user_data.get(field) for field in fields):
+            if not any(user_data[field] for field in fields):
                 return (
                     jsonify(
                         {"error": "At least one field is required for update"}),
@@ -247,7 +296,7 @@ class UserService:
                 )
             update_query = {}
             for field in fields:
-                value = user_data.get(field)
+                value = user_data[field]
                 if value:
                     if field == "birthDate":
                         value = datetime.strptime(value, "%Y-%m-%d")
@@ -269,6 +318,8 @@ class UserService:
                 return jsonify({"error": "User not found"}), 404
             updated_user = users_collection.find_one(
                 {"_id": ObjectId(id)}, {"_id": 0})
+            if not updated_user:
+                return jsonify({"error": "User not found"}), 404
             updated_user["lastModifiedBy"] = str(
                 updated_user["lastModifiedBy"])
             users_cache[ObjectId(id)] = updated_user["name"]

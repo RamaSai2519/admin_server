@@ -18,4 +18,4 @@ class EventManager:
         eventconfigs_collection.update_one(
             {"slug": data["slug"]}, {"$set": update_query}
         )
-        return eventconfigs_collection.find_one({"slug": data["slug"]}, {"_id": 0})
+        return eventconfigs_collection.find_one({"slug": data["slug"]}, {"_id": 0, "lastModifiedBy": 0})
