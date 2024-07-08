@@ -19,6 +19,7 @@ class AuthService:
         try:
             if not data["phoneNumber"] or not data["password"] or not data["name"]:
                 return jsonify({"msg": "Missing email or password or role"}), 400
+            
             phoneNumber = data["phoneNumber"]
             password = data["password"]
             name = data["name"]
@@ -56,7 +57,7 @@ class AuthService:
             if not id or not password:
                 return jsonify({"msg": "Missing email or password"}), 400
 
-            user = admins_collection.find_one({"id": id})
+            user = admins_collection.find_one({"phoneNumber": id})
             if not user or not bcrypt.checkpw(
                 password.encode("utf-8"), user["password"].encode("utf-8")
             ):
