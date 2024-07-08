@@ -28,7 +28,7 @@ app.config["JWT_REFRESH_TOKEN_EXPIRES"] = timedelta(weeks=1)
 threading.Thread(target=ExpertService.watch_changes, daemon=True).start()
 threading.Thread(
     target=ExpertService.periodic_reset_sse_connections, daemon=True).start()
-threading.Thread(target=GameService.watch_room_changes, daemon=True).start()
+# threading.Thread(target=GameService.watch_room_changes, daemon=True).start()
 
 app.register_blueprint(auth_routes)
 app.register_blueprint(call_routes)

@@ -14,7 +14,7 @@ def get_events_route():
 @event_routes.route("/admin/event/event", methods=["GET", "PUT", "POST"])
 @jwt_required()
 def get_event_route():
-    return EventService.get_event()
+    return EventService.handle_event_config()
 
 
 @event_routes.route("/admin/event/users", methods=["GET"])
