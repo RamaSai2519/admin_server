@@ -13,7 +13,7 @@ from routes.event_routes import event_routes
 from routes.expert_routes import expert_routes
 from routes.content_routes import content_routes
 from routes.service_routes import service_routes
-from Utils.Services.GameService import GameService
+# from Utils.Services.GameService import GameService
 from Utils.Services.ExpertService import ExpertService
 
 app = Flask(__name__)

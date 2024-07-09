@@ -60,36 +60,21 @@ class EventService:
                 url = f"{MAIN_BE_URL}/events/validateSlug"
                 params = {"slug": data["slug"]}
                 payload = json.dumps(params)
-                response = requests.post(url, data=payload)
+                response = requests.request("GET", url, data=payload)
+                pprint(response.text)
+                print("validateSlug")
                 validSlug = response.json()
                 validSlug = validSlug["data"]["isSlugAvailable"]
                 if not validSlug:
                     return jsonify({"error": "Slug already exists"}), 400
                 else:
-                    url = f"{MAIN_BE_URL}/events/createEvent"
-                    payload = json.dumps(data)
-                    response = requests.post(url, data=payload)
+                    url = f"{MAIN_BE_URL}/events/config"
+                    response = requests.post(url, data=data)
+                    pprint(response.text)
+                    print("config")
                     return response.json()
             except Exception as e:
                 print(e)
-                return jsonify({"error": str(e)})
+                return jsonify({"error": str(e)}), 400
         else:
             return jsonify({"error": "Invalid request method"}), 405
-
-# {'category': 'test',
-#  'description': 'Test',
-#  'eventType': 'challenge',
-#  'guestSpeaker': 'Test',
-#  'hostedBy': 'Test',
-#  'imageUrl': 'https://s3.ap-south-1.amazonaws.com/sukoon-media/5259873_394e80ee-33b7-45b4-92cf-1d3f460c3ad7_code.png',
-#  'mainTitle': 'Test',
-#  'maxVisitorsAllowed': 10,
-#  'meetingLink': 'test',
-#  'name': 'Test',
-#  'prizeMoney': 10,
-#  'registrationAllowedTill': '2024-07-08T12:03:16.400Z',
-#  'repeat': 'once',
-#  'slug': 'Test',
-#  'startEventDate': '2024-07-08T12:02:35.500Z',
-#  'subTitle': 'Test',
-#  'validUpto': '2024-07-08T12:02:39.800Z'}
