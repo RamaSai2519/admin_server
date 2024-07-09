@@ -7,10 +7,11 @@ import os
 
 load_dotenv()
 
-JWT_SECRET_KEY = os.getenv("JWT_SECRET")
-FB_SERVER_KEY = os.getenv("FB_SERVER_KEY")
 REGION = os.getenv("REGION")
 ACCESS_KEY = os.getenv("ACCESS_KEY")
+MAIN_BE_URL = os.getenv("MAIN_BE_URL")
+JWT_SECRET_KEY = os.getenv("JWT_SECRET")
+FB_SERVER_KEY = os.getenv("FB_SERVER_KEY")
 SECRET_ACCESS_KEY = os.getenv("SECRET_ACCESS_KEY")
 
 firebase_admin.initialize_app(
@@ -23,9 +24,9 @@ s3_client = boto3.client(
     aws_secret_access_key=SECRET_ACCESS_KEY
 )
 
-client = MongoClient(os.getenv("PROD_DB_URL"))
-db = client["test"]
-gamesdb = client["games"]
+mongodbClient = MongoClient(os.getenv("PROD_DB_URL"))
+gamesdb = mongodbClient["games"]
+db = mongodbClient["test"]
 
 games_config_collection = gamesdb["games_config"]
 
