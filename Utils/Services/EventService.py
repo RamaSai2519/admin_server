@@ -23,20 +23,22 @@ class EventService:
 
     @staticmethod
     def get_users_by_event():
-        try:
-            url = f"{MAIN_BE_URL}/events/listUsersOfEvent"
-            if request.args:
-                params = request.args
-                slug = params["slug"]
-                payload = json.dumps({"slug": slug})
-                response = requests.get(url, data=payload)
-            else:
-                response = requests.get(url)
+        url = f"{MAIN_BE_URL}/events/listUsersOfEvent"
+        params = request.args
+        headers = {
+            'Content-Type': 'application/json'
+        }
+        if "slug" not in params:
+            response = requests.request("GET", url, headers=headers)
             data = response.json()["data"]
             return data
-        except Exception as e:
-            print(e)
-            return jsonify({"error": str(e)})
+        slug = params["slug"]
+        payload = json.dumps({
+            "slug": slug
+        })
+        response = requests.request("GET", url, headers=headers, data=payload)
+        data = response.json()["data"]
+        return data
 
     @staticmethod
     def handle_event_config():
