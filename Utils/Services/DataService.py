@@ -7,7 +7,8 @@ from Utils.config import (
     schedules_collection,
     experts_collection,
     timings_collection,
-    users_collection
+    users_collection,
+    indianLanguages
 )
 from Utils.Helpers.UtilityFunctions import UtilityFunctions as uf
 from Utils.Helpers.HelperFunctions import HelperFunctions as hf
@@ -16,6 +17,7 @@ from Utils.Helpers.FormatManager import FormatManager as fm
 from Utils.Helpers.AuthManager import AuthManager as am
 from datetime import datetime, timedelta
 from flask import jsonify, request
+from pprint import pprint
 from bson import ObjectId
 import pytz
 
@@ -44,10 +46,36 @@ class DataService:
 
     @staticmethod
     def get_applications():
-        applications = list(applications_collection.find())
+        formType = request.args.get('formType', 'sarathi')
+        page = int(request.args.get('page', 1))
+        size = int(request.args.get('size', 10))
+        offset = (page - 1) * size
+
+        applications = list(applications_collection.find(
+            {"formType": formType}
+        ).sort("createdAt", -1).skip(offset).limit(size))
+
         for application in applications:
             application["_id"] = str(application["_id"])
-        return jsonify(applications)
+            application["workingHours"] = str(application["workingHours"]).replace(
+                "'", "").replace("[", "").replace("]", "") if "workingHours" in application else ""
+            if "languages" in application:
+                languages = application["languages"]
+                final_languages = []
+                for language in languages:
+                    for indianLanguage in indianLanguages:
+                        if indianLanguage["key"] == language:
+                            language = indianLanguage["value"]
+                            final_languages.append(language)
+                application["languages"] = str(final_languages).replace(
+                    "'", "").replace("[", "").replace("]", "")
+        total_applications = applications_collection.count_documents(
+            {"formType": formType})
+        pprint(applications)
+        return jsonify({
+            "data": applications,
+            "total": total_applications
+        })
 
     @staticmethod
     def get_all_calls():

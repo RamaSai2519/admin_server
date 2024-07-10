@@ -71,3 +71,28 @@ ALLOWED_MIME_TYPES = [
 
 times = ["PrimaryStartTime", "PrimaryEndTime",
          "SecondaryStartTime", "SecondaryEndTime"]
+
+indianLanguages = [
+    {"key": "as", "value": "Assamese"},
+    {"key": "bn", "value": "Bengali"},
+    {"key": "brx", "value": "Bodo"},
+    {"key": "doi", "value": "Dogri"},
+    {"key": "gu", "value": "Gujarati"},
+    {"key": "hi", "value": "Hindi"},
+    {"key": "kn", "value": "Kannada"},
+    {"key": "ks", "value": "Kashmiri"},
+    {"key": "kok", "value": "Konkani"},
+    {"key": "mai", "value": "Maithili"},
+    {"key": "ml", "value": "Malayalam"},
+    {"key": "mni", "value": "Manipuri"},
+    {"key": "mr", "value": "Marathi"},
+    {"key": "ne", "value": "Nepali"},
+    {"key": "or", "value": "Odia"},
+    {"key": "pa", "value": "Punjabi"},
+    {"key": "sa", "value": "Sanskrit"},
+    {"key": "sat", "value": "Santali"},
+    {"key": "sd", "value": "Sindhi"},
+    {"key": "ta", "value": "Tamil"},
+    {"key": "te", "value": "Telugu"},
+    {"key": "ur", "value": "Urdu"}
+]
