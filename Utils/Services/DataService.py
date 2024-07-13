@@ -71,7 +71,6 @@ class DataService:
                     "'", "").replace("[", "").replace("]", "")
         total_applications = applications_collection.count_documents(
             {"formType": formType})
-        pprint(applications)
         return jsonify({
             "data": applications,
             "total": total_applications

@@ -63,8 +63,6 @@ class EventService:
                 params = {"slug": data["slug"]}
                 payload = json.dumps(params)
                 response = requests.request("GET", url, data=payload)
-                pprint(response.text)
-                print("validateSlug")
                 validSlug = response.json()
                 validSlug = validSlug["data"]["isSlugAvailable"]
                 if not validSlug:
@@ -72,8 +70,6 @@ class EventService:
                 else:
                     url = f"{MAIN_BE_URL}/events/config"
                     response = requests.post(url, data=data)
-                    pprint(response.text)
-                    print("config")
                     return response.json()
             except Exception as e:
                 print(e)
