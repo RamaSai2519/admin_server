@@ -1,5 +1,8 @@
-from Utils.config import experts_collection, meta_collection, EXPERT_JWT
+from Utils.config import experts_collection, meta_collection, expertlogs_collection, EXPERT_JWT
 from Utils.Helpers.FormatManager import FormatManager as fm
+from datetime import datetime
+from bson import ObjectId
+import pytz
 import jwt
 
 
@@ -37,3 +40,29 @@ class ExpertManager:
         except Exception as e:
             print(e)
             return None
+
+    @staticmethod
+    def status_handler(status, expertId):
+        if status == "online":
+            expertlogs_collection.insert_one({
+                "expert": ObjectId(expertId),
+                status: datetime.now(pytz.utc)
+            })
+        elif status == "offline":
+            onlinetime = expertlogs_collection.find_one(
+                {"expert": ObjectId(expertId), "offline": {"$exists": False}},
+                sort=[("online", -1)]
+            )
+            if not onlinetime:
+                return None
+            onlinetime = onlinetime["online"] if onlinetime else None
+            duration = (datetime.now(pytz.utc) - datetime.strptime(str(onlinetime),
+                        "%Y-%m-%d %H:%M:%S.%f").replace(tzinfo=pytz.utc)).total_seconds()
+            expertlogs_collection.find_one_and_update(
+                {"expert": ObjectId(expertId)},
+                {"$set": {status: datetime.now(
+                    pytz.utc), "duration": int(duration)}},
+                sort=[("online", -1)]
+            )
+
+        return True

@@ -128,6 +128,9 @@ class ExpertService:
                         category_id = category["_id"] if category else None
                         new_categories_object_ids.append(category_id)
                     update_query[field] = new_categories_object_ids
+                elif field == "status":
+                    em.status_handler(expert_data[field], id)
+                    update_query[field] = expert_data[field]
                 elif field in expert_data:
                     update_query[field] = (
                         float(expert_data[field])
@@ -254,7 +257,7 @@ class ExpertService:
     @staticmethod
     def periodic_reset_sse_connections():
         while True:
-            time.sleep(600)  # 10 minutes
+            time.sleep(600)
             ExpertService.close_sse_connections()
 
     @staticmethod
@@ -265,7 +268,6 @@ class ExpertService:
         @return JSON response indicating the success or failure of the status update.
         """
         data = request.json
-        print(data)
         if not data:
             return jsonify({"error": "Invalid request"}), 400
         expertId = em.decode_expert_jwt(data["expertId"])
@@ -278,26 +280,8 @@ class ExpertService:
             {"$set": {"status": status}}
         )
 
-        if status == "online":
-            expertlogs_collection.insert_one({
-                "expert": ObjectId(expertId),
-                status: datetime.now(pytz.utc)
-            })
-        elif status == "offline":
-            onlinetime = expertlogs_collection.find_one(
-                {"expert": ObjectId(expertId), "offline": {"$exists": False}},
-                sort=[("online", -1)]
-            )
-            if not onlinetime:
-                return jsonify({"msg": "No online status found"}), 200
-            onlinetime = onlinetime["online"] if onlinetime else None
-            duration = (datetime.now(pytz.utc) - datetime.strptime(str(onlinetime),
-                        "%Y-%m-%d %H:%M:%S.%f").replace(tzinfo=pytz.utc)).total_seconds()
-            expertlogs_collection.find_one_and_update(
-                {"expert": ObjectId(expertId)},
-                {"$set": {status: datetime.now(
-                    pytz.utc), "duration": int(duration)}},
-                sort=[("online", -1)]
-            )
+        response = em.status_handler(status, expertId)
+        if not response:
+            return jsonify({"error": "Expert Not Online"}), 200
 
         return jsonify({"msg": "Status updated successfully"})
