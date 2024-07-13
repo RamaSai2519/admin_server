@@ -265,12 +265,18 @@ class ExpertService:
         @return JSON response indicating the success or failure of the status update.
         """
         data = request.json
+        print(data)
         if not data:
             return jsonify({"error": "Invalid request"}), 400
         expertId = em.decode_expert_jwt(data["expertId"])
         status = data["status"]
         if not expertId:
             return jsonify({"error": "Invalid Token"}), 400
+
+        experts_collection.update_one(
+            {"_id": ObjectId(expertId)},
+            {"$set": {"status": status}}
+        )
 
         if status == "online":
             expertlogs_collection.insert_one({
@@ -293,10 +299,5 @@ class ExpertService:
                     pytz.utc), "duration": int(duration)}},
                 sort=[("online", -1)]
             )
-
-        experts_collection.update_one(
-            {"_id": ObjectId(expertId)},
-            {"$set": {"status": status}}
-        )
 
         return jsonify({"msg": "Status updated successfully"})
