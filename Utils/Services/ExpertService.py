@@ -3,17 +3,20 @@ from Utils.Helpers.UserManager import UserManager as um
 from Utils.Helpers.CallManager import CallManager as cm
 from Utils.Helpers.AuthManager import AuthManager as am
 from flask import jsonify, request, Response
-from bson import ObjectId
 from Utils.config import (
     deleted_experts_collection,
     categories_collection,
+    statuslogs_collection,
     experts_collection,
     calls_collection,
     experts_cache,
     subscribers,
 )
+from datetime import datetime
+from bson import ObjectId
 import queue
 import time
+import pytz
 
 
 class ExpertService:
@@ -253,3 +256,47 @@ class ExpertService:
         while True:
             time.sleep(600)  # 10 minutes
             ExpertService.close_sse_connections()
+
+    @staticmethod
+    def update_status():
+        """
+        A static method to update the status of an expert based on the provided data.
+        @param request.json - The JSON data containing the expertId and status.
+        @return JSON response indicating the success or failure of the status update.
+        """
+        data = request.json
+        if not data:
+            return jsonify({"error": "Invalid request"}), 400
+        expertId = em.decode_expert_jwt(data["expertId"])
+        status = data["status"]
+        if not expertId:
+            return jsonify({"error": "Invalid Token"}), 400
+
+        if status == "online":
+            statuslogs_collection.insert_one({
+                "expert": ObjectId(expertId),
+                status: datetime.now(pytz.utc)
+            })
+        elif status == "offline":
+            onlinetime = statuslogs_collection.find_one(
+                {"expert": ObjectId(expertId), "offline": {"$exists": False}},
+                sort=[("updatedAt", -1)]
+            )
+            if not onlinetime:
+                return jsonify({"msg": "No online status found"}), 200
+            onlinetime = onlinetime["online"] if onlinetime else None
+            duration = (datetime.now(pytz.utc) - datetime.strptime(str(onlinetime),
+                        "%Y-%m-%d %H:%M:%S.%f").replace(tzinfo=pytz.utc)).total_seconds()
+            statuslogs_collection.find_one_and_update(
+                {"expert": ObjectId(expertId)},
+                {"$set": {status: datetime.now(
+                    pytz.utc), "duration": int(duration)}},
+                sort=[("updatedAt", -1)]
+            )
+
+        experts_collection.update_one(
+            {"_id": ObjectId(expertId)},
+            {"$set": {"status": status}}
+        )
+
+        return jsonify({"msg": "Status updated successfully"})

@@ -1,5 +1,6 @@
-from Utils.config import experts_collection, meta_collection
+from Utils.config import experts_collection, meta_collection, EXPERT_JWT
 from Utils.Helpers.FormatManager import FormatManager as fm
+import jwt
 
 
 class ExpertManager:
@@ -25,3 +26,14 @@ class ExpertManager:
         except Exception as e:
             print(e)
             return ["No Remarks found."]
+
+    @staticmethod
+    def decode_expert_jwt(token):
+        secret_key = EXPERT_JWT if EXPERT_JWT else ""
+        try:
+            decoded_token = jwt.decode(
+                token, secret_key, algorithms=["HS256"])
+            return decoded_token["userId"]
+        except Exception as e:
+            print(e)
+            return None
