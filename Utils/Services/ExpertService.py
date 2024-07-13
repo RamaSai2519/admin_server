@@ -6,7 +6,7 @@ from flask import jsonify, request, Response
 from Utils.config import (
     deleted_experts_collection,
     categories_collection,
-    statuslogs_collection,
+    expertlogs_collection,
     experts_collection,
     calls_collection,
     experts_cache,
@@ -273,25 +273,25 @@ class ExpertService:
             return jsonify({"error": "Invalid Token"}), 400
 
         if status == "online":
-            statuslogs_collection.insert_one({
+            expertlogs_collection.insert_one({
                 "expert": ObjectId(expertId),
                 status: datetime.now(pytz.utc)
             })
         elif status == "offline":
-            onlinetime = statuslogs_collection.find_one(
+            onlinetime = expertlogs_collection.find_one(
                 {"expert": ObjectId(expertId), "offline": {"$exists": False}},
-                sort=[("updatedAt", -1)]
+                sort=[("online", -1)]
             )
             if not onlinetime:
                 return jsonify({"msg": "No online status found"}), 200
             onlinetime = onlinetime["online"] if onlinetime else None
             duration = (datetime.now(pytz.utc) - datetime.strptime(str(onlinetime),
                         "%Y-%m-%d %H:%M:%S.%f").replace(tzinfo=pytz.utc)).total_seconds()
-            statuslogs_collection.find_one_and_update(
+            expertlogs_collection.find_one_and_update(
                 {"expert": ObjectId(expertId)},
                 {"$set": {status: datetime.now(
                     pytz.utc), "duration": int(duration)}},
-                sort=[("updatedAt", -1)]
+                sort=[("online", -1)]
             )
 
         experts_collection.update_one(

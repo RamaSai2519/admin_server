@@ -1,4 +1,6 @@
 from Utils.Helpers.HelperFunctions import HelperFunctions as hf
+from Utils.config import expertlogs_collection
+from bson import ObjectId
 
 
 class FormatManager:
@@ -25,6 +27,15 @@ class FormatManager:
     @staticmethod
     def get_formatted_expert(expert):
         expert_id = str(expert["_id"])
+        total_timeSpent = expertlogs_collection.find(
+            {"expert": ObjectId(expert_id)}, {"duration": 1}
+        )
+        total_timeSpent = sum(
+            [
+                log["duration"]
+                for log in total_timeSpent
+            ]
+        )
         formatted_expert = {
             "_id": expert_id,
             "name": expert["name"] if "name" in expert else None,
@@ -40,5 +51,6 @@ class FormatManager:
                 str(expert["lastModifiedBy"]
                     ) if "lastModifiedBy" in expert else None
             ),
+            "timeSpent": round((total_timeSpent / 3600), 2) if total_timeSpent else 0,
         }
         return formatted_expert
