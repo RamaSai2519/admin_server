@@ -52,8 +52,8 @@ class AuthService:
         try:
             id = data["id"]
             password = data["password"]
-            if id == "admin@sukoon.love" and password == "Care@sukoon123":
-                return jsonify({"message": "Authorized Admin"}), 200
+            # if id == "" and password == "":
+            #     return jsonify({"message": "Authorized Admin"}), 200
             if not id or not password:
                 return jsonify({"msg": "Missing email or password"}), 400
 
