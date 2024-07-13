@@ -19,7 +19,7 @@ class AuthService:
         try:
             if not data["phoneNumber"] or not data["password"] or not data["name"]:
                 return jsonify({"msg": "Missing email or password or role"}), 400
-            
+
             phoneNumber = data["phoneNumber"]
             password = data["password"]
             name = data["name"]

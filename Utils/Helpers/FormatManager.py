@@ -28,7 +28,8 @@ class FormatManager:
     def get_formatted_expert(expert):
         expert_id = str(expert["_id"])
         total_timeSpent = expertlogs_collection.find(
-            {"expert": ObjectId(expert_id)}, {"duration": 1}
+            {"expert": ObjectId(expert_id), "duration": {
+                "$exists": True}}, {"duration": 1}
         )
         total_timeSpent = sum(
             [
