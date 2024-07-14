@@ -17,7 +17,6 @@ from Utils.Helpers.FormatManager import FormatManager as fm
 from Utils.Helpers.AuthManager import AuthManager as am
 from datetime import datetime, timedelta
 from flask import jsonify, request
-from pprint import pprint
 from bson import ObjectId
 import pytz
 
@@ -39,10 +38,7 @@ class DataService:
     """
     @staticmethod
     def get_error_logs():
-        page = int(request.args.get('page', 1))
-        size = int(request.args.get('size', 10))
-        offset = (page - 1) * size
-
+        page, size, offset = uf.pagination_helper()
         error_logs = list(errorlogs_collection.find().sort(
             "time", -1).skip(offset).limit(size))
         for error_log in error_logs:
@@ -53,10 +49,7 @@ class DataService:
     @staticmethod
     def get_applications():
         formType = request.args.get('formType', 'sarathi')
-        page = int(request.args.get('page', 1))
-        size = int(request.args.get('size', 10))
-        offset = (page - 1) * size
-
+        page, size, offset = uf.pagination_helper()
         applications = list(applications_collection.find(
             {"formType": formType}
         ).sort("createdAt", -1).skip(offset).limit(size))
@@ -135,10 +128,7 @@ class DataService:
     @staticmethod
     def schedules():
         if request.method == "GET":
-            page = int(request.args.get('page', 1))
-            size = int(request.args.get('size', 10))
-            offset = (page - 1) * size
-
+            page, size, offset = uf.pagination_helper()
             schedules = list(schedules_collection.find({}, {
                 "lastModifiedBy": 0
             }).sort("datetime", -1).skip(offset).limit(size))

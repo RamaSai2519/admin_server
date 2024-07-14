@@ -1,8 +1,15 @@
 from Utils.config import calls_collection, users_collection, experts_collection
 from Utils.Helpers.FormatManager import FormatManager as fm
+from flask import request
 
 
 class UtilityFunctions:
+    """
+    A utility class containing static methods for retrieving calls data and pagination assistance.
+    - `get_calls(query={}, projection={}, exclusion=True, format=True)`: Retrieves calls based on the query parameters and exclusion criteria.
+    - `get_calls_count(query={})`: Retrieves the count of calls based on the query parameters.
+    - `pagination_helper()`: Helps with pagination by extracting page and size parameters from the request and calculating the offset.
+    """
     @staticmethod
     def get_calls(query={}, projection={}, exclusion=True, format=True):
         admin_ids = [
@@ -43,3 +50,11 @@ class UtilityFunctions:
         count = calls_collection.count_documents(
             {"user": {"$nin": admin_ids}, **query})
         return count
+
+    @staticmethod
+    def pagination_helper():
+        page = int(request.args.get('page', 1))
+        size = int(request.args.get('size', 10))
+        offset = (page - 1) * size
+
+        return size, offset, page

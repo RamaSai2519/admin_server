@@ -12,6 +12,7 @@ from Utils.config import (
 from Utils.Helpers.UserManager import UserManager as um
 from Utils.Helpers.AuthManager import AuthManager as am
 from Utils.Helpers.HelperFunctions import HelperFunctions as hf
+from Utils.Helpers.UtilityFunctions import UtilityFunctions as uf
 from flask import request, jsonify
 from datetime import datetime
 from bson import ObjectId
@@ -25,7 +26,7 @@ class UserService:
     - Updates user data if provided and returns appropriate responses.
     @return None
     """
-    
+
     """
     Define a static method to retrieve engagement data. 
     This method handles GET requests to fetch data based on pagination parameters like page and size. 
@@ -36,9 +37,7 @@ class UserService:
     def get_engagement_data():
         meta_fields = ["remarks", "poc", "expert", "status", "userStatus"]
         if request.method == "GET":
-            page = int(request.args.get('page', 1))
-            size = int(request.args.get('size', 10))
-            offset = (page - 1) * size
+            page, size, offset = uf.pagination_helper()
             time = datetime.now()
 
             user_data = list(
