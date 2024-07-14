@@ -39,10 +39,19 @@ class DataService:
     """
     @staticmethod
     def get_error_logs():
-        error_logs = list(errorlogs_collection.find())
-        for log in error_logs:
-            log["_id"] = str(log["_id"])
-        return jsonify(error_logs)
+        page = int(request.args.get('page', 1))
+        size = int(request.args.get('size', 10))
+        offset = (page - 1) * size
+
+        error_logs = list(errorlogs_collection.find().sort(
+            "time", -1).skip(offset).limit(size))
+        for error_log in error_logs:
+            error_log["_id"] = str(error_log["_id"])
+        total_error_logs = errorlogs_collection.count_documents({})
+        return jsonify({
+            "data": error_logs,
+            "total": total_error_logs
+        })
 
     @staticmethod
     def get_applications():
@@ -415,8 +424,6 @@ class DataService:
             feedback["body"] = str(feedback["body"]).replace("_", " ")
 
         return jsonify({
-            "data": feedbacks,
-            "total": total_feedbacks,
-            "page": page,
-            "pageSize": size
+            "data": feedbacks, "total": total_feedbacks,
+            "page": page, "pageSize": size
         })
