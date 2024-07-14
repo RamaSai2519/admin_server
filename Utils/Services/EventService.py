@@ -10,16 +10,24 @@ import json
 class EventService:
     @staticmethod
     def get_events():
-        allEvents = list(eventconfigs_collection.find(
-            {}, {"_id": 0}).sort("createdAt", -1))
+        page = request.args.get("page", 1, type=int)
+        limit = request.args.get("limit", 10, type=int)
+        offset = (page - 1) * limit
+
+        allEvents = list(eventconfigs_collection.find().sort(
+            "validUpto", -1).skip(offset).limit(limit))
+
         for event in allEvents:
+            event["_id"] = str(event["_id"])
             event["lastModifiedBy"] = (
                 str(event["lastModifiedBy"]
                     ) if "lastModifiedBy" in event else ""
             )
             event["expert"] = hf.get_expert_name(
                 ObjectId(event["expert"])) if 'expert' in event else ''
-        return jsonify(allEvents)
+        total = eventconfigs_collection.count_documents({})
+
+        return jsonify({"data": allEvents, "total": total})
 
     @staticmethod
     def get_users_by_event():

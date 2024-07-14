@@ -48,10 +48,7 @@ class DataService:
         for error_log in error_logs:
             error_log["_id"] = str(error_log["_id"])
         total_error_logs = errorlogs_collection.count_documents({})
-        return jsonify({
-            "data": error_logs,
-            "total": total_error_logs
-        })
+        return jsonify({"data": error_logs, "total": total_error_logs})
 
     @staticmethod
     def get_applications():
