@@ -6,17 +6,14 @@ from flask import jsonify, request, Response
 from Utils.config import (
     deleted_experts_collection,
     categories_collection,
-    expertlogs_collection,
     experts_collection,
     calls_collection,
     experts_cache,
     subscribers,
 )
-from datetime import datetime
 from bson import ObjectId
 import queue
 import time
-import pytz
 
 
 class ExpertService:
@@ -90,27 +87,9 @@ class ExpertService:
             if not expert_data:
                 return jsonify({"error": "Missing data"}), 400
             required_fields = [
-                "name",
-                "phoneNumber",
-                "topics",
-                "description",
-                "profile",
-                "status",
-                "languages",
-                "score",
-                "active",
-                "calls_share",
-                "repeat_score",
-                "total_score",
-                "categories",
-                "openingGreeting",
-                "flow",
-                "tonality",
-                "timeSplit",
-                "timeSpent",
-                "userSentiment",
-                "probability",
-                "closingGreeting",
+                "name", "phoneNumber", "topics", "description", "profile", "status", "userSentiment",
+                "languages", "score", "active", "calls_share", "repeat_score", "total_score", "probability",
+                "categories", "openingGreeting", "flow", "tonality", "timeSplit", "timeSpent", "closingGreeting",
             ]
             if not any(expert_data[field] for field in required_fields):
                 return (

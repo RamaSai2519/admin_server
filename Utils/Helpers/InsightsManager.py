@@ -266,3 +266,45 @@ class InsightsManager:
             """
 
         return insights_data
+
+    @staticmethod
+    def create_insights_structures():
+        insights = InsightsManager.get_call_insights()
+        successfulCalls = [
+            {"key": "1", "category": "< 15 mins",
+                "value": insights.get("_15min", "0%")},
+            {"key": "2", "category": "15-30 mins",
+                "value": insights.get("_15_30min", "0%")},
+            {"key": "3", "category": "30-45 mins",
+                "value": insights.get("_30_45min", "0%")},
+            {"key": "4", "category": "45-60 mins",
+                "value": insights.get("_45_60min", "0%")},
+            {"key": "5", "category": "> 60 mins",
+                "value": insights.get("_60min_", "0%")},
+        ]
+        avgCallDuration = [
+            {"key": "1", "category": "First Call",
+                "value": insights.get("one_call", "0")},
+            {"key": "2", "category": "Second Call",
+                "value": insights.get("two_calls", "0")},
+            {"key": "3", "category": "Repeat Calls",
+                "value": insights.get("repeat_calls", "0")},
+            {"key": "4", "category": "Scheduled Calls",
+                "value": insights.get("scheduled_avg_duration", "0")},
+            {"key": "5", "category": "Organic Calls",
+                "value": insights.get("organic_avg_duration", "0")},
+        ]
+        otherStats = [
+            {"key": "1", "category": "First Call Split",
+                "value": insights.get("first_calls_split", "0%")},
+            {"key": "2", "category": "Second Call Split",
+                "value": insights.get("second_calls_split", "0%")},
+            {"key": "3", "category": "Repeat Call Split",
+                "value": insights.get("repeat_calls_split", "0%")},
+        ]
+        callInsights = {
+            "successfulCalls": successfulCalls,
+            "avgCallDuration": avgCallDuration,
+            "otherStats": otherStats,
+        }
+        return callInsights

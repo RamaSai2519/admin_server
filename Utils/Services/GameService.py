@@ -1,5 +1,5 @@
 from Utils.Helpers.HelperFunctions import HelperFunctions as hf
-from Utils.config import users_collection, experts_collection, players, games_config_collection
+from Utils.config import users_collection, experts_collection, players
 from flask import request, jsonify, Response
 from pymongo import MongoClient
 from dotenv import load_dotenv

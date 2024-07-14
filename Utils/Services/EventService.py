@@ -14,11 +14,11 @@ class EventService:
         limit = request.args.get("limit", 10, type=int)
         offset = (page - 1) * limit
 
-        allEvents = list(eventconfigs_collection.find().sort(
-            "validUpto", -1).skip(offset).limit(limit))
+        allEvents = list(eventconfigs_collection.find(
+            {}, {"_id": 0}).sort("createdAt", -1).skip(offset).limit(limit)
+        )
 
         for event in allEvents:
-            event["_id"] = str(event["_id"])
             event["lastModifiedBy"] = (
                 str(event["lastModifiedBy"]
                     ) if "lastModifiedBy" in event else ""

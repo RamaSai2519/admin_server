@@ -41,29 +41,7 @@ def get_categories_route():
     return DataService.get_categories()
 
 
-@data_routes.route("/admin/data/schedules", methods=["POST", "GET"])
-def schedules_route():
-    return DataService.schedules()
-
-
-@data_routes.route("/admin/data/slots", methods=["POST"])
-def slots_route():
-    return DataService.get_slots()
-
-
 @data_routes.route("/admin/data/timings", methods=["GET", "POST"])
 @jwt_required()
 def timings_route():
     return DataService.get_timings()
-
-
-@data_routes.route("/admin/data/wahistory", methods=["GET"])
-@jwt_required()
-def get_wa_history_route():
-    return DataService.get_wa_history()
-
-
-@data_routes.route("/admin/data/feedbacks", methods=["GET"])
-@jwt_required()
-def get_feedbacks_route():
-    return DataService.get_feedbacks()

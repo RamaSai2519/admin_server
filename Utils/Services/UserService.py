@@ -37,7 +37,7 @@ class UserService:
     def get_engagement_data():
         meta_fields = ["remarks", "poc", "expert", "status", "userStatus"]
         if request.method == "GET":
-            page, size, offset = uf.pagination_helper()
+            size, offset, page = uf.pagination_helper()
             time = datetime.now()
 
             user_data = list(
@@ -278,15 +278,8 @@ class UserService:
             user_data = request.json
             if not user_data:
                 return jsonify({"error": "Missing data"}), 400
-            fields = [
-                "name",
-                "phoneNumber",
-                "city",
-                "birthDate",
-                "numberOfCalls",
-                "context",
-                "source",
-            ]
+            fields = ["name", "phoneNumber", "city", "birthDate",
+                      "numberOfCalls", "context", "source"]
             if not any(user_data[field] for field in fields):
                 return (
                     jsonify(
