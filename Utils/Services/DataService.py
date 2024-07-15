@@ -87,8 +87,7 @@ class DataService:
     def get_users():
         users = list(
             users_collection.find(
-                {"role": {"$ne": "admin"}, "profileCompleted": True,
-                    "city": {"$exists": True}},
+                {"role": {"$ne": "admin"}},
                 {"Customer Persona": 0},
             )
         )
