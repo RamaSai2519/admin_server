@@ -48,7 +48,7 @@ class DataService:
         size, offset, page = uf.pagination_helper()
         applications = list(applications_collection.find(
             {"formType": formType}
-        ).sort("createdAt", -1).skip(offset).limit(size))
+        ).sort("createdDate", -1).skip(offset).limit(size))
 
         for application in applications:
             application["_id"] = str(application["_id"])
