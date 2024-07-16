@@ -96,7 +96,6 @@ class DataService:
             user["lastModifiedBy"] = (
                 str(user["lastModifiedBy"]) if "lastModifiedBy" in user else ""
             )
-            user["createdDate"] = user["createdDate"].strftime("%Y-%m-%d")
             user["userGameStats"] = (
                 str(user["userGameStats"]) if "userGameStats" in user else ""
             )

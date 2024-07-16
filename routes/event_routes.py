@@ -21,3 +21,9 @@ def get_event_route():
 @jwt_required()
 def get_users_by_event_route():
     return EventService.get_users_by_event()
+
+
+@event_routes.route("/admin/event/allUsers", methods=["GET"])
+@jwt_required()
+def get_all_event_users_route():
+    return EventService.get_all_event_users()

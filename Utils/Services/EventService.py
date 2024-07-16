@@ -1,8 +1,8 @@
+from Utils.config import events_collection, eventconfigs_collection, users_collection, MAIN_BE_URL
+from Utils.Helpers.UtilityFunctions import UtilityFunctions as uf
 from Utils.Helpers.HelperFunctions import HelperFunctions as hf
-from Utils.config import eventconfigs_collection, MAIN_BE_URL
 from flask import jsonify, request
 from bson import ObjectId
-from pprint import pprint
 import requests
 import json
 
@@ -10,24 +10,38 @@ import json
 class EventService:
     @staticmethod
     def get_events():
-        page = request.args.get("page", 1, type=int)
-        limit = request.args.get("limit", 10, type=int)
-        offset = (page - 1) * limit
+        size, offset, page = uf.pagination_helper()
 
-        allEvents = list(eventconfigs_collection.find(
-            {}, {"_id": 0}).sort("createdAt", -1).skip(offset).limit(limit)
-        )
+        allEvents = list(eventconfigs_collection.find().sort(
+            "createdAt", -1).skip(offset).limit(size))
 
         for event in allEvents:
-            event["lastModifiedBy"] = (
-                str(event["lastModifiedBy"]
-                    ) if "lastModifiedBy" in event else ""
-            )
             event["expert"] = hf.get_expert_name(
                 ObjectId(event["expert"])) if 'expert' in event else ''
+        allEvents = list(map(hf.convert_objectids_to_strings, allEvents))
         total = eventconfigs_collection.count_documents({})
 
         return jsonify({"data": allEvents, "total": total})
+
+    @staticmethod
+    def get_all_event_users():
+        onFilter = str(request.args.get("filter"))
+        size, offset, page = uf.pagination_helper()
+
+        if onFilter == "true":
+            signedUpUsers = list(users_collection.find())
+            signedUpPhoneNumbers = [user["phoneNumber"]
+                                    for user in signedUpUsers]
+            query = {"phoneNumber": {"$nin": signedUpPhoneNumbers}}
+        else:
+            query = {}
+        allEventUsers = list(events_collection.find(query).sort(
+            "createdAt", -1).skip(offset).limit(size))
+        totalUsers = events_collection.count_documents(query)
+        allEventUsers = list(
+            map(hf.convert_objectids_to_strings, allEventUsers))
+
+        return jsonify({"data": allEventUsers, "total": totalUsers})
 
     @staticmethod
     def get_users_by_event():

@@ -8,6 +8,7 @@ from Utils.config import (
     FB_SERVER_KEY,
 )
 from datetime import timedelta, datetime
+from bson import ObjectId
 import requests
 
 
@@ -121,3 +122,14 @@ class HelperFunctions:
             last_logged_out_time = logged_out_at
 
         return total_logged_in_hours
+
+    @staticmethod
+    def convert_objectids_to_strings(doc):
+        if isinstance(doc, dict):
+            return {k: HelperFunctions.convert_objectids_to_strings(v) for k, v in doc.items()}
+        elif isinstance(doc, list):
+            return [HelperFunctions.convert_objectids_to_strings(item) for item in doc]
+        elif isinstance(doc, ObjectId):
+            return str(doc)
+        else:
+            return doc
