@@ -66,10 +66,17 @@ class UserService:
                 user["leadSource"] = "Website"
             for user in allEventUsers:
                 user["leadSource"] = "Events"
+                user["createdDate"] = user["createdAt"]
 
             final_data.extend(allEventUsers)
             final_data.extend(user_leads)
             final_data = list(map(hf.convert_objectids_to_strings, final_data))
+
+            def get_created_date(item):
+                return item["createdDate"]
+
+            final_data = sorted(
+                final_data, key=get_created_date, reverse=True)
 
             non_leads = users_collection.count_documents(
                 {"name": {"$exists": True}}
