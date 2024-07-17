@@ -1,18 +1,20 @@
-from flask_jwt_extended import (
-    create_access_token,
-    create_refresh_token,
-    get_jwt_identity,
-)
-from Utils.Helpers.AuthManager import AuthManager as am
 from Utils.config import admins_collection
 from flask import jsonify, request
 from datetime import datetime
 import bcrypt
 
+from flask_jwt_extended import (
+    create_access_token,
+    create_refresh_token,
+    get_jwt_identity,
+)
+
 
 class AuthService:
-    @staticmethod
-    def register():
+    def __init__(self):
+        pass
+
+    def register(self):
         data = request.json
         if not data:
             return jsonify({"msg": "Missing email or password"}), 400
@@ -44,8 +46,7 @@ class AuthService:
             print(e)
             return jsonify({"error": str(e)}), 400
 
-    @staticmethod
-    def login():
+    def login(self):
         data = request.json
         if not data:
             return jsonify({"msg": "Missing email or password"}), 400
@@ -73,8 +74,7 @@ class AuthService:
         except Exception as e:
             return jsonify({"error": str(e)}), 400
 
-    @staticmethod
-    def refresh():
+    def refresh(self):
         current_user = get_jwt_identity()
         new_access_token = create_access_token(
             identity=current_user,

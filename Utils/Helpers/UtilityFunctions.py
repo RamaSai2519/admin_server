@@ -58,3 +58,16 @@ class UtilityFunctions:
         offset = (page - 1) * size
 
         return size, offset, page
+
+    @staticmethod
+    def get_call_status(calls_done):
+        if calls_done == 0:
+            return "First call Pending"
+        elif calls_done == 1:
+            return "First call Done"
+        elif calls_done == 2:
+            return "Second call Done"
+        elif calls_done == 3:
+            return "Third call Done"
+        else:
+            return "Engaged"

@@ -1,3 +1,9 @@
+from flask import request, jsonify
+from datetime import datetime
+from bson import ObjectId
+from Utils.Helpers.HelperFunctions import HelperFunctions as hf
+from Utils.Helpers.UserManager import UserManager as um
+from Utils.Helpers.AuthManager import AuthManager as am
 from Utils.config import (
     userwebhookmessages_collection,
     usernotifications_collection,
@@ -5,294 +11,180 @@ from Utils.config import (
     applications_collection,
     events_collection,
     users_collection,
-    calls_collection,
     meta_collection,
     users_cache,
 )
-from Utils.Helpers.UserManager import UserManager as um
-from Utils.Helpers.AuthManager import AuthManager as am
-from Utils.Helpers.HelperFunctions import HelperFunctions as hf
-from Utils.Helpers.UtilityFunctions import UtilityFunctions as uf
-from flask import request, jsonify
-from datetime import datetime
-from bson import ObjectId
 
 
 class UserService:
-    """
-    A class to handle user service operations including retrieving engagement data and updating user data based on HTTP requests.
-    - Define a static method `get_engagement_data` to retrieve engagement data.
-    - Handles GET requests to fetch data based on pagination parameters like page and size.
-    - Updates user data if provided and returns appropriate responses.
-    @return None
-    """
+    def __init__(self):
+        pass
 
-    """
-    Define a static method to retrieve engagement data. 
-    This method handles GET requests to fetch data based on pagination parameters like page and size. 
-    It also updates user data if provided, and returns appropriate responses.
-    @return None
-    """
-    @staticmethod
-    def get_engagement_data():
-        meta_fields = ["remarks", "poc", "expert", "status", "userStatus"]
+    def update_document(self, collection, user_id, update_fields):
+        return collection.update_one({"_id": ObjectId(user_id)}, {"$set": update_fields})
+
+    def get_document(self, collection, user_id):
+        return collection.find_one({"_id": ObjectId(user_id)})
+
+    def add_lead_remarks(self):
+        if request.method != "POST":
+            return jsonify({"error": "Invalid request method"}), 404
+
+        data = request.json
+        if not data:
+            return jsonify({"error": "Missing data"}), 400
+
+        user_id = data["key"]
+        value = data["value"]
+        update_fields = {"remarks": value}
+
+        for collection in [users_collection, applications_collection, events_collection]:
+            if self.get_document(collection, user_id):
+                self.update_document(collection, user_id, update_fields)
+                return jsonify({"message": "User updated successfully"}), 200
+
+        return jsonify({"error": "User not found"}), 404
+
+    def get_leads(self):
         if request.method == "GET":
-            size, offset, page = uf.pagination_helper()
-            time = datetime.now()
-
-            user_data = list(
-                users_collection.find(
-                    {"role": {"$ne": "admin"}},
-                    {"Customer Persona": 0, "lastModifiedBy": 0, "userGameStats": 0}
-                ).sort("createdDate", -1).skip(offset).limit(size)
-            )
-
-            total_users = users_collection.count_documents(
-                {"role": {"$ne": "admin"}})
-
-            for user in user_data:
-                user["_id"] = str(user["_id"])
-                user["slDays"] = int((time - user["createdDate"]).days)
-                user["createdDate"] = str(
-                    user['createdDate'].strftime('%d-%m-%Y'))
-                if "birthDate" in user and user["birthDate"] is not None:
-                    user["birthDate"] = f"{
-                        user['birthDate'].strftime('%d-%m-%Y')}"
-
-                last_call = calls_collection.find_one(
-                    {"user": ObjectId(
-                        user["_id"]), "status": "successfull", "failedReason": ""},
-                    {"_id": 0, "initiatedTime": 1, "expert": 1},
-                    sort=[("initiatedTime", -1)],
-                )
-                days_since_last_call = (
-                    time - last_call["initiatedTime"]).days if last_call else 0
-                user["lastCallDate"] = f"{last_call['initiatedTime'].strftime(
-                    '%d-%m-%Y')}" if last_call else "No Calls"
-                user["callAge"] = days_since_last_call if last_call else 0
-                user["callsDone"] = calls_collection.count_documents(
-                    {"user": ObjectId(user["_id"]), "status": "successfull", "failedReason": ""})
-                user["callStatus"] = "First call Pending" if user["callsDone"] == 0 else "First call Done" if user[
-                    "callsDone"] == 1 else "Second call Done" if user["callsDone"] == 2 else "Third call Done" if user["callsDone"] == 3 else "Engaged"
-
-                user_meta = meta_collection.find_one(
-                    {"user": ObjectId(user["_id"])})
-                if user_meta:
-                    for field in meta_fields:
-                        if field in user_meta:
-                            user[field] = user_meta[field]
-                        else:
-                            user[field] = ""
-                if user["expert"] == "" if "expert" in user else True:
-                    expert = hf.get_expert_name(
-                        last_call["expert"]) if last_call else ""
-                    user["expert"] = expert if expert else ""
-            return jsonify({
-                "data": user_data,
-                "total": total_users,
-                "page": page,
-                "pageSize": size
-            })
-        if request.method == "POST":
-            data = request.json
-            if not data:
-                return jsonify({"error": "Missing data"}), 400
-            try:
-                user_id = data["key"]
-                if not users_collection.find_one({"_id": ObjectId(user_id)}):
-                    return jsonify({"error": "User not found"}), 404
-                user_field = data["field"]
-                user_value = data["value"]
-                if user_field in meta_fields:
-                    prev_meta = meta_collection.find_one(
-                        {"user": ObjectId(user_id)})
-                    if prev_meta:
-                        if user_field in prev_meta and prev_meta[user_field] == user_value:
-                            return jsonify({"message": "Value already exists"}), 200
-                    update = meta_collection.update_one(
-                        {"user": ObjectId(user_id)}, {
-                            "$set": {user_field: user_value}}
-                    )
-                    if update.modified_count == 0:
-                        update = meta_collection.insert_one(
-                            {"user": ObjectId(user_id), user_field: user_value}
-                        )
-                        if update.inserted_id == None:
-                            return jsonify({"error": "Something Went Wrong"}), 400
-                    return jsonify({"message": "User updated successfully"}), 200
-                else:
-                    update = users_collection.update_one(
-                        {"_id": ObjectId(user_id)}, {
-                            "$set": {user_field: user_value}}
-                    )
-                    if update.modified_count == 0:
-                        return jsonify({"error": "Something Went Wrong"}), 500
-                return jsonify({"message": "User updated successfully"}), 200
-            except Exception as e:
-                return jsonify({"error": str(e)}), 500
-        return jsonify({"error": "Invalid request method"}), 404
-
-    @staticmethod
-    def add_lead_remarks():
-        if request.method == "POST":
-            data = request.json
-            if not data:
-                return jsonify({"error": "Missing data"}), 400
-            user_id = data["key"]
-            value = data["value"]
-            if users_collection.find_one({"_id": ObjectId(user_id)}):
-                users_collection.update_one(
-                    {"_id": ObjectId(user_id)}, {
-                        "$set": {"remarks": value}}
-                )
-                return jsonify({"message": "User updated successfully"}), 200
-            elif applications_collection.find_one({"_id": ObjectId(user_id)}):
-                applications_collection.update_one(
-                    {"_id": ObjectId(user_id)}, {
-                        "$set": {"remarks": value}}
-                )
-                return jsonify({"message": "User updated successfully"}), 200
-            elif events_collection.find_one({"_id": ObjectId(user_id)}):
-                events_collection.update_one(
-                    {"_id": ObjectId(user_id)}, {
-                        "$set": {"remarks": value}}
-                )
-                return jsonify({"message": "User updated successfully"}), 200
-            return jsonify({"error": "User not found"}), 404
-        return jsonify({"error": "Invalid request method"}), 404
-
-    @staticmethod
-    def get_leads():
-        if request.method == "GET":
+            final_data = []
             user_leads = list(
                 users_collection.find(
                     {"name": {"$exists": False}},
-                    {"Customer Persona": 0}).sort("createdDate", -1)
+                    {"Customer Persona": 0}
+                ).sort("createdDate", -1)
             )
-            user_leads = list(map(hf.convert_objectids_to_strings, user_leads))
+            signedUpUsers = list(users_collection.find())
+            signedUpPhoneNumbers = [user["phoneNumber"]
+                                    for user in signedUpUsers]
+            query = {"phoneNumber": {"$nin": signedUpPhoneNumbers},
+                     "hidden": {"$exists": False}}
+            allEventUsers = list(events_collection.find(
+                query).sort("createdAt", -1))
+
+            for user in user_leads:
+                user["leadSource"] = "Website"
+            for user in allEventUsers:
+                user["leadSource"] = "Events"
+
+            final_data.extend(allEventUsers)
+            final_data.extend(user_leads)
+            final_data = list(map(hf.convert_objectids_to_strings, final_data))
 
             non_leads = users_collection.count_documents(
                 {"name": {"$exists": True}}
             )
             return jsonify({
-                "data": user_leads,
+                "data": final_data,
                 "totalUsers": non_leads,
             })
+
         elif request.method == "POST":
             data = request.json
             if not data:
                 return jsonify({"error": "Missing data"}), 400
-            userId = data["user"]["_id"]
+
+            user_id = data["user"]["_id"]
             source = data["user"]["source"]
             if source == "Users Lead":
                 return jsonify({"error": "Invalid source"}), 400
-            if source == "Events":
-                result = events_collection.update_one(
-                    {"_id": ObjectId(userId)}, {"$set": {"hidden": True}}
-                )
-                if result.modified_count == 0:
-                    return jsonify({"error": "Event not found"}), 400
-            elif source == "Saarthi Application":
-                result = applications_collection.update_one(
-                    {"_id": ObjectId(userId)}, {"$set": {"hidden": True}}
-                )
-                if result.modified_count == 0:
-                    return jsonify({"error": "Application not found"}), 400
-            return jsonify({"message": "Lead deleted successfully"}), 200
 
-    @staticmethod
-    def handle_user(id):
+            collections = {
+                "Events": events_collection,
+                "Saarthi Application": applications_collection
+            }
+
+            if source in collections:
+                result = self.update_document(
+                    collections[source], user_id, {"hidden": True})
+                if result.modified_count == 0:
+                    return jsonify({"error": f"{source} not found"}), 400
+
+                return jsonify({"message": "Lead deleted successfully"}), 200
+
+            return jsonify({"error": "Invalid source"}), 400
+
+    def handle_user(self, user_id):
         if request.method == "GET":
-            user = users_collection.find_one(
-                {"_id": ObjectId(id)}, {"_id": 0, "userGameStats": 0})
+            user = self.get_document(users_collection, user_id)
             if not user:
                 return jsonify({"error": "User not found"}), 404
-            user["lastModifiedBy"] = (
-                str(user["lastModifiedBy"]) if "lastModifiedBy" in user else ""
-            )
-            meta_doc = meta_collection.find_one({"user": ObjectId(id)})
+
+            user["lastModifiedBy"] = str(
+                user["lastModifiedBy"]) if "lastModifiedBy" in user else ""
+
+            meta_doc = self.get_document(meta_collection, user_id)
             if meta_doc:
                 user["context"] = str(meta_doc["context"]).split(
                     "\n") if "context" in meta_doc else []
                 user["source"] = meta_doc["source"] if "source" in meta_doc else ""
 
-            wa_history = []
-            usernotifications = list(usernotifications_collection.find(
-                {"userId": ObjectId(id), "templateName": {"$exists": True}},
+            wa_history = list(usernotifications_collection.find(
+                {"userId": ObjectId(user_id), "templateName": {
+                    "$exists": True}},
                 {"_id": 0, "userId": 0}
             ).sort("createdAt", -1))
-            userwebhookmessages = list(userwebhookmessages_collection.find(
-                {"userId": ObjectId(id), "body": {"$ne": None}},
+
+            wa_history += list(userwebhookmessages_collection.find(
+                {"userId": ObjectId(user_id), "body": {"$ne": None}},
                 {"_id": 0, "userId": 0}
             ).sort("createdAt", -1))
-            wa_history.extend(usernotifications)
-            wa_history.extend(userwebhookmessages)
+
             for history in wa_history:
-                if "templateName" in history:
-                    history["type"] = "Outgoing"
-                else:
-                    history["type"] = "Incoming"
+                history["type"] = "Outgoing" if "templateName" in history else "Incoming"
 
-            wa_history = sorted(
+            user["notifications"] = sorted(
                 wa_history, key=lambda x: x["createdAt"], reverse=True)
+            return jsonify(user), 200
 
-            user["notifications"] = wa_history
-            return (
-                (jsonify(user), 200)
-                if user
-                else (jsonify({"error": "User not found"}), 404)
-            )
         elif request.method == "PUT":
             user_data = request.json
             if not user_data:
                 return jsonify({"error": "Missing data"}), 400
+
             fields = ["name", "phoneNumber", "city", "birthDate",
                       "numberOfCalls", "context", "source"]
-            if not any(user_data[field] for field in fields):
-                return (
-                    jsonify(
-                        {"error": "At least one field is required for update"}),
-                    400,
-                )
-            update_query = {}
-            for field in fields:
-                value = user_data[field]
-                if value:
-                    if field == "birthDate":
-                        value = datetime.strptime(value, "%Y-%m-%d")
-                    elif field == "numberOfCalls":
-                        value = int(value)
-                    elif field == "context":
-                        value = "\n".join(value)
-                        meta_collection.update_one(
-                            {"user": ObjectId(id)}, {
-                                "$set": {"context": value}}
-                        )
-                    update_query[field] = value
-                    admin_id = am.get_identity()
-                    update_query["lastModifiedBy"] = ObjectId(admin_id)
-            result = users_collection.update_one(
-                {"_id": ObjectId(id)}, {"$set": update_query}
-            )
+            update_query = {
+                field: user_data[field] for field in fields if field in user_data and user_data[field]}
+
+            if "birthDate" in update_query:
+                update_query["birthDate"] = datetime.strptime(
+                    update_query["birthDate"], "%Y-%m-%d")
+            if "numberOfCalls" in update_query:
+                update_query["numberOfCalls"] = int(
+                    update_query["numberOfCalls"])
+            if "context" in update_query:
+                update_query["context"] = "\n".join(update_query["context"])
+                self.update_document(meta_collection, user_id, {
+                                     "context": update_query["context"]})
+
+            if not update_query:
+                return jsonify({"error": "At least one field is required for update"}), 400
+
+            admin_id = am.get_identity()
+            update_query["lastModifiedBy"] = ObjectId(admin_id)
+
+            result = self.update_document(
+                users_collection, user_id, update_query)
             if result.modified_count == 0:
                 return jsonify({"error": "User not found"}), 404
-            updated_user = users_collection.find_one(
-                {"_id": ObjectId(id)}, {"_id": 0})
+
+            updated_user = self.get_document(users_collection, user_id)
             if not updated_user:
                 return jsonify({"error": "User not found"}), 404
             updated_user["lastModifiedBy"] = str(
                 updated_user["lastModifiedBy"])
-            users_cache[ObjectId(id)] = updated_user["name"]
+            users_cache[ObjectId(user_id)] = updated_user["name"]
             um.updateProfile_status(updated_user)
             return jsonify(updated_user)
+
         elif request.method == "DELETE":
-            user = users_collection.find_one({"_id": ObjectId(id)})
+            user = self.get_document(users_collection, user_id)
+            if not user:
+                return jsonify({"error": "User not found"}), 404
+
             deleted_users_collection.insert_one(user)
-            result = users_collection.delete_one({"_id": ObjectId(id)})
-            return (
-                (jsonify({"message": "User deleted successfully"}), 200)
-                if result.deleted_count
-                else (jsonify({"error": "User not found"}), 404)
-            )
-        else:
-            return jsonify({"error": "Invalid request method"}), 404
+            result = users_collection.delete_one({"_id": ObjectId(user_id)})
+            return jsonify({"message": "User deleted successfully"}), 200 if result.deleted_count else jsonify({"error": "User not found"}), 404
+
+        return jsonify({"error": "Invalid request method"}), 404
