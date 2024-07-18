@@ -117,13 +117,12 @@ class UserService:
             if not user:
                 return jsonify({"error": "User not found"}), 404
 
+            user["_id"] = str(user["_id"])
             user["lastModifiedBy"] = str(
                 user["lastModifiedBy"]) if "lastModifiedBy" in user else ""
 
             meta_doc = self.get_document(meta_collection, user_id)
             if meta_doc:
-                user["context"] = str(meta_doc["context"]).split(
-                    "\n") if "context" in meta_doc else []
                 user["source"] = meta_doc["source"] if "source" in meta_doc else ""
 
             wa_history = list(usernotifications_collection.find(
