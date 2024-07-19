@@ -27,9 +27,12 @@ s3_client = boto3.client(
 
 mongodbClient = MongoClient(os.getenv("PROD_DB_URL"))
 gamesdb = mongodbClient["games"]
+wadb = mongodbClient["whatsapp"]
 db = mongodbClient["test"]
 
 games_config_collection = gamesdb["games_config"]
+
+watemplates_collection = wadb["templates"]
 
 userwebhookmessages_collection = db["userwebhookmessages"]
 usernotifications_collection = db["usernotifications"]

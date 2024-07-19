@@ -71,7 +71,6 @@ class ScheduleService:
             user_number = user["phoneNumber"] if user and "phoneNumber" in user else ""
 
             record = schedules_collection.find_one(document, {"_id": 1})
-
             record = str(record["_id"]) if record else ""
 
             sm.final_call_job(

@@ -3,90 +3,94 @@ from datetime import timedelta
 from flask import request, jsonify
 from Utils.Helpers.HelperFunctions import HelperFunctions as hf
 from Utils.Helpers.UtilityFunctions import UtilityFunctions as uf
-from Utils.config import userwebhookmessages_collection, users_collection, wafeedback_collection
+from Utils.config import userwebhookmessages_collection, users_collection, wafeedback_collection, watemplates_collection
 
 
 class WAService:
-    @staticmethod
-    def get_wa_history():
-        if request.method == "GET":
-            size = request.args.get('size', '10')
-            if size == "all":
-                offset = 0
-                size = "all"
-                page = 1
-            else:
-                size, offset, page = uf.pagination_helper()
+    def __init__(self):
+        self.size = None
+        self.page = None
+        self.offset = None
 
-            if size != "all":
-                userwebhookmessages = list(userwebhookmessages_collection.find(
-                    {"body": {"$ne": None}}
-                ).sort("createdAt", -1).skip(int(offset)).limit(int(size)))
-            else:
-                userwebhookmessages = list(userwebhookmessages_collection.find(
-                    {"body": {"$ne": None}}
-                ).sort("createdAt", -1))
+    def set_pagination_params(self):
+        self.size = request.args.get('size', '10')
+        self.page = request.args.get('page', 1, type=int)
+        self.size, self.offset = self.get_pagination_params(
+            self.size, self.page)
 
-            total_messages = userwebhookmessages_collection.count_documents(
-                {"body": {"$ne": None}}
-            )
+    def get_pagination_params(self, size, page):
+        if size == "all":
+            return "all", 0
+        size = int(size)
+        offset = (page - 1) * size
+        return size, offset
 
-            for message in userwebhookmessages:
-                message["_id"] = str(message["_id"])
-                message["userId"] = str(message["userId"])
-                message["createdAt"] = (message["createdAt"] + timedelta(
-                    hours=5, minutes=30)).strftime("%Y-%m-%d %H:%M:%S")
-                user = users_collection.find_one(
-                    {"_id": ObjectId(message["userId"])})
-                if user:
-                    message["userName"] = user["name"] if "name" in user else ""
-                    message["userNumber"] = user["phoneNumber"] if "phoneNumber" in user else ""
-                else:
-                    message["userName"] = ""
-                    message["userNumber"] = ""
-            return jsonify({
-                "data": userwebhookmessages,
-                "total": total_messages,
-                "page": page,
-                "pageSize": size
-            })
-        else:
+    def get_wa_history(self):
+        if request.method != "GET":
             return jsonify({"error": "Invalid request method"}), 404
 
-    @ staticmethod
-    def get_feedbacks():
-        size = request.args.get('size', '10')
-        page = request.args.get('page', '1')
+        self.set_pagination_params()
+        query = {"body": {"$ne": None}}
+        userwebhookmessages = self.fetch_documents(
+            userwebhookmessages_collection, query)
+        total_messages = userwebhookmessages_collection.count_documents(query)
+        userwebhookmessages = self.enrich_messages(userwebhookmessages)
 
-        try:
-            size = int(size)
-            page = int(page)
-            offset = (page - 1) * size
-        except ValueError:
-            offset = 0
-            size = "all"
+        return jsonify({
+            "data": userwebhookmessages,
+            "total": total_messages,
+            "page": self.page,
+            "pageSize": self.size
+        })
 
-        if size != "all":
-            feedbacks = list(wafeedback_collection.find({}).sort(
-                "createdAt", -1).skip(offset).limit(size))
-        else:
-            feedbacks = list(wafeedback_collection.find(
-                {}).sort("createdAt", -1))
+    def fetch_documents(self, collection, query):
+        if self.size == "all":
+            return list(collection.find(query).sort("createdAt", -1))
+        return list(collection.find(query).sort("createdAt", -1).skip(self.offset).limit(self.size))
 
-        total_feedbacks = wafeedback_collection.count_documents({})
+    def enrich_messages(self, messages):
+        for message in messages:
+            message["_id"] = str(message["_id"])
+            message["userId"] = str(message["userId"])
+            user = users_collection.find_one(
+                {"_id": ObjectId(message["userId"])})
+            if user:
+                message["userName"] = user.get("name", "")
+                message["userNumber"] = user.get("phoneNumber", "")
+            else:
+                message["userName"] = ""
+                message["userNumber"] = ""
+        return messages
 
+    def get_feedbacks(self):
+        self.set_pagination_params()
+        query = {}
+        feedbacks = self.fetch_documents(wafeedback_collection, query)
+        total_feedbacks = wafeedback_collection.count_documents(query)
+        feedbacks = self.enrich_feedbacks(feedbacks)
+
+        return jsonify({
+            "data": feedbacks,
+            "total": total_feedbacks,
+            "page": self.page,
+            "pageSize": self.size
+        })
+
+    def enrich_feedbacks(self, feedbacks):
         for feedback in feedbacks:
             feedback["_id"] = str(feedback["_id"])
-            feedback["createdAt"] = (feedback["createdAt"] + timedelta(
-                hours=5, minutes=30)).strftime("%Y-%m-%d %H:%M:%S")
             feedback["userName"] = hf.get_user_name(
                 ObjectId(feedback["userId"]))
             feedback["expertName"] = hf.get_expert_name(
                 ObjectId(feedback["sarathiId"]))
-            feedback["body"] = feedback["body"][2:]
-            feedback["body"] = str(feedback["body"]).replace("_", " ")
+            feedback["body"] = feedback["body"][2:].replace("_", " ")
+        return feedbacks
 
+    def get_templates(self):
+        query = {}
+        templates = list(watemplates_collection.find(query))
+        for template in templates:
+            template["_id"] = str(template["_id"])
         return jsonify({
-            "data": feedbacks, "total": total_feedbacks,
-            "page": page, "pageSize": size
+            "data": templates
         })
