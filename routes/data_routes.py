@@ -47,3 +47,9 @@ def get_categories_route():
 @jwt_required()
 def timings_route():
     return data_service.get_timings()
+
+
+@data_routes.route("/admin/data/userCities", methods=["GET"])
+@jwt_required()
+def user_cities_route():
+    return data_service.get_cities()

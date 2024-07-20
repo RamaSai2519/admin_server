@@ -98,3 +98,10 @@ class EventService:
                 return jsonify({"error": str(e)}), 400
         else:
             return jsonify({"error": "Invalid request method"}), 405
+
+    def get_slugs(self):
+        slugs = list(eventconfigs_collection.find({}, {"slug": 1}))
+        for slug in slugs:
+            slug["_id"] = str(slug["_id"])
+
+        return jsonify({"data": slugs})

@@ -5,7 +5,8 @@ from Utils.config import (
     experts_collection,
     timings_collection,
     users_collection,
-    indianLanguages
+    indianLanguages,
+    cities_cache
 )
 from Utils.Helpers.UtilityFunctions import UtilityFunctions
 from Utils.Helpers.HelperFunctions import HelperFunctions
@@ -123,3 +124,10 @@ class DataService:
             except Exception as e:
                 print(e)
                 return jsonify({"error": str(e)}), 400
+
+    def get_cities(self):
+        cities = list(users_collection.distinct("city"))
+        for city in cities:
+            if city not in cities_cache:
+                cities_cache.append({"_id": str(ObjectId()), "city": city})
+        return jsonify({"data": cities_cache})

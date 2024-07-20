@@ -64,6 +64,7 @@ experts_collection.create_index([("status", 1)])
 
 experts_cache = {}
 admins_cache = {}
+cities_cache = []
 users_cache = {}
 subscribers = {}
 players = {}
