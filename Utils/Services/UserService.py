@@ -48,19 +48,21 @@ class UserService:
     def get_leads(self):
         if request.method == "GET":
             final_data = []
+
+            user_leadsQuery = {"name": {"$exists": False}}
             user_leads = list(
                 users_collection.find(
-                    {"name": {"$exists": False}},
-                    {"Customer Persona": 0}
+                    user_leadsQuery, {"Customer Persona": 0}
                 ).sort("createdDate", -1)
             )
             signedUpUsers = list(users_collection.find())
             signedUpPhoneNumbers = [user["phoneNumber"]
                                     for user in signedUpUsers]
-            query = {"phoneNumber": {"$nin": signedUpPhoneNumbers},
-                     "hidden": {"$exists": False}}
+
+            allEventUsersQuery = {"phoneNumber": {"$nin": signedUpPhoneNumbers},
+                                  "hidden": {"$exists": False}}
             allEventUsers = list(events_collection.find(
-                query).sort("createdAt", -1))
+                allEventUsersQuery).sort("createdAt", -1))
 
             for user in user_leads:
                 user["leadSource"] = "Website"
@@ -172,8 +174,6 @@ class UserService:
 
             result = self.update_document(
                 users_collection, user_id, update_query)
-            if result.modified_count == 0:
-                return jsonify({"error": "User not found"}), 404
 
             updated_user = self.get_document(users_collection, user_id)
             if not updated_user:
@@ -182,6 +182,7 @@ class UserService:
                 updated_user["lastModifiedBy"])
             users_cache[ObjectId(user_id)] = updated_user["name"]
             um.updateProfile_status(updated_user)
+            updated_user["_id"] = str(updated_user["_id"])
             return jsonify(updated_user)
 
         elif request.method == "DELETE":
