@@ -123,6 +123,8 @@ class UserService:
             user["_id"] = str(user["_id"])
             user["lastModifiedBy"] = str(
                 user["lastModifiedBy"]) if "lastModifiedBy" in user else ""
+            user["userGameStats"] = str(
+                user["userGameStats"]) if "userGameStats" in user else ""
 
             meta_doc = self.get_document(meta_collection, user_id)
             if meta_doc:
