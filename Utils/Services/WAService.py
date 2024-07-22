@@ -104,7 +104,7 @@ class WAService:
 
         if not usersType and not cities:
             return jsonify({"error": "Neither User Type or User Cities are provided"}), 400
-        if usersType not in self.userTypes:
+        if usersType and usersType not in self.userTypes:
             return jsonify({"error": "Invalid User Type"}), 400
         if usersType and cities:
             return jsonify({"error": "Both User Type and User Cities are provided"}), 400
@@ -122,8 +122,8 @@ class WAService:
         finalCities = []
         for city in cities:
             for c in cities_cache:
-                if c["id"] == city:
-                    finalCities.append(c["name"])
+                if c["_id"] == city:
+                    finalCities.append(c["city"])
         return finalCities
 
     def find_template(self, templateId: str) -> str:
@@ -164,7 +164,10 @@ class WAService:
     def create_query(self, data: dict) -> dict:
         cities, usersType = self.validate_send_request(data)
         if usersType:
-            query = {"name": {"$exists": usersType == "full"}}
+            if usersType == "all":
+                query = {}
+            else:
+                query = {"name": {"$exists": usersType == "full"}}
         elif cities:
             cities = self.fetch_cities(cities)
             query = {"city": {"$in": cities}}
