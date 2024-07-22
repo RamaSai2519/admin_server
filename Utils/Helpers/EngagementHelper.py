@@ -1,4 +1,5 @@
 from Utils.config import meta_collection, users_collection
+from Utils.Helpers.AuthManager import AuthManager as am
 from flask import jsonify
 from bson import ObjectId
 
@@ -14,11 +15,11 @@ class EngagementHelper:
 
         update = meta_collection.update_one(
             {"user": ObjectId(self.user_id)}, {
-                "$set": {user_field: user_value}}
+                "$set": {user_field: user_value, "lastModifiedBy": ObjectId(am.get_identity())}}
         )
         if update.modified_count == 0:
             update = meta_collection.insert_one(
-                {"user": ObjectId(self.user_id), user_field: user_value}
+                {"user": ObjectId(self.user_id), user_field: user_value, "lastModifiedBy": ObjectId(am.get_identity())}
             )
             if update.inserted_id is None:
                 return jsonify({"error": "Something Went Wrong"}), 400
@@ -27,7 +28,7 @@ class EngagementHelper:
 
     def update_user_data(self, user_field, user_value):
         update = users_collection.update_one(
-            {"_id": ObjectId(self.user_id)}, {"$set": {user_field: user_value}}
+            {"_id": ObjectId(self.user_id)}, {"$set": {user_field: user_value, "lastModifiedBy": ObjectId(am.get_identity())}}
         )
         if update.modified_count == 0:
             return jsonify({"error": "Something Went Wrong"}), 500

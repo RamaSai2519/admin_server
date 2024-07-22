@@ -1,6 +1,8 @@
 from botocore.exceptions import NoCredentialsError, PartialCredentialsError
+from Utils.Helpers.AuthManager import AuthManager as am
 from Utils.config import shorts_collection, s3_client
 from flask import jsonify, request
+from bson import ObjectId
 
 
 class ContentService:
@@ -43,5 +45,5 @@ class ContentService:
             return jsonify({'msg': 'Missing videoId or status'}), 400
 
         shorts_collection.update_one({'videoId': video_id},
-                                     {'$set': {'approved': True if status == 'true' else False}})
+                                     {'$set': {'approved': True if status == 'true' else False, "lastModifiedBy": ObjectId(am.get_identity())}})
         return jsonify({'msg': 'Video status updated'})

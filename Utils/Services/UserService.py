@@ -21,6 +21,7 @@ class UserService:
         pass
 
     def update_document(self, collection, user_id, update_fields):
+        update_fields["lastModifiedBy"] = ObjectId(am.get_identity())
         return collection.update_one({"_id": ObjectId(user_id)}, {"$set": update_fields})
 
     def get_document(self, collection, user_id):
@@ -189,7 +190,7 @@ class UserService:
             user = self.get_document(users_collection, user_id)
             if not user:
                 return jsonify({"error": "User not found"}), 404
-
+            user["lastModifiedBy"] = ObjectId(am.get_identity())
             deleted_users_collection.insert_one(user)
             result = users_collection.delete_one({"_id": ObjectId(user_id)})
             return jsonify({"message": "User deleted successfully"}), 200 if result.deleted_count else jsonify({"error": "User not found"}), 404

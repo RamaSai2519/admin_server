@@ -11,6 +11,7 @@ from Utils.config import (
 from Utils.Helpers.UtilityFunctions import UtilityFunctions
 from Utils.Helpers.HelperFunctions import HelperFunctions
 from Utils.Helpers.FormatManager import FormatManager
+from Utils.Helpers.AuthManager import AuthManager
 from flask import jsonify, request
 from datetime import datetime
 from bson import ObjectId
@@ -86,7 +87,7 @@ class DataService:
             category = data["name"]
             createdDate = datetime.now()
             categories_collection.insert_one(
-                {"name": category, "createdDate": createdDate, "active": True})
+                {"name": category, "createdDate": createdDate, "active": True, "lastModifiedBy": ObjectId(AuthManager.get_identity())})
             return jsonify({"message": "Category added successfully"})
 
     def get_timings(self):
@@ -113,13 +114,14 @@ class DataService:
             try:
                 timing = timings_collection.find_one(
                     {"expert": ObjectId(expertId)})
+                admin_id = ObjectId(AuthManager.get_identity())
                 if timing:
                     timings_collection.update_one({"expert": ObjectId(expertId)}, {
-                                                  "$set": {field: value}})
+                                                  "$set": {field: value, "lastModifiedBy": admin_id}})
                     return jsonify({"message": "Timing updated successfully"})
                 else:
                     timings_collection.insert_one(
-                        {"expert": ObjectId(expertId), field: value})
+                        {"expert": ObjectId(expertId), field: value, "lastModifiedBy": admin_id})
                     return jsonify({"message": "Timing added successfully"})
             except Exception as e:
                 print(e)

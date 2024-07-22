@@ -32,9 +32,10 @@ class ExpertService:
                 "name": "Enter Name",
                 "categories": [],
                 "proflieCompleted": True,
+                "lastModifiedBy": ObjectId(am.get_identity()),
             }
         )
-        return jsonify(str(expert.inserted_id))
+        return jsonify(str(expert.inserted_id)), 201
 
     """
     A static method to retrieve popup data for a specific expert ID.
@@ -143,11 +144,15 @@ class ExpertService:
             return jsonify(updated_expert)
         elif request.method == "DELETE":
             try:
+                admin_id = ObjectId(am.get_identity())
                 expert = experts_collection.find_one({"_id": ObjectId(id)})
+                if not expert:
+                    return jsonify({"error": "Expert not found"}), 404
+                expert["lastModifiedBy"] = admin_id
                 deleted_experts_collection.insert_one(expert)
                 result = experts_collection.delete_one({"_id": ObjectId(id)})
                 if result.deleted_count == 0:
-                    return jsonify({"error": "Expert not found"}), 404
+                    return jsonify({"error": "Error deleting expert"}), 404
                 return jsonify({"message": "Expert deleted successfully"})
             except Exception as e:
                 return jsonify({"error": str(e)}), 500
@@ -256,7 +261,8 @@ class ExpertService:
 
         experts_collection.update_one(
             {"_id": ObjectId(expertId)},
-            {"$set": {"status": status}}
+            {"$set": {"status": status,
+                      "lastModifiedBy": ObjectId(am.get_identity())}},
         )
 
         response = em.status_handler(status, expertId)

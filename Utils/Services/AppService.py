@@ -33,9 +33,14 @@ class AppService:
         token = data["token"]
         tokens = list(fcm_tokens_collection.find())
         if token in [t["token"] for t in tokens]:
+            fcm_tokens_collection.update_one(
+                {"token": token}, {
+                    "$set": {"lastModifiedBy": ObjectId(am.get_identity())}}
+            )
             return jsonify({"message": "FCM token already saved"}), 200
         elif token:
-            fcm_tokens_collection.insert_one({"token": token})
+            fcm_tokens_collection.insert_one(
+                {"token": token, "lastModifiedBy": ObjectId(am.get_identity())})
             return jsonify({"message": "FCM token saved successfully"}), 200
         else:
             return jsonify({"error": "FCM token missing"}), 400
@@ -105,6 +110,9 @@ class AppService:
         elif request.method == "DELETE":
             try:
                 schedule = schedules_collection.find_one({"_id": ObjectId(id)})
+                if not schedule:
+                    return jsonify({"error": "Schedule not found"}), 404
+                schedule["lastModifiedBy"] = ObjectId(am.get_identity())
                 deleted_schedules_collection.insert_one(schedule)
                 result = schedules_collection.delete_one({"_id": ObjectId(id)})
                 sm.cancel_final_call(id)

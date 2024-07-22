@@ -26,7 +26,7 @@ def handle_user_route(id):
     return user_service.handle_user(id)
 
 
-@user_routes.route("/admin/user/engagementData", methods=["GET", "POST", "DELETE"])
+@user_routes.route("/admin/user/engagementData", methods=["GET", "POST"])
 @jwt_required()
 def get_engagement_data_route():
     return engagement_service.get_engagement_data()

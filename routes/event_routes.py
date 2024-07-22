@@ -12,7 +12,7 @@ def get_events_route():
     return event_service.get_events()
 
 
-@event_routes.route("/admin/event/handle", methods=["GET", "PUT", "POST"])
+@event_routes.route("/admin/event/handle", methods=["GET", "POST"])
 @jwt_required()
 def get_event_route():
     return event_service.handle_event_config()
