@@ -26,6 +26,7 @@ def call_stream_route():
 def get_popup_data_route(expertId):
     return ExpertService.get_popup_data(expertId)
 
+
 @expert_routes.route("/admin/expert/updateStatus", methods=["POST"])
 def update_status_route():
     return ExpertService.update_status()

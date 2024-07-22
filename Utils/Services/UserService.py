@@ -123,8 +123,8 @@ class UserService:
             user["_id"] = str(user["_id"])
             user["lastModifiedBy"] = str(
                 user["lastModifiedBy"]) if "lastModifiedBy" in user else ""
-            user["userGameStats"] = str(
-                user["userGameStats"]) if "userGameStats" in user else ""
+            if "userGameStats" in user:
+                user["userGameStats"] = str(user["userGameStats"])
 
             meta_doc = self.get_document(meta_collection, user_id)
             if meta_doc:
@@ -154,9 +154,9 @@ class UserService:
                 return jsonify({"error": "Missing data"}), 400
 
             fields = ["name", "phoneNumber", "city", "birthDate",
-                      "numberOfCalls", "context", "source"]
+                      "isPaidUser", "numberOfCalls", "context", "source",]
             update_query = {
-                field: user_data[field] for field in fields if field in user_data and user_data[field]}
+                field: user_data[field] for field in fields if field in user_data}
 
             if "birthDate" in update_query:
                 update_query["birthDate"] = datetime.strptime(
@@ -165,9 +165,10 @@ class UserService:
                 update_query["numberOfCalls"] = int(
                     update_query["numberOfCalls"])
             if "context" in update_query:
-                update_query["context"] = "\n".join(update_query["context"])
                 self.update_document(meta_collection, user_id, {
                                      "context": update_query["context"]})
+            if "isPaidUser" in update_query:
+                update_query["isPaidUser"] = bool(update_query["isPaidUser"])
 
             if not update_query:
                 return jsonify({"error": "At least one field is required for update"}), 400
@@ -181,12 +182,14 @@ class UserService:
             updated_user = self.get_document(users_collection, user_id)
             if not updated_user:
                 return jsonify({"error": "User not found"}), 404
-            updated_user["lastModifiedBy"] = str(
-                updated_user["lastModifiedBy"])
             users_cache[ObjectId(user_id)] = updated_user["name"]
             um.updateProfile_status(updated_user)
             updated_user["_id"] = str(updated_user["_id"])
-            return jsonify(updated_user)
+            updated_user["lastModifiedBy"] = str(
+                updated_user["lastModifiedBy"]) if "lastModifiedBy" in updated_user else ""
+            updated_user["userGameStats"] = str(
+                updated_user["userGameStats"]) if "userGameStats" in updated_user else ""
+            return jsonify(updated_user), 200
 
         elif request.method == "DELETE":
             user = self.get_document(users_collection, user_id)
