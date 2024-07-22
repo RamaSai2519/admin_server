@@ -261,8 +261,7 @@ class ExpertService:
 
         experts_collection.update_one(
             {"_id": ObjectId(expertId)},
-            {"$set": {"status": status,
-                      "lastModifiedBy": ObjectId(am.get_identity())}},
+            {"$set": {"status": status}},
         )
 
         response = em.status_handler(status, expertId)
