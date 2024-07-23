@@ -90,9 +90,7 @@ class EventService:
                 if not validSlug:
                     return jsonify({"error": "Slug already exists"}), 400
                 else:
-                    url = f"{MAIN_BE_URL}/events/config"
-                    response = requests.request("POST", url, data=data)
-                    return response.json()
+                    return jsonify({"data": "Slug is available"}), 200
             except Exception as e:
                 print(e)
                 return jsonify({"error": str(e)}), 400
