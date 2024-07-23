@@ -91,6 +91,7 @@ class EventService:
                     return jsonify({"error": "Slug already exists"}), 400
                 else:
                     url = f"{MAIN_BE_URL}/events/config"
+                    data["isPremiumUserOnly"] = bool(data["isPremiumUserOnly"])
                     response = requests.post(url, data=data)
                     return response.json()
             except Exception as e:
