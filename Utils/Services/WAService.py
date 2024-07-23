@@ -111,11 +111,7 @@ class WAService:
         return cities, usersType
 
     def fetch_users(self, query: dict) -> list:
-        # users = users_collection.find(query)
-        users = [
-            {"name": "Rama Sathya Sai", "phoneNumber": "9398036558", "city": "Goa"},
-            {"name": "Mayank Dwivedi", "phoneNumber": "9936142128", "city": "Bengaluru"},
-        ]
+        users = users_collection.find(query)
         return list(users)
 
     def fetch_cities(self, cities):
