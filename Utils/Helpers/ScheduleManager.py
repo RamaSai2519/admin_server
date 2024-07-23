@@ -2,9 +2,25 @@ from Utils.config import timings_collection, times
 from datetime import timedelta, datetime
 from bson.objectid import ObjectId
 import requests
+import json
 
 
 class ScheduleManager:
+    @staticmethod
+    def scheduleCall(time, expert_id, user_id):
+        url = "https://6x4j0qxbmk.execute-api.ap-south-1.amazonaws.com/main/actions/create_scheduled_job"
+        time = time.strftime("%Y-%m-%dT%H:%M:%SZ")
+        meta = {"expertId": expert_id, "userId": user_id}
+        meta = json.dumps(meta)
+        payload = {
+            "job_type": "CALL",
+            "job_time": time,
+            "status": "PENDING",
+            "request_meta": meta
+        }
+        response = requests.request("POST", url, data=json.dumps(payload))
+        return response.text
+
     @staticmethod
     def cancel_final_call(record):
         url = "http://localhost:7000/api/v1/cancelJob"
