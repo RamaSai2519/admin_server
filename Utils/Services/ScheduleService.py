@@ -42,11 +42,9 @@ class ScheduleService:
             type = data["type"] if "type" in data else "User"
             duration = data["duration"] if "duration" in data else 30
 
-            time = datetime.strptime(time, "%Y-%m-%dT%H:%M:%S.%fZ")
-            response = sm.scheduleCall(time, expert_id, user_id)
-
             ist_offset = timedelta(hours=5, minutes=30)
-            ist_time = time + ist_offset
+            date_object = datetime.strptime(time, "%Y-%m-%dT%H:%M:%S.%fZ")
+            ist_time = date_object + ist_offset
 
             document = {
                 "expert": ObjectId(expert_id),
@@ -58,9 +56,35 @@ class ScheduleService:
                 "duration": int(duration),
             }
             schedules_collection.insert_one(document)
+            time = datetime.strptime(time, "%Y-%m-%dT%H:%M:%S.%fZ")
+            hour = ist_time.hour
+            minute = ist_time.minute
+            year = ist_time.year
+            month = ist_time.month - 1
+            day = ist_time.day
+
+            expert_docment = experts_collection.find_one(
+                {"_id": ObjectId(expert_id)})
+            expert_number = expert_docment["phoneNumber"] if expert_docment else ""
+
+            user = users_collection.find_one({"_id": ObjectId(user_id)})
+            user_number = user["phoneNumber"] if user and "phoneNumber" in user else ""
+
             record = schedules_collection.find_one(document, {"_id": 1})
             record = str(record["_id"]) if record else ""
 
+            sm.final_call_job(
+                record,
+                expert_id,
+                user_id,
+                expert_number,
+                user_number,
+                year,
+                month,
+                day,
+                hour,
+                minute,
+            )
             return jsonify({"message": "Data received successfully"})
         else:
             return jsonify({"error": "Invalid request method"}), 404
