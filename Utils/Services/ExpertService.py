@@ -269,3 +269,14 @@ class ExpertService:
             return jsonify({"error": "Expert Not Online"}), 200
 
         return jsonify({"msg": "Status updated successfully"})
+
+    @staticmethod
+    def get_expert_names():
+        """
+        A static method to get the names of all experts.
+        @return JSON response containing the names of all experts.
+        """
+        experts = list(experts_collection.find({}, {"name": 1}))
+        for expert in experts:
+            expert["_id"] = str(expert["_id"])
+        return jsonify(experts), 200
