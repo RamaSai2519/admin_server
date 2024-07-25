@@ -1,4 +1,5 @@
 from Utils.config import (
+    club_intersts_collection,
     applications_collection,
     categories_collection,
     errorlogs_collection,
@@ -133,3 +134,20 @@ class DataService:
             if city not in cities_cache:
                 cities_cache.append({"_id": str(ObjectId()), "city": city})
         return jsonify({"data": cities_cache})
+
+    def get_club_interests(self):
+        size, offset, page = self.uf.pagination_helper()
+        club_interests = list(club_intersts_collection.find(
+            {}).sort("createdDate", -1).skip(offset).limit(size))
+        for club_interest in club_interests:
+            club_interest["_id"] = str(club_interest["_id"])
+            user = users_collection.find_one(
+                {"_id": ObjectId(club_interest["userId"])},
+                {"_id": 0, "name": 1, "phoneNumber": 1})
+            if user:
+                club_interest["name"] = user["name"]
+                club_interest["phoneNumber"] = user["phoneNumber"]
+            else:
+                club_interests.remove(club_interest)
+        total_docs = club_intersts_collection.count_documents({})
+        return jsonify({"data": club_interests, "total": total_docs})

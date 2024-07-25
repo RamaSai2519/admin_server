@@ -53,3 +53,9 @@ def timings_route():
 @jwt_required()
 def user_cities_route():
     return data_service.get_cities()
+
+
+@data_routes.route("/admin/data/clubInterests", methods=["GET"])
+@jwt_required()
+def club_interests_route():
+    return data_service.get_club_interests()
