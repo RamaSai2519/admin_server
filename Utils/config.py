@@ -8,11 +8,13 @@ import os
 load_dotenv()
 
 REGION = os.getenv("REGION")
+EXPERT_JWT = os.getenv("EXPERT_JWT")
 ACCESS_KEY = os.getenv("ACCESS_KEY")
 MAIN_BE_URL = os.getenv("MAIN_BE_URL")
-EXPERT_JWT = os.getenv("EXPERT_JWT")
 JWT_SECRET_KEY = os.getenv("JWT_SECRET")
 FB_SERVER_KEY = os.getenv("FB_SERVER_KEY")
+GRAPH_API_KEY = os.getenv("GRAPH_API_KEY")
+GRAPH_API_URL = os.getenv("GRAPH_API_URL")
 SECRET_ACCESS_KEY = os.getenv("SECRET_ACCESS_KEY")
 
 firebase_admin.initialize_app(
