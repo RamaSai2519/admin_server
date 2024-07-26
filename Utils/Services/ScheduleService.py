@@ -82,7 +82,7 @@ class ScheduleService:
             #     hour,
             #     minute,
             # )
-            response = sm.scheduleCall(time, expert_id, user_id)
+            response = sm.scheduleCall(time, expert_id, user_id, record)
             print(response)
             return jsonify({"message": "Data received successfully"})
         else:
