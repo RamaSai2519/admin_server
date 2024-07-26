@@ -33,6 +33,7 @@ db = mongodbClient["test"]
 games_config_collection = gamesdb["games_config"]
 
 watemplates_collection = wadb["templates"]
+temp_collection = wadb["temp"]
 
 userwebhookmessages_collection = db["userwebhookmessages"]
 usernotifications_collection = db["usernotifications"]

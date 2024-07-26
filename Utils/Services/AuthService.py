@@ -64,10 +64,9 @@ class AuthService:
             ):
                 return jsonify({"msg": "Bad credentials"}), 401
 
-            id = str(user["_id"])
-            user["_id"] = id
-            access_token = create_access_token(identity=id)
-            refresh_token = create_refresh_token(identity=id)
+            user["_id"] = str(user["_id"])
+            access_token = create_access_token(identity=user["_id"])
+            refresh_token = create_refresh_token(identity=user["_id"])
             return jsonify(
                 access_token=access_token, refresh_token=refresh_token, user=user
             )

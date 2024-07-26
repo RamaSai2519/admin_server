@@ -1,10 +1,11 @@
 import json
 import requests
+import threading
 from bson import ObjectId
-from pprint import pprint
+from datetime import datetime
 from flask import request, jsonify
 from Utils.Helpers.HelperFunctions import HelperFunctions as hf
-from Utils.config import userwebhookmessages_collection, users_collection, wafeedback_collection, watemplates_collection, cities_cache, users_cache
+from Utils.config import userwebhookmessages_collection, users_collection, wafeedback_collection, watemplates_collection, cities_cache, temp_collection
 
 
 class WAService:
@@ -165,7 +166,6 @@ class WAService:
             else:
                 query = {"name": {"$exists": usersType == "full"}}
         elif cities:
-            cities = self.fetch_cities(cities)
             query = {"city": {"$in": cities}}
         else:
             return {}
@@ -175,22 +175,32 @@ class WAService:
         data = request.json
         if not data:
             return jsonify({"error": "Invalid request data"}), 400
+
         query = self.create_query(data)
         users = self.fetch_users(query)
-        for user in users:
-            phoneNumber = user["phoneNumber"]
-            templateId = data["templateId"]
-            inputs = data["inputs"]
-            payload = self.prepare_payload(
-                user, phoneNumber, templateId, inputs)
-            if not payload:
-                return jsonify({"error": "Invalid template"}), 400
-            response = self.send_whatsapp_message(json.dumps(payload))
-            # print(payload, "payload")
-            # print(response.headers, "headers")
-            # print(response.text, "text")
-            if response.status_code != 200:
-                return jsonify({"error": "Failed to send message"}), 400
+        messageId = data["messageId"]
+
+        def final_send():
+            for user in users:
+                phoneNumber = user["phoneNumber"]
+                templateId = data["templateId"]
+                inputs = data["inputs"]
+                payload = self.prepare_payload(
+                    user, phoneNumber, templateId, inputs)
+                if not payload:
+                    return jsonify({"error": "Invalid template"}), 400
+                response = self.send_whatsapp_message(json.dumps(payload))
+                print(payload)
+                print(response.text)
+                print(response.headers)
+                temp_collection.insert_one({
+                    "phoneNumber": phoneNumber,
+                    "responseCode": response.status_code,
+                    "responseText": response.text,
+                    "messageId": messageId,
+                    "datetime": datetime.now()
+                })
+        threading.Thread(target=final_send).start()
 
         return jsonify({"message": "success"}), 200
 
@@ -203,3 +213,19 @@ class WAService:
         return jsonify({
             "usersCount": users,
         }), 200
+
+    def fetchStatus(self):
+        messageId = request.args.get("messageId")
+        proNum = request.args.get("proNum")
+        if not messageId:
+            return jsonify({"error": "Invalid request data"}), 400
+        query = {"messageId": messageId}
+        count = temp_collection.count_documents(query)
+        if count == proNum:
+            status = "done"
+        else:
+            status = "pending"
+        return jsonify({"data": {
+            "status": status,
+            "count": count
+        }}), 200

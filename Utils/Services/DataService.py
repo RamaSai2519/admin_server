@@ -133,7 +133,7 @@ class DataService:
         cities = list(users_collection.distinct("city"))
         for city in cities:
             if city not in cities_cache:
-                cities_cache.append({"_id": str(ObjectId()), "city": city})
+                cities_cache.append({"_id": city, "city": city})
         return jsonify({"data": cities_cache})
 
     def get_club_interests(self):

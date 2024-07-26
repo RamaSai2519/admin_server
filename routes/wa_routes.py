@@ -34,3 +34,9 @@ def send_message_route():
 @jwt_required()
 def preview_message_route():
     return wa_service.get_preview()
+
+
+@wa_routes.route("/admin/wa/proNum", methods=["GET"])
+@jwt_required()
+def get_pro_num_route():
+    return wa_service.fetchStatus()
