@@ -1,5 +1,6 @@
 from Utils.config import calls_collection, users_collection, experts_collection
 from Utils.Helpers.FormatManager import FormatManager as fm
+from Utils.Helpers.HelperFunctions import HelperFunctions as hf
 from flask import request
 
 
@@ -71,3 +72,11 @@ class UtilityFunctions:
             return "Third call Done"
         else:
             return "Engaged"
+
+    @staticmethod
+    def format_schedules(schedules):
+        for schedule in schedules:
+            schedule["_id"] = str(schedule["_id"])
+            schedule["expert"] = hf.get_expert_name(schedule["expert"])
+            schedule["user"] = hf.get_user_name(schedule["user"])
+        return schedules

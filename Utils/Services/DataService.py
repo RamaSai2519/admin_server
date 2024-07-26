@@ -7,7 +7,8 @@ from Utils.config import (
     timings_collection,
     users_collection,
     indianLanguages,
-    cities_cache
+    cities_cache,
+    db
 )
 from Utils.Helpers.UtilityFunctions import UtilityFunctions
 from Utils.Helpers.HelperFunctions import HelperFunctions
@@ -151,3 +152,52 @@ class DataService:
                 club_interests.remove(club_interest)
         total_docs = club_intersts_collection.count_documents({})
         return jsonify({"data": club_interests, "total": total_docs})
+
+    def generate_filter_options(self):
+        data = request.json
+        if not data:
+            return jsonify({"error": "Invalid request data"}), 400
+
+        collection = data["collection"]
+        field = data["field"]
+        collection = db[collection]
+        filter_options = list(collection.distinct(field))
+        filter_options = [{"text": value, "value": value}
+                          for value in filter_options]
+        return jsonify(filter_options)
+
+    def get_filtered_data(self):
+        data = request.json
+        if not data:
+            return jsonify({"error": "Invalid request data"}), 400
+
+        page = data.get("page", 1)
+        size = data.get("size", 10)
+        filters: dict = data.get("filter", {})
+        collection_name = data.get("collection")
+        if not collection_name:
+            return jsonify({"error": "Collection name is required"}), 400
+
+        mongo_collection = db[collection_name]
+        query = {}
+        for key, value in filters.items():
+            if value is not None:
+                obIds = users_collection.find({"name": {"$in": value}}, {"_id": 1}) if key == "user" else experts_collection.find(
+                    {"name": {"$in": value}}, {"_id": 1}) if key == "expert" else None
+                query[key] = {"$in": [obId["_id"]
+                                      for obId in obIds]} if obIds else {"$in": value}
+        total = mongo_collection.count_documents(query)
+        output_data = list(mongo_collection.find(query).skip(
+            (page - 1) * size).limit(size))
+
+        if collection_name == "schedules":
+            output_data = self.uf.format_schedules(output_data)
+        final_data = list(
+            map(self.hf.convert_objectids_to_strings, output_data))
+
+        return jsonify({
+            "page": page,
+            "size": size,
+            "data": final_data,
+            "total": total
+        })

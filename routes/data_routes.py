@@ -59,3 +59,15 @@ def user_cities_route():
 @jwt_required()
 def club_interests_route():
     return data_service.get_club_interests()
+
+
+@data_routes.route("/admin/data/generateFilters", methods=["POST"])
+@jwt_required()
+def genrate_filters_route():
+    return data_service.generate_filter_options()
+
+
+@data_routes.route("/admin/data/filter", methods=["POST"])
+@jwt_required()
+def get_schedules_filter_route():
+    return data_service.get_filtered_data()
