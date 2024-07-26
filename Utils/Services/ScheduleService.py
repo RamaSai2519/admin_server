@@ -70,18 +70,20 @@ class ScheduleService:
             record = schedules_collection.find_one(document, {"_id": 1})
             record = str(record["_id"]) if record else ""
 
-            sm.final_call_job(
-                record,
-                expert_id,
-                user_id,
-                expert_number,
-                user_number,
-                year,
-                month,
-                day,
-                hour,
-                minute,
-            )
+            # sm.final_call_job(
+            #     record,
+            #     expert_id,
+            #     user_id,
+            #     expert_number,
+            #     user_number,
+            #     year,
+            #     month,
+            #     day,
+            #     hour,
+            #     minute,
+            # )
+            response = sm.scheduleCall(time, expert_id, user_id)
+            print(response)
             return jsonify({"message": "Data received successfully"})
         else:
             return jsonify({"error": "Invalid request method"}), 404
