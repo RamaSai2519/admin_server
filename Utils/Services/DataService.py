@@ -141,7 +141,6 @@ class DataService:
         club_interests = list(club_intersts_collection.find(
             {}).sort("createdDate", -1).skip(offset).limit(size))
         for club_interest in club_interests:
-            club_interest["_id"] = str(club_interest["_id"])
             user = users_collection.find_one(
                 {"_id": ObjectId(club_interest["userId"])},
                 {"_id": 0, "name": 1, "phoneNumber": 1})
@@ -149,8 +148,9 @@ class DataService:
                 club_interest["name"] = user["name"]
                 club_interest["phoneNumber"] = user["phoneNumber"]
             else:
-                club_interests.remove(club_interest)
+                club_intersts_collection.delete_one({"_id": club_interest["_id"]})
         total_docs = club_intersts_collection.count_documents({})
+        club_interests = list(map(self.hf.convert_objectids_to_strings, club_interests))
         return jsonify({"data": club_interests, "total": total_docs})
 
     def generate_filter_options(self):
