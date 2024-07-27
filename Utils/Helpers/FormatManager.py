@@ -1,6 +1,7 @@
 from Utils.Helpers.HelperFunctions import HelperFunctions as hf
 from Utils.config import expertlogs_collection
 from bson import ObjectId
+import json
 
 
 class FormatManager:
@@ -55,3 +56,15 @@ class FormatManager:
             "timeSpent": round((total_timeSpent / 3600), 2) if total_timeSpent else 0,
         }
         return formatted_expert
+
+    @staticmethod
+    def format_schedules(response):
+        schedules = response["listScheduledJobs"]["items"]
+        for schedule in schedules:
+            schedule["requestMeta"] = json.loads(schedule["requestMeta"])
+            schedule["expert"] = hf.get_expert_name(
+                ObjectId(schedule["requestMeta"]["expertId"]))
+            schedule["user"] = hf.get_user_name(
+                ObjectId(schedule["requestMeta"]["userId"]))
+            schedule["datetime"] = schedule["scheduledJobTime"]
+        return {"data": schedules}

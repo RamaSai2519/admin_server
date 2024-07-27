@@ -79,4 +79,5 @@ class UtilityFunctions:
             schedule["_id"] = str(schedule["_id"])
             schedule["expert"] = hf.get_expert_name(schedule["expert"])
             schedule["user"] = hf.get_user_name(schedule["user"])
+            schedule["callStatus"] = schedule["callStatus"] if "callStatus" in schedule else ""
         return schedules
