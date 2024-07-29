@@ -69,9 +69,6 @@ class EngagementService:
         for user in users:
             user["_id"] = str(user["_id"])
             user["slDays"] = (time - user["createdDate"]).days
-            user["createdDate"] = user["createdDate"].strftime('%d-%m-%Y')
-            user["birthDate"] = user["birthDate"].strftime(
-                '%d-%m-%Y') if user["birthDate"] else None
 
             self.populate_meta_data(user)
             self.populate_call_data(user, time)
@@ -88,8 +85,7 @@ class EngagementService:
         )
 
         if last_call:
-            user["lastCallDate"] = last_call["initiatedTime"].strftime(
-                '%d-%m-%Y')
+            user["lastCallDate"] = last_call["initiatedTime"]
             user["callAge"] = (time - last_call["initiatedTime"]).days
             if not user["expert"] or user["expert"] == "":
                 user["expert"] = hf.get_expert_name(last_call["expert"])
@@ -106,7 +102,10 @@ class EngagementService:
     def populate_meta_data(self, user):
         user_meta = meta_collection.find_one({"user": ObjectId(user["_id"])})
         for field in self.meta_fields:
-            user[field] = user_meta[field] if user_meta else ""
+            if user_meta:
+                user[field] = user_meta[field] if field in user_meta else ""
+            else:
+                user[field] = ""
 
     def is_valid_user(self, user_id):
         return users_collection.find_one({"_id": ObjectId(user_id)}) is not None

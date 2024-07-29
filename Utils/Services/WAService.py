@@ -154,7 +154,8 @@ class WAService:
                     user=user, templateId=templateId, inputs=inputs)
                 if not payload:
                     return jsonify({"error": "Invalid template"}), 400
-                response = self.wa_helper.send_whatsapp_message(payload, messageId, phoneNumber=user["phoneNumber"])
+                self.wa_helper.send_whatsapp_message(
+                    payload, messageId, phoneNumber=user["phoneNumber"])
         threading.Thread(target=final_send).start()
 
         return jsonify({"message": "success"}), 200
