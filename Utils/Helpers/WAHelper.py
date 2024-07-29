@@ -44,10 +44,10 @@ class WAHelper:
         response = requests.request(
             "POST", self.waUrl, headers=headers, data=json.dumps(payload))
         temp_collection.insert_one({
-                    "phoneNumber": phoneNumber,
-                    "responseCode": response.status_code,
-                    "responseText": response.text,
-                    "messageId": messageId,
-                    "datetime": datetime.now()
-                })
+            "phoneNumber": phoneNumber,
+            "responseCode": response.status_code,
+            "responseText": response.text,
+            "messageId": messageId,
+            "datetime": datetime.now()
+        })
         return response

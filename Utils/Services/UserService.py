@@ -185,7 +185,7 @@ class UserService:
                     "phone_number": prev_user["phoneNumber"],
                     "template_name": "CLUB_SUKOON_MEMBERSHIP",
                     "parameters": {
-                        "user_name": prev_user["name"]
+                        "user_name": str(str(prev_user["name"]).split(" ")[0].capitalize())
                     }
                 }
                 self.wa_service.send_whatsapp_message(
