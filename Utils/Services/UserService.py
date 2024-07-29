@@ -4,6 +4,7 @@ from bson import ObjectId
 from Utils.Helpers.HelperFunctions import HelperFunctions as hf
 from Utils.Helpers.UserManager import UserManager as um
 from Utils.Helpers.AuthManager import AuthManager as am
+from Utils.Helpers.WAHelper import WAHelper
 from Utils.config import (
     userwebhookmessages_collection,
     usernotifications_collection,
@@ -18,7 +19,7 @@ from Utils.config import (
 
 class UserService:
     def __init__(self):
-        pass
+        self.wa_service = WAHelper()
 
     def update_document(self, collection, user_id, update_fields):
         update_fields["lastModifiedBy"] = ObjectId(am.get_identity())
@@ -176,6 +177,19 @@ class UserService:
             admin_id = am.get_identity()
             update_query["lastModifiedBy"] = ObjectId(admin_id)
 
+            prev_user = self.get_document(users_collection, user_id)
+            if not prev_user:
+                return jsonify({"error": "User not found"}), 404
+            if update_query["isPaidUser"] and prev_user["isPaidUser"] != update_query["isPaidUser"] and update_query["isPaidUser"] == True:
+                payload = {
+                    "phone_number": prev_user["phoneNumber"],
+                    "template_name": "CLUB_SUKOON_MEMBERSHIP",
+                    "parameters": {
+                        "user_name": prev_user["name"]
+                    }
+                }
+                self.wa_service.send_whatsapp_message(
+                    payload, "CLUB_SUKOON_MEMBERSHIP", prev_user["phoneNumber"])
             result = self.update_document(
                 users_collection, user_id, update_query)
 

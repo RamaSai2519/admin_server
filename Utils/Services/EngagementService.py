@@ -31,10 +31,8 @@ class EngagementService:
             {"role": {"$ne": "admin"}})
 
         return jsonify({
-            "data": user_data,
-            "total": total_users,
-            "page": page,
-            "pageSize": size
+            "data": user_data, "total": total_users,
+            "page": page, "pageSize": size
         })
 
     def handle_post_request(self):
@@ -42,9 +40,9 @@ class EngagementService:
         if not data:
             return self.response_error("Missing data", 400)
 
-        user_id = data.get("key")
-        user_field = data.get("field")
-        user_value = data.get("value")
+        user_id = data["key"]
+        user_field = data["field"]
+        user_value = data["value"]
 
         if not user_id or not user_field or user_value is None:
             return self.response_error("Invalid input data", 400)
@@ -72,8 +70,8 @@ class EngagementService:
             user["_id"] = str(user["_id"])
             user["slDays"] = (time - user["createdDate"]).days
             user["createdDate"] = user["createdDate"].strftime('%d-%m-%Y')
-            user["birthDate"] = user.get("birthDate").strftime(
-                '%d-%m-%Y') if user.get("birthDate") else None
+            user["birthDate"] = user["birthDate"].strftime(
+                '%d-%m-%Y') if user["birthDate"] else None
 
             self.populate_meta_data(user)
             self.populate_call_data(user, time)
@@ -108,7 +106,7 @@ class EngagementService:
     def populate_meta_data(self, user):
         user_meta = meta_collection.find_one({"user": ObjectId(user["_id"])})
         for field in self.meta_fields:
-            user[field] = user_meta.get(field, "") if user_meta else ""
+            user[field] = user_meta[field] if user_meta else ""
 
     def is_valid_user(self, user_id):
         return users_collection.find_one({"_id": ObjectId(user_id)}) is not None
