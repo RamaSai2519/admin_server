@@ -9,7 +9,7 @@ from Utils.config import meta_collection, users_collection, calls_collection
 
 class EngagementService:
     def __init__(self):
-        self.meta_fields = ["remarks", "poc", "expert", "status", "userStatus"]
+        self.meta_fields = ["remarks", "poc", "expert", "status", "userStatus", "source"]
 
     def get_engagement_data(self):
         try:
