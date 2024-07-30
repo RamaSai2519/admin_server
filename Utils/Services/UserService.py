@@ -57,34 +57,19 @@ class UserService:
                     user_leadsQuery, {"Customer Persona": 0}
                 ).sort("createdDate", -1)
             )
-            signedUpUsers = list(users_collection.find())
-            signedUpPhoneNumbers = [user["phoneNumber"]
-                                    for user in signedUpUsers]
-
-            allEventUsersQuery = {"phoneNumber": {"$nin": signedUpPhoneNumbers},
-                                  "hidden": {"$exists": False}}
-            allEventUsers = list(events_collection.find(
-                allEventUsersQuery).sort("createdAt", -1))
-
             for user in user_leads:
-                user["leadSource"] = "Website"
-            for user in allEventUsers:
-                user["leadSource"] = "Events"
-                user["createdDate"] = user["createdAt"]
+                user_meta = meta_collection.find_one(
+                    {"user": user["_id"]})
+                if user_meta:
+                    user["leadSource"] = user_meta["source"] if "source" in user_meta else ""
+                    if user["leadSource"] != "Events":
+                        user["leadSource"] = "Website"
 
-            final_data.extend(allEventUsers)
             final_data.extend(user_leads)
             final_data = list(map(hf.convert_objectids_to_strings, final_data))
 
-            def get_created_date(item):
-                return item["createdDate"]
-
-            final_data = sorted(
-                final_data, key=get_created_date, reverse=True)
-
             non_leads = users_collection.count_documents(
-                {"name": {"$exists": True}}
-            )
+                {"name": {"$exists": True}})
             return jsonify({
                 "data": final_data,
                 "totalUsers": non_leads,
