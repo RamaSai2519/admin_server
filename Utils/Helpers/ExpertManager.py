@@ -1,5 +1,6 @@
 from Utils.config import experts_collection, meta_collection, expertlogs_collection, EXPERT_JWT
 from Utils.Helpers.FormatManager import FormatManager as fm
+from Utils.Helpers.SlackManager import SlackManager
 from datetime import datetime
 from bson import ObjectId
 import pytz
@@ -7,6 +8,8 @@ import jwt
 
 
 class ExpertManager:
+    slack_manager = SlackManager()
+
     @staticmethod
     def get_online_saarthis():
         online_saarthis = experts_collection.find(
@@ -43,11 +46,16 @@ class ExpertManager:
 
     @staticmethod
     def status_handler(status, expertId):
+        expert = experts_collection.find_one({"_id": ObjectId(expertId)})
+        if not expert:
+            return None
+        expertName = expert["name"]
         if status == "online":
             expertlogs_collection.insert_one({
                 "expert": ObjectId(expertId),
                 status: datetime.now(pytz.utc)
             })
+            ExpertManager.slack_manager.send_message(True, expertName, expertId)
         elif status == "offline":
             onlinetime = expertlogs_collection.find_one(
                 {"expert": ObjectId(expertId), "offline": {"$exists": False}},
@@ -64,5 +72,5 @@ class ExpertManager:
                     pytz.utc), "duration": int(duration)}},
                 sort=[("online", -1)]
             )
-
+            ExpertManager.slack_manager.send_message(False, expertName, expertId)
         return True
