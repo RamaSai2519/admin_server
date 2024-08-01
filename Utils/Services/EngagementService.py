@@ -9,7 +9,8 @@ from Utils.config import meta_collection, users_collection, calls_collection
 
 class EngagementService:
     def __init__(self):
-        self.meta_fields = ["remarks", "poc", "expert", "status", "userStatus", "source"]
+        self.meta_fields = ["remarks", "poc",
+                            "expert", "status", "userStatus", "source"]
 
     def get_engagement_data(self):
         try:
@@ -20,6 +21,7 @@ class EngagementService:
             else:
                 return self.response_error("Invalid request method", 405)
         except Exception as e:
+            print(e)
             return self.response_error(str(e), 500)
 
     def handle_get_request(self):
