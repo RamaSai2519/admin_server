@@ -31,6 +31,7 @@ def get_popup_data_route(expertId):
 def update_status_route():
     return ExpertService.update_status()
 
+
 @expert_routes.route("/admin/expert/getExpertNames", methods=["GET"])
 def get_expert_names_route():
     return ExpertService.get_expert_names()

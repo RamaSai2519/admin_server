@@ -4,6 +4,7 @@ import threading
 from bson import ObjectId
 from datetime import datetime
 from flask import request, jsonify
+from Utils.Helpers.WAHelper import WAHelper
 from Utils.Helpers.HelperFunctions import HelperFunctions as hf
 from Utils.config import userwebhookmessages_collection, users_collection, wafeedback_collection, watemplates_collection, cities_cache, temp_collection
 
@@ -14,7 +15,7 @@ class WAService:
         self.page = None
         self.offset = None
         self.userTypes = ["partial", "full", "all"]
-        self.waUrl = "https://6x4j0qxbmk.execute-api.ap-south-1.amazonaws.com/main/actions/send_whatsapp"
+        self.wa_helper = WAHelper()
 
     def set_pagination_params(self):
         self.size = request.args.get('size', '10')
@@ -123,41 +124,6 @@ class WAService:
                     finalCities.append(c["city"])
         return finalCities
 
-    def find_template(self, templateId: str) -> str:
-        template = watemplates_collection.find_one(
-            {"_id": ObjectId(templateId)})
-        if not template:
-            return ""
-        template = template["name"]
-        return template
-
-    def format_input(self, inputs: dict) -> dict:
-        output_dict = {}
-        for key, value in inputs.items():
-            new_key = key.replace('<', '').replace('>', '')
-            output_dict[new_key] = value
-        return output_dict
-
-    def prepare_payload(self, user: dict, phoneNumber: str, templateId: str, inputs: dict) -> dict:
-        template = self.find_template(templateId)
-        if template == "":
-            return {}
-        inputs = self.format_input(inputs)
-        if "user_name" in inputs:
-            inputs["user_name"] = user["name"] if "name" in user else "User"
-        payload = {
-            "phone_number": phoneNumber,
-            "template_name": template,
-            "parameters": inputs
-        }
-        return payload
-
-    def send_whatsapp_message(self, payload: str) -> requests.Response:
-        headers = {'Content-Type': 'application/json'}
-        response = requests.request(
-            "POST", self.waUrl, headers=headers, data=payload)
-        return response
-
     def create_query(self, data: dict) -> dict:
         cities, usersType = self.validate_send_request(data)
         if usersType:
@@ -182,24 +148,14 @@ class WAService:
 
         def final_send():
             for user in users:
-                phoneNumber = user["phoneNumber"]
                 templateId = data["templateId"]
                 inputs = data["inputs"]
-                payload = self.prepare_payload(
-                    user, phoneNumber, templateId, inputs)
+                payload = self.wa_helper.prepare_payload(
+                    user=user, templateId=templateId, inputs=inputs)
                 if not payload:
                     return jsonify({"error": "Invalid template"}), 400
-                response = self.send_whatsapp_message(json.dumps(payload))
-                print(payload)
-                print(response.text)
-                print(response.headers)
-                temp_collection.insert_one({
-                    "phoneNumber": phoneNumber,
-                    "responseCode": response.status_code,
-                    "responseText": response.text,
-                    "messageId": messageId,
-                    "datetime": datetime.now()
-                })
+                self.wa_helper.send_whatsapp_message(
+                    payload, messageId, phoneNumber=user["phoneNumber"])
         threading.Thread(target=final_send).start()
 
         return jsonify({"message": "success"}), 200

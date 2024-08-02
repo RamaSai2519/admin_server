@@ -1,5 +1,6 @@
 from pymongo import MongoClient, DESCENDING
 from firebase_admin import credentials
+from slack_sdk import WebClient
 from dotenv import load_dotenv
 import firebase_admin
 import boto3
@@ -26,6 +27,7 @@ s3_client = boto3.client(
     aws_access_key_id=ACCESS_KEY,
     aws_secret_access_key=SECRET_ACCESS_KEY
 )
+slack_client = WebClient(token=os.getenv("SLACK_BOT_TOKEN"))
 
 mongodbClient = MongoClient(os.getenv("PROD_DB_URL"))
 gamesdb = mongodbClient["games"]

@@ -3,7 +3,6 @@ from Utils.Helpers.AuthManager import AuthManager as am
 from Utils.config import shorts_collection, s3_client
 from flask import jsonify, request
 from bson import ObjectId
-from pprint import pprint
 
 
 class ContentService:
@@ -11,7 +10,6 @@ class ContentService:
     def get_shorts():
         shorts = list(shorts_collection.find(
             {}, {"_id": 0, "categoryId": 0, "thumbnails": 0, "description": 0, "lastModifiedBy": 0}))
-        pprint(shorts)
         return jsonify(shorts)
 
     @staticmethod

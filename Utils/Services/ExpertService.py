@@ -266,7 +266,7 @@ class ExpertService:
 
         response = em.status_handler(status, expertId)
         if not response:
-            return jsonify({"error": "Expert Not Online"}), 200
+            return jsonify({"error": "Status update failed"}), 400
 
         return jsonify({"msg": "Status updated successfully"})
 

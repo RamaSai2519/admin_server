@@ -4,6 +4,7 @@ from bson import ObjectId
 from Utils.Helpers.HelperFunctions import HelperFunctions as hf
 from Utils.Helpers.UserManager import UserManager as um
 from Utils.Helpers.AuthManager import AuthManager as am
+from Utils.Helpers.WAHelper import WAHelper
 from Utils.config import (
     userwebhookmessages_collection,
     usernotifications_collection,
@@ -18,7 +19,7 @@ from Utils.config import (
 
 class UserService:
     def __init__(self):
-        pass
+        self.wa_service = WAHelper()
 
     def update_document(self, collection, user_id, update_fields):
         update_fields["lastModifiedBy"] = ObjectId(am.get_identity())
@@ -56,34 +57,19 @@ class UserService:
                     user_leadsQuery, {"Customer Persona": 0}
                 ).sort("createdDate", -1)
             )
-            signedUpUsers = list(users_collection.find())
-            signedUpPhoneNumbers = [user["phoneNumber"]
-                                    for user in signedUpUsers]
-
-            allEventUsersQuery = {"phoneNumber": {"$nin": signedUpPhoneNumbers},
-                                  "hidden": {"$exists": False}}
-            allEventUsers = list(events_collection.find(
-                allEventUsersQuery).sort("createdAt", -1))
-
             for user in user_leads:
-                user["leadSource"] = "Website"
-            for user in allEventUsers:
-                user["leadSource"] = "Events"
-                user["createdDate"] = user["createdAt"]
+                user_meta = meta_collection.find_one(
+                    {"user": user["_id"]})
+                if user_meta:
+                    user["leadSource"] = user_meta["source"] if "source" in user_meta else ""
+                    if user["leadSource"] != "Events":
+                        user["leadSource"] = "Website"
 
-            final_data.extend(allEventUsers)
             final_data.extend(user_leads)
             final_data = list(map(hf.convert_objectids_to_strings, final_data))
 
-            def get_created_date(item):
-                return item["createdDate"]
-
-            final_data = sorted(
-                final_data, key=get_created_date, reverse=True)
-
             non_leads = users_collection.count_documents(
-                {"name": {"$exists": True}}
-            )
+                {"name": {"$exists": True}})
             return jsonify({
                 "data": final_data,
                 "totalUsers": non_leads,
@@ -176,6 +162,19 @@ class UserService:
             admin_id = am.get_identity()
             update_query["lastModifiedBy"] = ObjectId(admin_id)
 
+            prev_user = self.get_document(users_collection, user_id)
+            if not prev_user:
+                return jsonify({"error": "User not found"}), 404
+            if update_query["isPaidUser"] and prev_user["isPaidUser"] != update_query["isPaidUser"] and update_query["isPaidUser"] == True:
+                payload = {
+                    "phone_number": prev_user["phoneNumber"],
+                    "template_name": "CLUB_SUKOON_MEMBERSHIP",
+                    "parameters": {
+                        "user_name": str(str(prev_user["name"]).split(" ")[0].capitalize())
+                    }
+                }
+                self.wa_service.send_whatsapp_message(
+                    payload, "CLUB_SUKOON_MEMBERSHIP", prev_user["phoneNumber"])
             result = self.update_document(
                 users_collection, user_id, update_query)
 

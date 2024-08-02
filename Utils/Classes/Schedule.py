@@ -2,6 +2,7 @@ from Utils.Helpers.AuthManager import AuthManager as am
 from datetime import datetime, timedelta
 from bson import ObjectId
 
+
 class Schedule:
     def __init__(self, expert_id, user_id, time, duration=30, type="User"):
         self.expert_id = expert_id
