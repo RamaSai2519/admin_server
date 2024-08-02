@@ -9,8 +9,8 @@ from Utils.config import meta_collection, users_collection, calls_collection
 
 class EngagementService:
     def __init__(self):
-        self.meta_fields = ["remarks", "poc",
-                            "expert", "status", "userStatus", "source"]
+        self.meta_fields = ["remarks", "expert",
+                            "status", "userStatus", "source"]
 
     def get_engagement_data(self):
         try:
@@ -71,6 +71,10 @@ class EngagementService:
         for user in users:
             user["_id"] = str(user["_id"])
             user["slDays"] = (time - user["createdDate"]).days
+            if "name" not in user or user["name"] == "":
+                user["type"] = "Lead"
+            else:
+                user["type"] = "User"
 
             self.populate_meta_data(user)
             self.populate_call_data(user, time)
