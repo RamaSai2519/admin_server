@@ -15,7 +15,6 @@ from routes.expert_routes import expert_routes
 from routes.content_routes import content_routes
 from routes.service_routes import service_routes
 from routes.schedule_routes import schedule_routes
-# from Utils.Services.GameService import GameService
 from Utils.Services.ExpertService import ExpertService
 
 app = Flask(__name__)
@@ -30,7 +29,6 @@ app.config["JWT_REFRESH_TOKEN_EXPIRES"] = timedelta(days=1)
 threading.Thread(target=ExpertService.watch_changes, daemon=True).start()
 threading.Thread(
     target=ExpertService.periodic_reset_sse_connections, daemon=True).start()
-# threading.Thread(target=GameService.watch_room_changes, daemon=True).start()
 
 app.register_blueprint(wa_routes)
 app.register_blueprint(auth_routes)

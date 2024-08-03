@@ -1,11 +1,25 @@
-/Utils/__pycache__
-/Utils/Helpers/__pycache__
-/Utils/Services/__pycache__
-/routes/__pycache__
-jwtgenerator.py
-/serviceAccountKey.json
-.env
-experimentor.py
+# Python
 __pycache__/
-venv/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Flask
+instance/
+webapp.egg-info/
+.env
+
+# IDE
 .vscode/
+.idea/
+
+# Logs
+*.log
+
+# Dependency directories
+venv/
+env/
+
+# misc
+jwtgenerator.py
+serviceAccountKey.json

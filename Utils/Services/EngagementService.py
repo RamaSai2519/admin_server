@@ -71,7 +71,7 @@ class EngagementService:
         for user in users:
             user["_id"] = str(user["_id"])
             user["slDays"] = (time - user["createdDate"]).days
-            if "name" not in user or user["name"] == "":
+            if "profileCompleted" in user and user["profileCompleted"] is False:
                 user["type"] = "Lead"
             else:
                 user["type"] = "User"
