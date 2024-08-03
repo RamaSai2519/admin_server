@@ -64,6 +64,8 @@ class UserService:
                     user["leadSource"] = user_meta["source"] if "source" in user_meta else ""
                     if user["leadSource"] != "Events":
                         user["leadSource"] = "Website"
+                if not user_meta:
+                    user["leadSource"] = "Website"
 
             final_data.extend(user_leads)
             final_data = list(map(hf.convert_objectids_to_strings, final_data))
