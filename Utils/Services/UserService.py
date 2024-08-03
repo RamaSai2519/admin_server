@@ -51,7 +51,7 @@ class UserService:
         if request.method == "GET":
             final_data = []
 
-            user_leadsQuery = {"name": {"$exists": False}}
+            user_leadsQuery = {"profileCompleted": False}
             user_leads = list(
                 users_collection.find(
                     user_leadsQuery, {"Customer Persona": 0}
@@ -69,7 +69,7 @@ class UserService:
             final_data = list(map(hf.convert_objectids_to_strings, final_data))
 
             non_leads = users_collection.count_documents(
-                {"name": {"$exists": True}})
+                {"profileCompleted": True})
             return jsonify({
                 "data": final_data,
                 "totalUsers": non_leads,
