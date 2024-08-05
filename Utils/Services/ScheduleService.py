@@ -94,6 +94,7 @@ class ScheduleService:
                 listScheduledJobs(limit: $limit) {
                     nextToken
                     items {
+                        id
                         requestMeta
                         scheduledJobTime
                         scheduledJobStatus
