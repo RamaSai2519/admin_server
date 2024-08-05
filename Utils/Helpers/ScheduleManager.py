@@ -17,7 +17,8 @@ class ScheduleManager:
             "job_type": "CALL",
             "job_time": time,
             "status": "PENDING",
-            "request_meta": meta
+            "request_meta": meta,
+            "action": "CREATE"
         }
         response = requests.request("POST", url, data=json.dumps(payload))
         return response.text
