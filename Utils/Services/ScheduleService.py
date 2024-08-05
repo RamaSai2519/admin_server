@@ -110,3 +110,8 @@ class ScheduleService:
         response = fm.format_schedules(response)
 
         return jsonify(response)
+    
+    @staticmethod
+    def delete_schedule(scheduleId):
+        sm.cancelCall(scheduleId)
+        return jsonify({"message": "Schedule deleted successfully"})

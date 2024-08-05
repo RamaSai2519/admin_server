@@ -16,3 +16,7 @@ def slots_route():
 @schedule_routes.route("/admin/data/newSchedules", methods=["GET"])
 def test_route():
     return ScheduleService.get_dynamo_schedules()
+
+@schedule_routes.route("/admin/data/schedule/<scheduleId>", methods=["DELETE"])
+def delete_schedule_route(scheduleId):
+    return ScheduleService.delete_schedule(scheduleId)
