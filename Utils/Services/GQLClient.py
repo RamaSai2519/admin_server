@@ -1,8 +1,6 @@
 import re
 import json
 from boto3 import Session as AWSSession
-from botocore.client import Config
-from botocore.exceptions import ClientError
 from requests_aws4auth import AWS4Auth
 from gql import gql
 from gql.client import Client
