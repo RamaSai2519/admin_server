@@ -6,6 +6,7 @@ from Utils.Classes.Slot import Slot
 from Utils.Classes.Schedule import Schedule
 from Utils.Services.GQLClient import call_graphql
 from Utils.Helpers.FormatManager import FormatManager as fm
+from Utils.Constants.gqlQueries import listScheduledJobsQuery
 from Utils.Helpers.ScheduleManager import ScheduleManager as sm
 from Utils.Helpers.UtilityFunctions import UtilityFunctions as uf
 from Utils.config import schedules_collection, experts_collection, users_collection
@@ -89,20 +90,7 @@ class ScheduleService:
 
     @staticmethod
     def get_dynamo_schedules():
-        query = """
-            query MyQuery($limit: Int = 500) {
-                listScheduledJobs(limit: $limit) {
-                    nextToken
-                    items {
-                        id
-                        requestMeta
-                        scheduledJobTime
-                        scheduledJobStatus
-                    }
-                }
-            }
-        """
-
+        query = listScheduledJobsQuery
         params = {"limit": 500}
         response = call_graphql(
             query=query, params=params, message="get_scheduled_jobs")

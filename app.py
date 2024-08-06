@@ -1,6 +1,7 @@
 import threading
 from flask import Flask
 from flask_cors import CORS
+from flask_restful import Api
 from datetime import timedelta
 from routes.wa_routes import wa_routes
 from Utils.config import JWT_SECRET_KEY
@@ -16,9 +17,10 @@ from routes.content_routes import content_routes
 from routes.service_routes import service_routes
 from routes.schedule_routes import schedule_routes
 from Utils.Services.ExpertService import ExpertService
+from Utils.Services.services.events import EventsService
 
 app = Flask(__name__)
-
+api = Api(app)
 JWTManager(app)
 CORS(app, supports_credentials=True)
 
@@ -42,6 +44,7 @@ app.register_blueprint(content_routes)
 app.register_blueprint(service_routes)
 app.register_blueprint(schedule_routes)
 
+api.add_resource(EventsService, "/events")
 
 if __name__ == "__main__":
     app.run(
