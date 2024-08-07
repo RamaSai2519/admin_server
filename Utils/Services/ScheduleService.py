@@ -95,6 +95,7 @@ class ScheduleService:
                     nextToken
                     items {
                         id
+                        status
                         requestMeta
                         scheduledJobTime
                         scheduledJobStatus
