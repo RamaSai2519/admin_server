@@ -57,14 +57,6 @@ class ScheduleService:
     @staticmethod
     def schedule_call_job(document, schedule: Schedule):
         time = datetime.strptime(schedule.time, "%Y-%m-%dT%H:%M:%S.%fZ")
-        hour, minute, year, month, day = schedule.ist_time.hour, schedule.ist_time.minute, schedule.ist_time.year, schedule.ist_time.month - 1, schedule.ist_time.day
-
-        expert_doc = experts_collection.find_one(
-            {"_id": ObjectId(schedule.expert_id)})
-        expert_number = expert_doc["phoneNumber"] if expert_doc else ""
-        user_doc = users_collection.find_one(
-            {"_id": ObjectId(schedule.user_id)})
-        user_number = user_doc["phoneNumber"] if user_doc and "phoneNumber" in user_doc else ""
         record = schedules_collection.find_one(document, {"_id": 1})
         record_id = str(record["_id"]) if record else ""
 
