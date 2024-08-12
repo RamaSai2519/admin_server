@@ -51,8 +51,8 @@ class ScheduleService:
 
         document = schedule.to_document()
         schedules_collection.insert_one(document)
-        ScheduleService.schedule_call_job(document, schedule)
-        return jsonify({"message": "Data received successfully"})
+        response = ScheduleService.schedule_call_job(document, schedule)
+        return jsonify({"message": f"Data received successfully {response}"})
 
     @staticmethod
     def schedule_call_job(document, schedule: Schedule):
@@ -63,6 +63,7 @@ class ScheduleService:
         response = sm.scheduleCall(
             time, schedule.expert_id, schedule.user_id, record_id)
         print(response)
+        return response
 
     @staticmethod
     def get_slots():
@@ -88,6 +89,7 @@ class ScheduleService:
                     items {
                         id
                         status
+                        isDeleted
                         requestMeta
                         scheduledJobTime
                         scheduledJobStatus

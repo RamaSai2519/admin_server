@@ -18,14 +18,13 @@ class ScheduleManager:
             "job_time": time,
             "status": "PENDING",
             "request_meta": meta,
-            "action": "CREATE"
         }
         response = requests.request("POST", url, data=json.dumps(payload))
         return response.text
 
     @staticmethod
     def cancelCall(scheduleId):
-        url = "https://6x4j0qxbmk.execute-api.ap-south-1.amazonaws.com/main/actions/create_scheduled_job"
+        url = "https://6x4j0qxbmk.execute-api.ap-south-1.amazonaws.com/main/actions/update_scheduled_job"
         payload = {
             "action": "DELETE",
             "scheduled_job_id": scheduleId
