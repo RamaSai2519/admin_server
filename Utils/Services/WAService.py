@@ -6,7 +6,7 @@ from datetime import datetime
 from flask import request, jsonify
 from Utils.Helpers.WAHelper import WAHelper
 from Utils.Helpers.HelperFunctions import HelperFunctions as hf
-from Utils.config import userwebhookmessages_collection, users_collection, wafeedback_collection, watemplates_collection, cities_cache, temp_collection
+from Utils.config import userwebhookmessages_collection, users_collection, wafeedback_collection, watemplates_collection, cities_cache, temp_collection, events_collection, eventconfigs_collection
 
 
 class WAService:
@@ -142,8 +142,17 @@ class WAService:
         if not data:
             return jsonify({"error": "Invalid request data"}), 400
 
-        query = self.create_query(data)
-        users = self.fetch_users(query)
+        if data["usersType"] == "event" and not data["eventSlug"]:
+            return jsonify({"error": "Event slug is required"}), 200
+
+        if data["usersType"] == "event":
+            event = eventconfigs_collection.find_one(
+                {"_id": ObjectId(data["eventSlug"])})
+            users = events_collection.find({"source": event["slug"]})
+        else:
+            query = self.create_query(data)
+            users = self.fetch_users(query)
+        
         messageId = data["messageId"]
 
         def final_send():
@@ -164,8 +173,19 @@ class WAService:
         data = request.json
         if not data:
             return jsonify({"error": "Invalid request data"}), 400
-        query = self.create_query(data)
-        users = users_collection.count_documents(query)
+
+        if data["usersType"] == "event" and not data["eventSlug"]:
+            return jsonify({"error": "Event slug is required"}), 200
+
+        if data["usersType"] == "event":
+            event = eventconfigs_collection.find_one(
+                {"_id": ObjectId(data["eventSlug"])})
+            users = events_collection.count_documents(
+                {"source": event["slug"]})
+        else:
+            query = self.create_query(data)
+            users = users_collection.count_documents(query)
+
         return jsonify({
             "usersCount": users,
         }), 200
