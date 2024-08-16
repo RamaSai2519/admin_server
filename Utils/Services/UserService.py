@@ -167,7 +167,7 @@ class UserService:
             prev_user = self.get_document(users_collection, user_id)
             if not prev_user:
                 return jsonify({"error": "User not found"}), 404
-            if update_query["isPaidUser"] and "isPaidUser" in prev_user and prev_user["isPaidUser"] != update_query["isPaidUser"] and update_query["isPaidUser"] == True:
+            if "isPaidUser" in update_query and "isPaidUser" in prev_user and prev_user["isPaidUser"] != update_query["isPaidUser"] and update_query["isPaidUser"] == True:
                 payload = {
                     "phone_number": prev_user["phoneNumber"],
                     "template_name": "CLUB_SUKOON_MEMBERSHIP",
