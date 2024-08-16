@@ -47,7 +47,7 @@ class SlackManager:
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": f"*{expert_name}* is now *{'online' if status else 'offline'}*. {'🎉' if status else '🚫'}"
+                    "text": f"@channel *{expert_name}* is now *{'online' if status else 'offline'}*. {'🎉' if status else '🚫'}"
                 }
             },
             details_block,
