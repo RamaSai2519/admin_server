@@ -130,7 +130,7 @@ class WAService:
             if usersType == "all":
                 query = {}
             else:
-                query = {"name": {"$exists": usersType == "full"}}
+                query = {"profileCompleted": {usersType == "full"}}
         elif cities:
             query = {"city": {"$in": cities}}
         else:
