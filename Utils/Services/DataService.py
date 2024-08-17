@@ -169,7 +169,7 @@ class DataService:
         return jsonify(filter_options)
 
     def get_filtered_data(self):
-        data = request.json
+        data = dict(request.json)
         if not data:
             return jsonify({"error": "Invalid request data"}), 400
 

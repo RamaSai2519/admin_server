@@ -126,15 +126,14 @@ class WAService:
 
     def create_query(self, data: dict) -> dict:
         cities, usersType = self.validate_send_request(data)
+        query = {"wa_opt_out": False}
         if usersType:
-            if usersType == "all":
-                query = {}
-            else:
-                query = {"profileCompleted": usersType == "full"}
+            if usersType != "all":
+                query["profileCompleted"] = usersType == "full"
         elif cities:
-            query = {"city": {"$in": cities}}
+            query["city"] = {"$in": cities}
         else:
-            return {}
+            return query
         return query
 
     def handle_send(self):
@@ -152,7 +151,7 @@ class WAService:
         else:
             query = self.create_query(data)
             users = self.fetch_users(query)
-        
+
         messageId = data["messageId"]
 
         def final_send():
