@@ -87,6 +87,9 @@ class DataService:
             if not data:
                 return jsonify({"error": "Invalid request data"}), 400
             category = data["name"]
+            prev_category = categories_collection.find_one({"name": category})
+            if prev_category:
+                return jsonify({"error": "Category already exists"}), 400
             createdDate = datetime.now()
             categories_collection.insert_one(
                 {"name": category, "createdDate": createdDate, "active": True, "lastModifiedBy": ObjectId(AuthManager.get_identity())})
