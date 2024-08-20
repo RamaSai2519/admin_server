@@ -37,7 +37,7 @@ class ScheduleService:
 
     @staticmethod
     def create_schedule():
-        data = request.json
+        data = dict(request.json)
         if not data:
             return jsonify({"error": "Invalid request data"}), 400
 
@@ -62,7 +62,7 @@ class ScheduleService:
 
         response = sm.scheduleCall(
             time, schedule.expert_id, schedule.user_id, record_id)
-        print(response)
+
         return response
 
     @staticmethod

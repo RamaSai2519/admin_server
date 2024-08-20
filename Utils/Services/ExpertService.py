@@ -30,6 +30,7 @@ class ExpertService:
         expert = experts_collection.insert_one(
             {
                 "name": "Enter Name",
+                "status": "offline",
                 "categories": [],
                 "proflieCompleted": True,
                 "lastModifiedBy": ObjectId(am.get_identity()),
