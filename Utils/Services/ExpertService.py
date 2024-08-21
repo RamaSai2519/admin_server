@@ -32,7 +32,7 @@ class ExpertService:
                 "name": "Enter Name",
                 "status": "offline",
                 "categories": [],
-                "profileCompleted": True,
+                "profileCompleted": False,
                 "lastModifiedBy": ObjectId(am.get_identity()),
             }
         )
