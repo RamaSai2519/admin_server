@@ -5,11 +5,12 @@ from Utils.Helpers.EngagementHelper import EngagementHelper
 from Utils.Helpers.HelperFunctions import HelperFunctions as hf
 from Utils.Helpers.UtilityFunctions import UtilityFunctions as uf
 from Utils.config import meta_collection, users_collection, calls_collection
+from pprint import pprint
 
 
 class EngagementService:
     def __init__(self):
-        self.meta_fields = ["remarks", "expert",
+        self.meta_fields = ["remarks", "expert", "lastReached",
                             "status", "userStatus", "source"]
 
     def get_engagement_data(self):
