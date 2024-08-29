@@ -37,7 +37,7 @@ class ScheduleService:
 
     @staticmethod
     def create_schedule():
-        data = dict(request.json)
+        data = dict(request.json) if request.json is not None else {}
         if not data:
             return jsonify({"error": "Invalid request data"}), 400
 

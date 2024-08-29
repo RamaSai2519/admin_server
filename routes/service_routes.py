@@ -6,18 +6,6 @@ from flask import Blueprint
 service_routes = Blueprint("service_routes", __name__)
 
 
-@service_routes.route("/admin/service/schedule/<id>", methods=["PUT", "DELETE", "GET"])
-@jwt_required()
-def update_schedule_route(id):
-    return AppService.update_schedule(id)
-
-
-@service_routes.route("/admin/service/approve/<string:id>/<level>", methods=["PUT"])
-@jwt_required()
-def approve_user(id, level):
-    return AppService.approve_application(id, level)
-
-
 @service_routes.route("/admin/service/save-fcm-token", methods=["POST"])
 @jwt_required()
 def save_fcm_token_route():
