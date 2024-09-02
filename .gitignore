@@ -23,3 +23,5 @@ env/
 # misc
 jwtgenerator.py
 serviceAccountKey.json
+Pipfile
+Pipfile.lock
