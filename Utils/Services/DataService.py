@@ -109,6 +109,7 @@ class DataService:
             data = request.json
             if not data:
                 return jsonify({"error": "Invalid request data"}), 400
+            print(data)
             expertId = data["expertId"]
             field = data["row"]["field"]
             value = data["row"]["value"]
