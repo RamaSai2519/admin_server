@@ -103,6 +103,7 @@ class DataService:
             for timing in timings:
                 timing["_id"] = str(timing["_id"])
                 timing["expert"] = str(timing["expert"])
+                timing["lastModifiedBy"] = str(timing["lastModifiedBy"]) if "lastModifiedBy" in timing else ""
             return jsonify(timings)
         if request.method == "POST":
             data = request.json
