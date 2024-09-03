@@ -103,7 +103,8 @@ class DataService:
             for timing in timings:
                 timing["_id"] = str(timing["_id"])
                 timing["expert"] = str(timing["expert"])
-                timing["lastModifiedBy"] = str(timing["lastModifiedBy"]) if "lastModifiedBy" in timing else ""
+                timing["lastModifiedBy"] = str(
+                    timing["lastModifiedBy"]) if "lastModifiedBy" in timing else ""
             return jsonify(timings)
         if request.method == "POST":
             data = request.json
@@ -111,6 +112,7 @@ class DataService:
                 return jsonify({"error": "Invalid request data"}), 400
             print(data)
             expertId = data["expertId"]
+            day = data["row"]["key"]
             field = data["row"]["field"]
             value = data["row"]["value"]
 
@@ -119,17 +121,11 @@ class DataService:
             if field not in fields:
                 return jsonify({"error": "Invalid field"}), 400
             try:
-                timing = timings_collection.find_one(
-                    {"expert": ObjectId(expertId)})
                 admin_id = ObjectId(AuthManager.get_identity())
-                if timing:
-                    timings_collection.update_one({"expert": ObjectId(expertId)}, {
-                                                  "$set": {field: value, "lastModifiedBy": admin_id}})
-                    return jsonify({"message": "Timing updated successfully"})
-                else:
-                    timings_collection.insert_one(
-                        {"expert": ObjectId(expertId), field: value, "lastModifiedBy": admin_id})
-                    return jsonify({"message": "Timing added successfully"})
+                filter = {"expert": ObjectId(expertId), "day": day}
+                timings_collection.update_one(filter, {
+                    "$set": {field: value, "lastModifiedBy": admin_id}})
+                return jsonify({"message": "Timing updated successfully"})
             except Exception as e:
                 print(e)
                 return jsonify({"error": str(e)}), 400
