@@ -13,8 +13,7 @@ class SlackManager:
 
     def join_channel(self):
         try:
-            response = self.client.conversations_join(channel=self.channel)
-            print("Joined channel:", response)
+            self.client.conversations_join(channel=self.channel)
         except SlackApiError as e:
             print(f"Error joining channel: {e}")
 
