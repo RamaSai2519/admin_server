@@ -3,7 +3,6 @@ from flask import Flask
 from flask_cors import CORS
 from datetime import timedelta
 from routes.wa_routes import wa_routes
-from Utils.config import JWT_SECRET_KEY
 from flask_jwt_extended import JWTManager
 from routes.auth_routes import auth_routes
 from routes.call_routes import call_routes
@@ -11,6 +10,7 @@ from routes.data_routes import data_routes
 from routes.game_routes import game_routes
 from routes.user_routes import user_routes
 from routes.event_routes import event_routes
+from Utils.config import JWT_SECRET_KEY, PORT
 from routes.expert_routes import expert_routes
 from routes.content_routes import content_routes
 from routes.service_routes import service_routes
@@ -46,6 +46,6 @@ app.register_blueprint(schedule_routes)
 if __name__ == "__main__":
     app.run(
         host="0.0.0.0",
-        port=8080,
+        port=PORT,
         debug=True,
     )

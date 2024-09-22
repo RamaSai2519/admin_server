@@ -8,6 +8,7 @@ import os
 
 load_dotenv()
 
+PORT = os.getenv("PORT")
 REGION = os.getenv("REGION")
 EXPERT_JWT = os.getenv("EXPERT_JWT")
 ACCESS_KEY = os.getenv("ACCESS_KEY")
