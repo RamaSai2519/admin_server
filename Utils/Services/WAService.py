@@ -116,14 +116,6 @@ class WAService:
         users = users_collection.find(query)
         return list(users)
 
-    def fetch_cities(self, cities):
-        finalCities = []
-        for city in cities:
-            for c in cities_cache:
-                if c["_id"] == city:
-                    finalCities.append(c["city"])
-        return finalCities
-
     def create_query(self, data: dict) -> dict:
         cities, usersType = self.validate_send_request(data)
         query = {"wa_opt_out": False}
