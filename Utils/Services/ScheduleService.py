@@ -83,7 +83,7 @@ class ScheduleService:
     @staticmethod
     def get_dynamo_schedules():
         query = """
-            query MyQuery($limit: Int = 1000) {
+            query MyQuery($limit: Int = 10000) {
                 listScheduledJobs(limit: $limit) {
                     nextToken
                     items {
@@ -98,7 +98,7 @@ class ScheduleService:
             }
         """
 
-        params = {"limit": 1000}
+        params = {"limit": 10000}
         response = call_graphql(
             query=query, params=params, message="get_scheduled_jobs")
 
