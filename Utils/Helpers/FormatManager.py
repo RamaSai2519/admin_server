@@ -58,8 +58,7 @@ class FormatManager:
         return formatted_expert
 
     @staticmethod
-    def format_schedules(response):
-        schedules = response["listScheduledJobs"]["items"]
+    def format_schedules(schedules):
         for schedule in schedules:
             schedule["requestMeta"] = json.loads(schedule["requestMeta"])
             schedule["expert"] = hf.get_expert_name(

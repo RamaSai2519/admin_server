@@ -81,10 +81,15 @@ class ScheduleService:
         return jsonify(output_slots)
 
     @staticmethod
+    @staticmethod
+    def delete_schedule(scheduleId):
+        sm.cancelCall(scheduleId)
+        return jsonify({"message": "Schedule deleted successfully"})
+
     def get_dynamo_schedules():
         query = """
-            query MyQuery($limit: Int = 10000) {
-                listScheduledJobs(limit: $limit) {
+            query MyQuery($limit: Int = 1000, $nextToken: String) {
+                listScheduledJobs(limit: $limit, nextToken: $nextToken) {
                     nextToken
                     items {
                         id
@@ -98,15 +103,24 @@ class ScheduleService:
             }
         """
 
-        params = {"limit": 10000}
-        response = call_graphql(
-            query=query, params=params, message="get_scheduled_jobs")
+        params = {"limit": 1000}
+        all_items = []
+        next_token = None
 
-        response = fm.format_schedules(response)
+        while True:
+            if next_token:
+                params["nextToken"] = next_token
+            else:
+                params.pop("nextToken", None)
 
-        return jsonify(response)
-    
-    @staticmethod
-    def delete_schedule(scheduleId):
-        sm.cancelCall(scheduleId)
-        return jsonify({"message": "Schedule deleted successfully"})
+            response = call_graphql(
+                query=query, params=params, message="get_scheduled_jobs")
+            all_items.extend(response['listScheduledJobs']['items'])
+
+            next_token = response['listScheduledJobs'].get('nextToken')
+            if not next_token:
+                break
+
+        formatted_response = fm.format_schedules(all_items)
+
+        return jsonify(formatted_response)
