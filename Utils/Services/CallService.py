@@ -52,15 +52,11 @@ class CallService:
             if not call:
                 return jsonify({"error": "Call not found"}), 404
             formatted_call = fm.format_call(call)
-            callmeta = callsmeta_collection.find_one(
+            callmeta: dict = callsmeta_collection.find_one(
                 {"callId": id}, {"_id": 0})
             if callmeta:
-                formatted_call["Topics"] = callmeta["Topics"]
-                formatted_call["Summary"] = callmeta["Summary"]
-                formatted_call["User Callback"] = callmeta["User Callback"]
-                formatted_call["Score Breakup"] = callmeta["Score Breakup"]
-                formatted_call["transcript_url"] = callmeta["transcript_url"]
-                formatted_call["Saarthi Feedback"] = callmeta["Saarthi Feedback"]
+                for key, value in callmeta.items():
+                    formatted_call[key] = value
             return jsonify(formatted_call)
         elif (request.method) == "PUT":
             data = request.get_json()
