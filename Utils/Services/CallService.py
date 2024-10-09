@@ -70,7 +70,7 @@ class CallService:
                 {"callId": id},
                 {
                     "$set": {
-                        "Conversation Score": float(new_conversation_score),
+                        "conversationScore": float(new_conversation_score),
                         "lastModifiedBy": ObjectId(admin_id),
                     }
                 },

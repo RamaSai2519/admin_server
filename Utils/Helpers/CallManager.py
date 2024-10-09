@@ -14,10 +14,10 @@ import json
 class CallManager:
     @staticmethod
     def calculate_average_conversation_score():
-        query = {"Conversation Score": {"$gt": 0}}
-        projection = {"Conversation Score": 1, "_id": 0}
+        query = {"conversationScore": {"$gt": 0}}
+        projection = {"conversationScore": 1, "_id": 0}
         documents = calls_collection.find(query, projection)
-        scores = [doc["Conversation Score"] for doc in documents]
+        scores = [doc["conversationScore"] for doc in documents]
         if scores:
             average_score = sum(scores) / len(scores)
         else:

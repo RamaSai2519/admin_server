@@ -17,7 +17,6 @@ class FormatManager:
         call["lastModifiedBy"] = (
             str(call["lastModifiedBy"]) if "lastModifiedBy" in call else None
         )
-        call["ConversationScore"] = call.pop("Conversation Score", 0)
         if "failedReason" in call:
             if call["failedReason"] == "call missed":
                 call["status"] = "missed"
