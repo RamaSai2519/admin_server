@@ -65,7 +65,7 @@ class EngagementService:
     def get_user_data(self, size, offset, time):
         users = users_collection.find(
             {"role": {"$ne": "admin"}},
-            {"Customer Persona": 0, "lastModifiedBy": 0, "userGameStats": 0}
+            {"customerPersona": 0, "lastModifiedBy": 0, "userGameStats": 0}
         ).sort("createdDate", -1).skip(offset).limit(size)
 
         user_data = []

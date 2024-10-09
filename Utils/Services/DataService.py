@@ -67,7 +67,7 @@ class DataService:
 
     def get_users(self):
         users = list(users_collection.find(
-            {"role": {"$ne": "admin"}, "profileCompleted": True}, {"Customer Persona": 0}))
+            {"role": {"$ne": "admin"}, "profileCompleted": True}, {"customerPersona": 0}))
         for user in users:
             user["_id"] = str(user["_id"])
             user["lastModifiedBy"] = str(

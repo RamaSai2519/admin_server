@@ -39,11 +39,8 @@ class UserManager:
                 "city": user_city if "city" in user else "Unknown",
                 "age": user_age if "birthDate" in user else "Unknown",
             }
-            user_persona = (
-                user["Customer Persona"]
-                if "Customer Persona" in user
-                else "Unknown"
-            )
+            user_persona = (user["customerPersona"]
+                            if "customerPersona" in user else "Unknown")
             document = meta_collection.find_one({"user": user_id})
             if not document:
                 return {

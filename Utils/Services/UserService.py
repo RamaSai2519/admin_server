@@ -54,7 +54,7 @@ class UserService:
             user_leadsQuery = {"profileCompleted": False}
             user_leads = list(
                 users_collection.find(
-                    user_leadsQuery, {"Customer Persona": 0}
+                    user_leadsQuery, {"customerPersona": 0}
                 ).sort("createdDate", -1)
             )
             for user in user_leads:
