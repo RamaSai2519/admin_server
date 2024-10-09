@@ -67,13 +67,13 @@ class UserManager:
         if len(list(calls_collection.find({"user": user_id, "status": " ", "failedReason": ""}))) > 1:
             if (
                 len(list(calls_collection.find(
-                    {"user": user_id, "expert": expert_id, "status": "successfull", "failedReason": ""})))
+                    {"user": user_id, "expert": expert_id, "status": "successful", "failedReason": ""})))
                 > 1
             ):
                 return "You have connected to this user before."
             else:
                 calls = list(calls_collection.find(
-                    {"user": user_id,  "status": "successfull", "failedReason": ""}))
+                    {"user": user_id,  "status": "successful", "failedReason": ""}))
                 latest_call = calls[-2]
                 last_expert_name = hf.get_expert_name(latest_call["expert"])
                 return f"The user has spoken to {last_expert_name} in the last session."

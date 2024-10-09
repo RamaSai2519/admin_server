@@ -30,11 +30,11 @@ class InsightsManager:
             return uf.get_calls_count(today_calls_query)
 
         def successfulCalls():
-            return uf.get_calls_count({"status": "successfull", "failedReason": ""})
+            return uf.get_calls_count({"status": "successful", "failedReason": ""})
 
         def todaySuccessfulCalls():
             return uf.get_calls_count(
-                {"status": "successfull", "failedReason": "", **today_calls_query}
+                {"status": "successful", "failedReason": "", **today_calls_query}
             )
 
         def failedCalls():
@@ -119,7 +119,7 @@ class InsightsManager:
     def get_call_insights():
         # Retrieve all necessary data in bulk
         successful_calls = uf.get_calls(
-            {"status": "successfull", "failedReason": ""},
+            {"status": "successful", "failedReason": ""},
             {"duration": 1, "user": 1, "type": 1, "_id": 0},
             False,
             False,

@@ -28,7 +28,7 @@ class CallManager:
     def get_total_duration():
         total_duration = 0
         calls = uf.get_calls({"failedReason": "",
-                              "status": "successfull"},
+                              "status": "successful"},
                              {"duration": 1, "_id": 0}, False, False)
         for call in calls:
             if "duration" in call and call["duration"] != "":
@@ -41,7 +41,7 @@ class CallManager:
         successful_calls_data = uf.get_calls(
             {
                 "failedReason": "",
-                "status": "successfull",
+                "status": "successful",
                 "duration": {"$exists": True},
             },
             {"duration": 1, "_id": 0},
@@ -58,7 +58,7 @@ class CallManager:
     @staticmethod
     def get_successful_scheduled_calls():
         successful_scheduled_calls = uf.get_calls(
-            {"status": "successfull", "type": "scheduled"},
+            {"status": "successful", "type": "scheduled"},
             {"duration": 1, "type": 1, "_id": 0},
             False,
             False,

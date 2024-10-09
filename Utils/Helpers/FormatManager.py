@@ -20,7 +20,7 @@ class FormatManager:
         if "failedReason" in call:
             if call["failedReason"] == "call missed":
                 call["status"] = "missed"
-            if call["status"] == "successfull":
+            if call["status"] == "successful":
                 call["status"] = "successful"
         return call
 

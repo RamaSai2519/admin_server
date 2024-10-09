@@ -86,7 +86,7 @@ class EngagementService:
     def populate_call_data(self, user, time):
         last_call = calls_collection.find_one(
             {"user": ObjectId(user["_id"]),
-             "status": "successfull", "failedReason": ""},
+             "status": "successful", "failedReason": ""},
             {"_id": 0, "initiatedTime": 1, "expert": 1},
             sort=[("initiatedTime", -1)]
         )
@@ -102,7 +102,7 @@ class EngagementService:
 
         user["callsDone"] = calls_collection.count_documents(
             {"user": ObjectId(user["_id"]),
-             "status": "successfull", "failedReason": ""}
+             "status": "successful", "failedReason": ""}
         )
         user["callStatus"] = uf.get_call_status(user["callsDone"])
 
